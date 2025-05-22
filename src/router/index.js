@@ -4,6 +4,9 @@ import HomeView from "../views/HomeView.vue";
 import AdminMainView from "../views/admin/AdminMainView.vue";
 import AdminLoginView from "@/views/admin/AdminLoginView.vue";
 import { doc, getDoc } from "firebase/firestore";
+import AdminProductDashboardView from "@/views/admin/product/AdminProductDashboardView.vue";
+import AdminLayout from "@/layouts/AdminLayout.vue";
+import AdminProductAddView from "@/views/admin/product/AdminProductAddView.vue";
 const routes = [
   {
     path: "/",
@@ -17,9 +20,33 @@ const routes = [
   {
     path: "/admin",
     name: "admin",
-    component: AdminMainView,
+    component: AdminLayout,
+    redirect: "/admin/dashboard",
     meta: { requiresAuthAdmin: true },
-    children: [],
+    children: [
+      {
+        path: "dashboard",
+        name: "admin-dashboard",
+        component: AdminMainView,
+      },
+      {
+        path: "product",
+        name: "admin-product",
+        redirect: "/admin/product/dashboard",
+        children: [
+          {
+            path: "dashboard",
+            name: "admin-product-dashboard",
+            component: AdminProductDashboardView,
+          },
+          {
+            path: "add",
+            name: "admin-product-add",
+            component: AdminProductAddView,
+          },
+        ],
+      },
+    ],
   },
   {
     path: "/admin/login",

@@ -99,6 +99,15 @@
         </div>
       </div>
     </div>
+    <div class="option-box">
+      <h3>옵션 / 재고 설정</h3>
+    </div>
+    <div class="image-box">
+      <h3>이미지 정보</h3>
+    </div>
+    <div class="button-box">
+      <button @click="addProduct">상품 등록하기</button>
+    </div>
   </div>
 </template>
 
@@ -243,6 +252,37 @@ onMounted(async () => {
           }
         }
       }
+    }
+  }
+
+  > .option-box {
+    margin-top: 24px;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 24px;
+  }
+
+  > .image-box {
+    margin-top: 24px;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 24px;
+  }
+
+  > .button-box {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    > button {
+      border-radius: 4px;
+      padding: 12px 24px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
     }
   }
 }

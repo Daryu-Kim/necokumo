@@ -52,37 +52,115 @@
       <div>
         <div>
           <h4>대분류</h4>
-          <input
-            type="number"
-            v-model="productName"
-            placeholder="예시) 19,800"
-          />
-          <span>원</span>
+          <div>
+            <div v-for="(item, index) in category0List" :key="index">
+              <input
+                :value="item"
+                :id="item.categoryId"
+                type="radio"
+                name="0"
+                v-model="category0Select"
+                @change="changeCategory0"
+              />
+              <label :for="item.categoryId">{{ item.categoryName }}</label>
+            </div>
+          </div>
         </div>
         <div>
           <h4>중분류</h4>
-          <input
-            type="number"
-            v-model="productName"
-            placeholder="예시) 9,900"
-          />
-          <span>원</span>
+          <div>
+            <div v-for="(item, index) in category1List" :key="index">
+              <input
+                :value="item"
+                :id="item.categoryId"
+                type="radio"
+                name="1"
+                v-model="category1Select"
+                @change="changeCategory1"
+              />
+              <label :for="item.categoryId">{{ item.categoryName }}</label>
+            </div>
+          </div>
         </div>
         <div>
           <h4>소분류</h4>
-          <input
-            type="number"
-            v-model="productName"
-            placeholder="예시) 3,000"
-          />
-          <span>원</span>
+          <div>
+            <div v-for="(item, index) in category2List" :key="index">
+              <input
+                :value="item"
+                :id="item.categoryId"
+                type="radio"
+                name="2"
+                v-model="category2Select"
+              />
+              <label :for="item.categoryId">{{ item.categoryName }}</label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { getDocs, collection, where, query } from "firebase/firestore";
+import { onMounted, ref } from "vue";
+import { db } from "@/lib/firebase";
+
+const category0List = ref([]);
+const category1List = ref([]);
+const category2List = ref([]);
+
+const category0Select = ref();
+const category1Select = ref();
+const category2Select = ref();
+
+const changeCategory0 = async () => {
+  try {
+    console.log(category0Select.value);
+    const categoryDatas = await getDocs(
+      query(
+        collection(db, "category"),
+        where("categoryGrade", "==", 1),
+        where("categoryParentId", "==", category0Select.value.categoryId)
+      )
+    );
+    category1List.value = categoryDatas.docs.map((doc) => doc.data());
+    category2List.value = [];
+    console.log(category1List.value);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const changeCategory1 = async () => {
+  try {
+    console.log(category1Select.value);
+    const categoryDatas = await getDocs(
+      query(
+        collection(db, "category"),
+        where("categoryGrade", "==", 2),
+        where("categoryParentId", "==", category1Select.value.categoryId)
+      )
+    );
+    category2List.value = categoryDatas.docs.map((doc) => doc.data());
+    console.log(category2List.value);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+onMounted(async () => {
+  try {
+    const categoryDatas = await getDocs(
+      query(collection(db, "category"), where("categoryGrade", "==", 0))
+    );
+    category0List.value = categoryDatas.docs.map((doc) => doc.data());
+  } catch (error) {
+    console.error(error);
+  }
+});
+</script>
 
 <style scoped lang="scss">
 .admin-product-add {
@@ -137,6 +215,34 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       margin-top: 16px;
+      gap: 16px;
+
+      > div {
+        > div {
+          border: 1px solid rgba(0, 0, 0, 0.25);
+          height: 216px;
+          border-radius: 8px;
+          overflow-y: scroll;
+          margin-top: 8px;
+          padding: 8px 12px;
+
+          > div {
+            > input {
+              display: none;
+            }
+
+            > label {
+              cursor: pointer;
+              font-size: 14px;
+            }
+
+            > input:checked + label {
+              color: #007bff;
+              font-weight: 700;
+            }
+          }
+        }
+      }
     }
   }
 }

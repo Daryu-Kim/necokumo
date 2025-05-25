@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "category",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoryGrade",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "categoryParentId",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -101,6 +101,37 @@
     </div>
     <div class="option-box">
       <h3>옵션 / 재고 설정</h3>
+      <div>
+        <h4>옵션1</h4>
+        <input
+          type="text"
+          placeholder="Enter 키로 구분 (색상, 맛 등 1차 옵션)"
+          @keydown.enter="insertOption1"
+          v-model="option1Text"
+        />
+        <div>
+          <button v-for="(item, index) in option1List" :key="index">
+            {{ item }}
+            <span class="material-icons-round">close</span>
+          </button>
+        </div>
+      </div>
+      <div>
+        <h4>옵션2</h4>
+        <input
+          type="text"
+          placeholder="Enter 키로 구분 (수량 등 2차 옵션)"
+          @keydown.enter="insertOption2"
+          v-model="option2Text"
+        />
+        <div>
+          <button v-for="(item, index) in option2List" :key="index">
+            {{ item }}
+            <span class="material-icons-round">close</span>
+          </button>
+        </div>
+      </div>
+      <button>모든 옵션 품목추가</button>
     </div>
     <div class="image-box">
       <h3>이미지 정보</h3>
@@ -123,6 +154,14 @@ const category2List = ref([]);
 const category0Select = ref();
 const category1Select = ref();
 const category2Select = ref();
+
+const option1Text = ref("");
+const option2Text = ref("");
+
+const option1List = ref([]);
+const option2List = ref([]);
+
+const optionList = ref([]);
 
 const changeCategory0 = async () => {
   try {
@@ -154,6 +193,26 @@ const changeCategory1 = async () => {
     );
     category2List.value = categoryDatas.docs.map((doc) => doc.data());
     console.log(category2List.value);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const insertOption1 = async () => {
+  try {
+    const option = option1Text.value;
+    option1List.value = [...option1List.value, option];
+    option1Text.value = "";
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const insertOption2 = async () => {
+  try {
+    const option = option2Text.value;
+    option2List.value = [...option2List.value, option];
+    option2Text.value = "";
   } catch (error) {
     console.error(error);
   }
@@ -201,9 +260,11 @@ onMounted(async () => {
         margin-left: 8px;
         background-color: #efefef;
         font-size: 14px;
+
         ::placeholder {
           color: rgba(0, 0, 0, 0.6);
         }
+
         &:focus {
           outline: 2px solid #007bff;
         }
@@ -220,6 +281,7 @@ onMounted(async () => {
     box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25);
     border-radius: 8px;
     padding: 24px;
+
     > div {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -260,6 +322,67 @@ onMounted(async () => {
     box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25);
     border-radius: 8px;
     padding: 24px;
+
+    > div {
+      > h4 {
+        margin-top: 16px;
+      }
+
+      > input {
+        width: 100%;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        background-color: #efefef;
+        margin-top: 8px;
+        font-size: 14px;
+
+        ::placeholder {
+          color: rgba(0, 0, 0, 0.6);
+        }
+
+        &:focus {
+          outline: 2px solid #007bff;
+        }
+      }
+
+      > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+
+        > button {
+          padding: 4px 12px;
+          border: none;
+          border-radius: 100px;
+          background-color: #007bff;
+          color: #fff;
+          font-weight: 500;
+          font-size: 14px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+
+          > span {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+          }
+        }
+      }
+    }
+
+    > button {
+      margin-top: 16px;
+      border-radius: 4px;
+      padding: 8px 16px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+    }
   }
 
   > .image-box {

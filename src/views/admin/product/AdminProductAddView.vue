@@ -15,7 +15,7 @@
         <h4>상품 요약설명</h4>
         <input
           type="text"
-          v-model="productName"
+          v-model="productSummary"
           placeholder="예시) 발라리안을 잡으려고 긱베이프가 작정했다!"
         />
       </div>
@@ -23,7 +23,7 @@
         <h4>상품 상세설명</h4>
         <textarea
           type="text"
-          v-model="productName"
+          v-model="productDetail"
           rows="10"
           placeholder="예시) <img src='https://picsum.photos/600' style='width: 100%;' />"
         ></textarea>
@@ -33,17 +33,29 @@
       <h3>판매 정보</h3>
       <div>
         <h4>판매가</h4>
-        <input type="number" v-model="productName" placeholder="예시) 19,800" />
+        <input
+          type="number"
+          v-model="productSellPrice"
+          placeholder="예시) 19,800"
+        />
         <span>원</span>
       </div>
       <div>
         <h4>매입가</h4>
-        <input type="number" v-model="productName" placeholder="예시) 9,900" />
+        <input
+          type="number"
+          v-model="productBuyPrice"
+          placeholder="예시) 9,900"
+        />
         <span>원</span>
       </div>
       <div>
         <h4>매입 운송비</h4>
-        <input type="number" v-model="productName" placeholder="예시) 3,000" />
+        <input
+          type="number"
+          v-model="productBuyDeliveryPrice"
+          placeholder="예시) 3,000"
+        />
         <span>원</span>
       </div>
     </div>

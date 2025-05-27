@@ -193,7 +193,7 @@
             <p>상품 대시보드</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/product" class="admin-menu-item">
+        <router-link to="/admin/product/list" class="admin-menu-item">
           <div>
             <p>상품 목록보기</p>
           </div>

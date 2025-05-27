@@ -6,11 +6,15 @@
       <div>
         <div>
           <p class="count-title">전체 등록 상품</p>
-          <p class="count-text"><span class="count-number">0</span> 개</p>
+          <p class="count-text">
+            <span class="count-number">{{ productCount }}</span> 개
+          </p>
         </div>
         <div>
           <p class="count-title">판매 중인 상품</p>
-          <p class="count-text"><span class="count-number">0</span> 개</p>
+          <p class="count-text">
+            <span class="count-number">{{ productCount }}</span> 개
+          </p>
         </div>
         <div>
           <p class="count-title">품절 상품</p>
@@ -25,7 +29,18 @@
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { getDocs, collection } from "firebase/firestore";
+import { onMounted, ref } from "vue";
+import { db } from "@/lib/firebase";
+
+const productCount = ref(0);
+
+onMounted(async () => {
+  const data = await getDocs(collection(db, "product"));
+  productCount.value = data.size;
+});
+</script>
 
 <style scoped lang="scss">
 .admin-product-dashboard {

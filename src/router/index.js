@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import AdminProductDashboardView from "@/views/admin/product/AdminProductDashboardView.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 import AdminProductAddView from "@/views/admin/product/AdminProductAddView.vue";
+import AdminProductListView from "@/views/admin/product/AdminProductListView.vue";
 const routes = [
   {
     path: "/",
@@ -38,6 +39,11 @@ const routes = [
             path: "dashboard",
             name: "admin-product-dashboard",
             component: AdminProductDashboardView,
+          },
+          {
+            path: "list",
+            name: "admin-product-list",
+            component: AdminProductListView,
           },
           {
             path: "add",

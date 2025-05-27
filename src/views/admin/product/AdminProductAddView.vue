@@ -20,7 +20,9 @@
             placeholder="예시) 발라리안을 잡으려고 긱베이프가 작정했다!"
           />
           <div>
-            <button @click="generateProductSummary">AI</button>
+            <button @click="generateProductSummary" :disabled="isBusy">
+              자동 완성
+            </button>
           </div>
         </div>
       </div>
@@ -33,7 +35,9 @@
             placeholder="검색어는 콤마로 구분, 검색어 당 최대 125자까지 입력 가능"
           />
           <div>
-            <button @click="generateProductSearchKeyword">AI</button>
+            <button @click="generateProductSearchKeyword" :disabled="isBusy">
+              자동 완성
+            </button>
           </div>
         </div>
       </div>
@@ -47,7 +51,9 @@
             placeholder="예시) <img src='https://picsum.photos/600' style='width: 100%;' />"
           ></textarea>
           <div>
-            <button @click="crawlProduct('medusa')">메두사</button>
+            <button @click="crawlProduct('medusa')" :disabled="isBusy">
+              메두사
+            </button>
             <button
               @click="openDialog"
               :disabled="productDetailImages.length === 0"
@@ -103,6 +109,7 @@
                 name="0"
                 v-model="category0Select"
                 @change="changeCategory0"
+                :disabled="isBusy"
               />
               <label :for="item.categoryId">{{ item.categoryName }}</label>
             </div>
@@ -119,6 +126,7 @@
                 name="1"
                 v-model="category1Select"
                 @change="changeCategory1"
+                :disabled="isBusy"
               />
               <label :for="item.categoryId">{{ item.categoryName }}</label>
             </div>
@@ -134,6 +142,7 @@
                 type="radio"
                 name="2"
                 v-model="category2Select"
+                :disabled="isBusy"
               />
               <label :for="item.categoryId">{{ item.categoryName }}</label>
             </div>
@@ -149,6 +158,8 @@
           type="text"
           placeholder="Enter 키로 구분 (색상, 맛 등 1차 옵션)"
           @keydown.enter="insertOption1"
+          @compositionstart="isComposingOption1 = true"
+          @compositionend="isComposingOption1 = false"
           v-model="option1Text"
         />
         <div>
@@ -157,6 +168,7 @@
             :key="index"
             :value="item"
             @click="deleteOption1"
+            :disabled="isBusy"
           >
             {{ item }}
             <span class="material-icons-round">close</span>
@@ -170,6 +182,8 @@
           placeholder="Enter 키로 구분 (수량 등 2차 옵션)"
           @keydown.enter="insertOption2"
           v-model="option2Text"
+          @compositionstart="isComposingOption2 = true"
+          @compositionend="isComposingOption2 = false"
         />
         <div>
           <button
@@ -177,13 +191,16 @@
             :key="index"
             :value="item"
             @click="deleteOption2"
+            :disabled="isBusy"
           >
             {{ item }}
             <span class="material-icons-round">close</span>
           </button>
         </div>
       </div>
-      <button @click="addOptionList">모든 옵션 품목추가</button>
+      <button @click="addOptionList" :disabled="isBusy">
+        모든 옵션 품목추가
+      </button>
       <table v-if="optionList.length > 0">
         <thead>
           <tr>
@@ -218,7 +235,7 @@
       </div>
     </div>
     <div class="button-box">
-      <button @click="addProduct">상품 등록하기</button>
+      <button @click="addProduct" :disabled="isBusy">상품 등록하기</button>
     </div>
     <dialog ref="dialogRef">
       <header>
@@ -255,6 +272,7 @@ import { uploadImageByUrl } from "@/lib/imgbb";
 import { useDeepseek } from "@/lib/openrouter";
 import router from "@/router";
 
+const isBusy = ref(false);
 const productName = ref("");
 const productSummary = ref("");
 const productSearchKeyword = ref("");
@@ -289,6 +307,9 @@ const selectedCategory = computed(() => {
 const option1Text = ref("");
 const option2Text = ref("");
 
+const isComposingOption1 = ref(false);
+const isComposingOption2 = ref(false);
+
 const option1List = ref([]);
 const option2List = ref([]);
 
@@ -313,6 +334,7 @@ const conditionProductAdd = computed(() => {
 
 const changeCategory0 = async () => {
   try {
+    isBusy.value = true;
     console.log(category0Select.value);
     const categoryDatas = await getDocs(
       query(
@@ -324,13 +346,16 @@ const changeCategory0 = async () => {
     category1List.value = categoryDatas.docs.map((doc) => doc.data());
     category2List.value = [];
     console.log(category1List.value);
+    isBusy.value = false;
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const changeCategory1 = async () => {
   try {
+    isBusy.value = true;
     console.log(category1Select.value);
     const categoryDatas = await getDocs(
       query(
@@ -341,57 +366,76 @@ const changeCategory1 = async () => {
     );
     category2List.value = categoryDatas.docs.map((doc) => doc.data());
     console.log(category2List.value);
+    isBusy.value = false;
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const insertOption1 = async () => {
   try {
-    optionList.value = [];
-    const option = option1Text.value;
-    option1List.value = [...option1List.value, option];
-    option1Text.value = "";
+    if (!isComposingOption1.value) {
+      isBusy.value = true;
+      optionList.value = [];
+      const option = option1Text.value;
+      option1List.value = [...option1List.value, option];
+      option1Text.value = "";
+      isBusy.value = false;
+    }
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const insertOption2 = async () => {
   try {
-    optionList.value = [];
-    const option = option2Text.value;
-    option2List.value = [...option2List.value, option];
-    option2Text.value = "";
+    if (!isComposingOption2.value) {
+      isBusy.value = true;
+      optionList.value = [];
+      const option = option2Text.value;
+      option2List.value = [...option2List.value, option];
+      option2Text.value = "";
+      isBusy.value = false;
+    }
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const deleteOption1 = (element) => {
   try {
+    isBusy.value = true;
     optionList.value = [];
     option1List.value = option1List.value.filter(
       (item) => item !== element.target.value
     );
+    isBusy.value = false;
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const deleteOption2 = (element) => {
   try {
+    isBusy.value = true;
     optionList.value = [];
     option2List.value = option2List.value.filter(
       (item) => item !== element.value
     );
+    isBusy.value = false;
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const addOptionList = async () => {
   try {
+    isBusy.value = true;
     optionList.value = [];
     option1List.value.forEach((option1) => {
       option2List.value.forEach((option2) => {
@@ -401,32 +445,40 @@ const addOptionList = async () => {
         });
       });
     });
+    isBusy.value = false;
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const crawlProduct = async (buyer) => {
-  // 도매사 선택 부분 만들어서 Array.from 부분에 적용시켜야함.
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(productDetail.value, "text/html");
+  try {
+    isBusy.value = true;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(productDetail.value, "text/html");
 
-  const images = doc.querySelectorAll("img");
-  productDetailImages.value = Array.from(images).map((img) => {
-    let replaceUrl = "";
-    switch (buyer) {
-      case "medusa":
-        replaceUrl = "https://medusamall.com";
-        break;
-      default:
-        replaceUrl = "";
-        break;
-    }
+    const images = doc.querySelectorAll("img");
+    productDetailImages.value = Array.from(images).map((img) => {
+      let replaceUrl = "";
+      switch (buyer) {
+        case "medusa":
+          replaceUrl = "https://medusamall.com";
+          break;
+        default:
+          replaceUrl = "";
+          break;
+      }
 
-    return img.src.replace(window.location.origin, replaceUrl);
-  });
+      return img.src.replace(window.location.origin, replaceUrl);
+    });
 
-  console.log(productDetailImages.value);
+    console.log(productDetailImages.value);
+    isBusy.value = false;
+  } catch (error) {
+    console.error(error);
+    isBusy.value = false;
+  }
 };
 
 const openDialog = () => {
@@ -439,31 +491,39 @@ const closeDialog = () => {
 
 const generateProductSummary = async () => {
   try {
+    isBusy.value = true;
     const prompt = `"${productName.value}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 다른 불필요한 대답 없이(상품 요약설명, 정리, 대답 필요없음, 보충설명 필요없음. 쓸데없는 말 부조건 제외.) 특장점을 바탕으로 소비자가 알기 쉽고 구매욕구가 들게 50글자 내의 1문장으로 마케팅 제안 문구만 간결하게 딱 말해줘. api로 content 받아낼거라 그냥 output만 내주면돼.`;
     const data = await useDeepseek(prompt);
     productSummary.value = data.choices[0].message.content.replaceAll(/"/g, "");
+    isBusy.value = false;
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const generateProductSearchKeyword = async () => {
   try {
+    isBusy.value = true;
     const prompt = `"${productName.value}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 불필요한 상품 요약설명, 정리, 대답 필요없으니까 전부 제외하고 소비자가 알기 쉽고 구매욕구가 들게 SEO에 노출 잘되게 50개의 키워드를 콤마로 연결하고 띄어쓰기를 모두 없애서 딱 말해줘. 무조건 키워드의 총합은 50을 넘어가면 안되고, 50개의 키워드 중에서 무조건 "네코쿠모", "네코쿠모전자담배", "네코쿠모전담", "냥이네구름가게", "냥이네구름가게전자담배", "냥이네구름가게전담" 키워드들은 무조건 들어가야해.`;
     const data = await useDeepseek(prompt);
     productSearchKeyword.value = data.choices[0].message.content.replaceAll(
       /"/g,
       ""
     );
+    isBusy.value = false;
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 };
 
 const addProduct = async () => {
   try {
+    isBusy.value = true;
     if (!conditionProductAdd.value) {
       alert("모든 항목을 채워주세요.");
+      isBusy.value = false;
       return;
     }
 
@@ -513,20 +573,25 @@ const addProduct = async () => {
 
     await setDoc(doc(db, "product", uuid), productData);
     alert("상품이 성공적으로 등록되었습니다.");
+    isBusy.value = false;
     router.push("/admin/product");
   } catch (error) {
     console.error("Error adding product:", error);
+    isBusy.value = false;
   }
 };
 
 onMounted(async () => {
   try {
+    isBusy.value = true;
     const categoryDatas = await getDocs(
       query(collection(db, "category"), where("categoryGrade", "==", 0))
     );
     category0List.value = categoryDatas.docs.map((doc) => doc.data());
+    isBusy.value = false;
   } catch (error) {
     console.error(error);
+    isBusy.value = false;
   }
 });
 </script>

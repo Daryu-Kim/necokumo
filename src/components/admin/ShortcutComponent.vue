@@ -17,12 +17,28 @@
       <p>계좌이체몰</p>
     </a>
     <a
-      href="https://sell.smartstore.naver.com/"
+      href="https://eclogin.cafe24.com/Shop/"
       target="_blank"
       class="admin-shortcut-item secondary"
     >
       <span class="material-icons-round">report_problem</span>
-      <p>스마트스토어</p>
+      <p>카페24 관리자</p>
+    </a>
+    <a
+      href="https://instagram.com/necokumo.shop"
+      target="_blank"
+      class="admin-shortcut-item secondary"
+    >
+      <span class="material-icons-round">report_problem</span>
+      <p>인스타그램</p>
+    </a>
+    <a
+      href="https://youtube.com/@necokumo"
+      target="_blank"
+      class="admin-shortcut-item secondary"
+    >
+      <span class="material-icons-round">report_problem</span>
+      <p>유튜브</p>
     </a>
     <a
       href="https://www.cupost.co.kr/postbox/main.cupost"

@@ -10,7 +10,7 @@ export async function generateUUIDFromSeed(seed, length = 12) {
 
   let uuid = "";
   for (let i = 0; i < length; i++) {
-    const index = Math.abs((has + i * 31) % charset.length);
+    const index = Math.abs((hash + i * 31) % charset.length);
     uuid += charset.charAt(index);
   }
 

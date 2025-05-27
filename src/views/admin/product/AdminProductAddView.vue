@@ -21,12 +21,23 @@
       </div>
       <div>
         <h4>상품 상세설명</h4>
-        <textarea
-          type="text"
-          v-model="productDetail"
-          rows="10"
-          placeholder="예시) <img src='https://picsum.photos/600' style='width: 100%;' />"
-        ></textarea>
+        <div>
+          <textarea
+            type="text"
+            v-model="productDetail"
+            rows="10"
+            placeholder="예시) <img src='https://picsum.photos/600' style='width: 100%;' />"
+          ></textarea>
+          <div>
+            <button @click="crawlProduct('medusa')">메두사</button>
+            <button
+              @click="openDialog"
+              :disabled="productDetailImages.length === 0"
+            >
+              미리보기
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="add-box">
@@ -180,32 +191,51 @@
     <div class="image-box">
       <h3>이미지 정보</h3>
       <div>
-        <div>
-          <div :style="`background-image: url(${productThumbnail})`"></div>
-          <input
-            type="file"
-            accept="image/*"
-            @change="uploadImages"
-            id="thumbnail"
-          />
-          <label for="thumbnail">
-            <span class="material-icons-round">add</span>
-            <p>등록</p>
-          </label>
-        </div>
-        <p>- 권장 이미지: 500px * 500px / 5mb 이하 / gif, png, jpg(jpeg)</p>
+        <h4>썸네일 URL</h4>
+        <input
+          type="text"
+          v-model="productThumbnail"
+          placeholder="예시) https://picsum.photos/200"
+        />
       </div>
     </div>
     <div class="button-box">
       <button @click="addProduct">상품 등록하기</button>
     </div>
+    <dialog ref="dialogRef">
+      <header>
+        <h2>상품 상세이미지 미리보기</h2>
+        <button @click="closeDialog">
+          <span class="material-icons-round">close</span>
+        </button>
+      </header>
+      <main>
+        <img
+          v-for="(image, index) in productDetailImages"
+          :key="index"
+          :src="image"
+        />
+      </main>
+    </dialog>
   </div>
 </template>
 
 <script setup>
-import { getDocs, collection, where, query } from "firebase/firestore";
+import {
+  getDocs,
+  collection,
+  where,
+  query,
+  doc,
+  setDoc,
+  Timestamp,
+} from "firebase/firestore";
 import { onMounted, ref, computed } from "vue";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+import { generateUUIDFromSeed } from "@/lib/utils";
+import { uploadImageByUrl } from "@/lib/imgbb";
+import router from "@/router";
+// import { uploadImageByUrl } from "@/lib/imgbb";
 
 const productName = ref("");
 const productSummary = ref("");
@@ -213,14 +243,17 @@ const productDetail = ref("");
 const productSellPrice = ref(0);
 const productBuyPrice = ref(0);
 const productBuyDeliveryPrice = ref(0);
+const dialogRef = ref(null);
 
 const category0List = ref([]);
 const category1List = ref([]);
 const category2List = ref([]);
 
-const category0Select = ref();
-const category1Select = ref();
-const category2Select = ref();
+const category0Select = ref(null);
+const category1Select = ref(null);
+const category2Select = ref(null);
+
+const productDetailImages = ref([]);
 
 const selectedCategory = computed(() => {
   if (category0Select.value && category1Select.value && category2Select.value) {
@@ -242,19 +275,19 @@ const option2List = ref([]);
 
 const optionList = ref([]);
 
-const productThumbnail = ref(null);
+const productThumbnail = ref("");
 
 const conditionProductAdd = computed(() => {
   return (
     productName.value &&
+    typeof productName.value === "string" &&
     productSummary.value &&
-    productDetail.value &&
+    productDetailImages.value.length > 0 &&
     productSellPrice.value > 0 &&
     productBuyPrice.value > 0 &&
     productBuyDeliveryPrice.value > 0 &&
     category0Select.value &&
-    option1List.value.length > 0 &&
-    option2List.value.length > 0 &&
+    optionList.value.length > 0 &&
     productThumbnail.value
   );
 });
@@ -354,13 +387,35 @@ const addOptionList = async () => {
   }
 };
 
-const uploadImages = async (event) => {
-  try {
-    const file = event.target.files[0];
-    productThumbnail.value = URL.createObjectURL(file);
-  } catch (error) {
-    console.error("Error uploading file:", error);
-  }
+const crawlProduct = async (buyer) => {
+  // 도매사 선택 부분 만들어서 Array.from 부분에 적용시켜야함.
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(productDetail.value, "text/html");
+
+  const images = doc.querySelectorAll("img");
+  productDetailImages.value = Array.from(images).map((img) => {
+    let replaceUrl = "";
+    switch (buyer) {
+      case "medusa":
+        replaceUrl = "https://medusamall.com";
+        break;
+      default:
+        replaceUrl = "";
+        break;
+    }
+
+    return img.src.replace(window.location.origin, replaceUrl);
+  });
+
+  console.log(productDetailImages.value);
+};
+
+const openDialog = () => {
+  dialogRef.value.showModal();
+};
+
+const closeDialog = () => {
+  dialogRef.value.close();
 };
 
 const addProduct = async () => {
@@ -369,20 +424,50 @@ const addProduct = async () => {
       alert("모든 항목을 채워주세요.");
       return;
     }
+
+    const uuid = await generateUUIDFromSeed(productName.value);
+    console.log(uuid);
+
+    const thumbnailURL = await uploadImageByUrl(productThumbnail.value);
+
+    const detailImageURL = await Promise.all(
+      Array.from(productDetailImages.value).map(async (item) => {
+        const data = await uploadImageByUrl(item);
+        return {
+          imageOriginUrl: data?.data?.image?.url || "",
+          imageDeleteUrl: data?.data?.delete_url || "",
+        };
+      })
+    );
+
+    const category = [
+      category0Select.value?.categoryId,
+      category1Select.value?.categoryId,
+      category2Select.value?.categoryId,
+    ].filter((id) => id != null);
+
     const productData = {
+      productId: uuid,
       productName: productName.value,
       productSummary: productSummary.value,
       productDetail: productDetail.value,
       productSellPrice: productSellPrice.value,
       productBuyPrice: productBuyPrice.value,
       productBuyDeliveryPrice: productBuyDeliveryPrice.value,
-      categoryId: category0Select.value.categoryId,
+      productCategory: category,
       optionList: optionList.value,
-      productThumbnail: productThumbnail.value,
+      productThumbnailOriginUrl: thumbnailURL?.data?.image?.url || "",
+      productThumbnailSmallUrl: thumbnailURL?.data?.thumb?.url || "",
+      productThumbnailDeleteUrl: thumbnailURL?.data?.delete_url || "",
+      productDetailUrl: detailImageURL,
+      createdBy: auth.currentUser.uid,
+      createdAt: Timestamp.fromDate(new Date()),
+      updatedAt: Timestamp.fromDate(new Date()),
     };
 
-    await collection(db, "product").add(productData);
-    console.log("Product added!");
+    await setDoc(doc(db, "product", uuid), productData);
+    alert("상품이 성공적으로 등록되었습니다.");
+    router.push("/admin/product");
   } catch (error) {
     console.error("Error adding product:", error);
   }
@@ -427,7 +512,6 @@ onMounted(async () => {
         padding: 8px 12px;
         border: none;
         border-radius: 4px;
-        margin-left: 8px;
         background-color: #efefef;
         font-size: 14px;
 
@@ -442,6 +526,53 @@ onMounted(async () => {
 
       > span {
         font-size: 14px;
+      }
+
+      > div {
+        flex: 1;
+        > textarea {
+          width: 100%;
+          padding: 8px 12px;
+          border: none;
+          border-radius: 4px;
+          background-color: #efefef;
+          font-size: 14px;
+
+          ::placeholder {
+            color: rgba(0, 0, 0, 0.6);
+          }
+
+          &:focus {
+            outline: 2px solid #007bff;
+          }
+        }
+
+        > div {
+          margin-top: 8px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          > button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+
+            &:hover {
+              background-color: #0069d9;
+            }
+
+            &:disabled {
+              cursor: not-allowed;
+              background-color: #efefef;
+              color: rgba($color: #000000, $alpha: 0.5);
+            }
+          }
+        }
       }
     }
   }
@@ -657,42 +788,31 @@ onMounted(async () => {
     padding: 24px;
 
     > div {
-      margin-top: 16px;
       display: flex;
-      gap: 16px;
-      > div {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: fit-content;
-        > div {
-          width: 128px;
-          height: 128px;
-          background-color: #efefef;
-          background-position: center center;
-          background-size: cover;
-          background-repeat: no-repeat;
-        }
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
 
-        > input[type="file"] {
-          display: none;
-        }
-
-        > label {
-          cursor: pointer;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          border-radius: 4px;
-          border: 1px solid rgba(0, 0, 0, 0.25);
-          width: fit-content;
-          padding: 2px 8px 2px 4px;
-          margin-top: 8px;
-        }
+      > h4 {
+        width: 160px;
+        border-right: 1px solid rgba(0, 0, 0, 0.25);
       }
 
-      > p {
+      > input {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        background-color: #efefef;
         font-size: 14px;
+
+        ::placeholder {
+          color: rgba(0, 0, 0, 0.6);
+        }
+
+        &:focus {
+          outline: 2px solid #007bff;
+        }
       }
     }
   }
@@ -712,6 +832,58 @@ onMounted(async () => {
       font-weight: 700;
       font-size: 16px;
       cursor: pointer;
+    }
+  }
+
+  > dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border-radius: 8px;
+    width: 90%;
+    height: 90%;
+    max-width: 600px;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25);
+
+    &::backdrop {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    > header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+      background: #efefef;
+
+      > h2 {
+        font-size: 18px;
+      }
+
+      > button {
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        background-color: #007bff;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+
+        > span {
+          font-size: 16px;
+        }
+      }
+    }
+
+    > main {
+      > img {
+        width: 100%;
+      }
     }
   }
 }

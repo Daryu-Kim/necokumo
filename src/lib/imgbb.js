@@ -13,7 +13,7 @@ export async function uploadImageByUrl(imageUrl) {
     const result = await response.json();
     if (result.success) {
       console.log("업로드 성공:", result.data.url);
-      return result.data.url; // 업로드된 이미지 URL 반환
+      return result; // 업로드된 이미지 URL 반환
     } else {
       console.error("업로드 실패:", result);
       return null;

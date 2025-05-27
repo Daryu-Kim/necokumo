@@ -13,11 +13,29 @@
       </div>
       <div>
         <h4>상품 요약설명</h4>
-        <input
-          type="text"
-          v-model="productSummary"
-          placeholder="예시) 발라리안을 잡으려고 긱베이프가 작정했다!"
-        />
+        <div>
+          <input
+            type="text"
+            v-model="productSummary"
+            placeholder="예시) 발라리안을 잡으려고 긱베이프가 작정했다!"
+          />
+          <div>
+            <button @click="generateProductSummary">AI</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h4>상품 검색 키워드</h4>
+        <div>
+          <input
+            type="text"
+            v-model="productSearchKeyword"
+            placeholder="검색어는 콤마로 구분, 검색어 당 최대 125자까지 입력 가능"
+          />
+          <div>
+            <button @click="generateProductSearchKeyword">AI</button>
+          </div>
+        </div>
       </div>
       <div>
         <h4>상품 상세설명</h4>
@@ -234,11 +252,12 @@ import { onMounted, ref, computed } from "vue";
 import { db, auth } from "@/lib/firebase";
 import { generateUUIDFromSeed } from "@/lib/utils";
 import { uploadImageByUrl } from "@/lib/imgbb";
+import { useDeepseek } from "@/lib/openrouter";
 import router from "@/router";
-// import { uploadImageByUrl } from "@/lib/imgbb";
 
 const productName = ref("");
 const productSummary = ref("");
+const productSearchKeyword = ref("");
 const productDetail = ref("");
 const productSellPrice = ref(0);
 const productBuyPrice = ref(0);
@@ -418,6 +437,29 @@ const closeDialog = () => {
   dialogRef.value.close();
 };
 
+const generateProductSummary = async () => {
+  try {
+    const prompt = `"${productName.value}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 다른 불필요한 대답 없이(상품 요약설명, 정리, 대답 필요없음, 보충설명 필요없음. 쓸데없는 말 부조건 제외.) 특장점을 바탕으로 소비자가 알기 쉽고 구매욕구가 들게 50글자 내의 1문장으로 마케팅 제안 문구만 간결하게 딱 말해줘. api로 content 받아낼거라 그냥 output만 내주면돼.`;
+    const data = await useDeepseek(prompt);
+    productSummary.value = data.choices[0].message.content.replaceAll(/"/g, "");
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const generateProductSearchKeyword = async () => {
+  try {
+    const prompt = `"${productName.value}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 불필요한 상품 요약설명, 정리, 대답 필요없으니까 전부 제외하고 소비자가 알기 쉽고 구매욕구가 들게 SEO에 노출 잘되게 50개의 키워드를 콤마로 연결하고 띄어쓰기를 모두 없애서 딱 말해줘. 무조건 키워드의 총합은 50을 넘어가면 안되고, 50개의 키워드 중에서 무조건 "네코쿠모", "네코쿠모전자담배", "네코쿠모전담", "냥이네구름가게", "냥이네구름가게전자담배", "냥이네구름가게전담" 키워드들은 무조건 들어가야해.`;
+    const data = await useDeepseek(prompt);
+    productSearchKeyword.value = data.choices[0].message.content.replaceAll(
+      /"/g,
+      ""
+    );
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const addProduct = async () => {
   try {
     if (!conditionProductAdd.value) {
@@ -450,15 +492,19 @@ const addProduct = async () => {
       productId: uuid,
       productName: productName.value,
       productSummary: productSummary.value,
-      productDetail: productDetail.value,
+      productSearchKeyword: productSearchKeyword.value,
       productSellPrice: productSellPrice.value,
       productBuyPrice: productBuyPrice.value,
       productBuyDeliveryPrice: productBuyDeliveryPrice.value,
       productCategory: category,
+      option1List: option1List.value,
+      option2List: option2List.value,
       optionList: optionList.value,
-      productThumbnailOriginUrl: thumbnailURL?.data?.image?.url || "",
-      productThumbnailSmallUrl: thumbnailURL?.data?.thumb?.url || "",
-      productThumbnailDeleteUrl: thumbnailURL?.data?.delete_url || "",
+      productThumbnailUrl: {
+        originalUrl: thumbnailURL?.data?.image?.url || "",
+        smallUrl: thumbnailURL?.data?.thumb?.url || "",
+        deleteUrl: thumbnailURL?.data?.delete_url || "",
+      },
       productDetailUrl: detailImageURL,
       createdBy: auth.currentUser.uid,
       createdAt: Timestamp.fromDate(new Date()),
@@ -530,7 +576,8 @@ onMounted(async () => {
 
       > div {
         flex: 1;
-        > textarea {
+        > input,
+        textarea {
           width: 100%;
           padding: 8px 12px;
           border: none;

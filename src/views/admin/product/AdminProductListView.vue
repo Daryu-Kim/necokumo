@@ -37,7 +37,33 @@ onMounted(async () => {
           return `${value.toLocaleString()}원`;
         },
       },
+      {
+        content: item.productBuyPrice,
+        editable: false,
+        format: (value) => {
+          return `${value.toLocaleString()}원`;
+        },
+      },
+      {
+        content: item.productBuyDeliveryPrice,
+        editable: false,
+        format: (value) => {
+          return `${value.toLocaleString()}원`;
+        },
+      },
+      {
+        content: item.optionList,
+        editable: false,
+        format: (value) => {
+          console.log(value);
+          const lines = value.map(
+            (o) => `${o.optionName} | ${o.optionPrice.toLocaleString()}원`
+          );
+          return `<p>${lines.join("<br/>")}</p>`;
+        },
+      },
       item.createdAt?.toDate().toLocaleString() || "",
+      item.updatedAt?.toDate().toLocaleString() || "",
     ];
   });
 
@@ -55,10 +81,31 @@ onMounted(async () => {
         },
       },
       {
-        name: "소비자가",
+        name: "판매가",
         editable: false,
         resizable: false,
         width: 96,
+        align: "center",
+      },
+      {
+        name: "매입가",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+      },
+      {
+        name: "매입운송비",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+      },
+      {
+        name: "옵션",
+        editable: false,
+        resizable: false,
+        width: 256,
         align: "center",
       },
       {
@@ -68,10 +115,17 @@ onMounted(async () => {
         width: 192,
         align: "center",
       },
+      {
+        name: "수정일",
+        editable: false,
+        resizable: false,
+        width: 192,
+        align: "center",
+      },
     ],
     data: data,
     checkboxColumn: true,
-    inlineFilters: true,
+    serialNoColumn: false,
   });
 });
 </script>

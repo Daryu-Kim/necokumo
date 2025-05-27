@@ -28,5 +28,6 @@ ol {
 
 .datatable .dt-cell__content {
   font-size: 14px; /* 원하는 크기로 조정 */
+  overflow-y: auto;
 }
 </style>

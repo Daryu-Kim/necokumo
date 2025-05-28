@@ -29,5 +29,14 @@ ol {
 .datatable .dt-cell__content {
   font-size: 14px; /* 원하는 크기로 조정 */
   overflow-y: auto;
+  line-height: 1.5;
+}
+
+.datatable .dt-cell__content--col-1 {
+  overflow-y: hidden;
+}
+
+.datatable .dt-header .dt-row {
+  height: 48px;
 }
 </style>

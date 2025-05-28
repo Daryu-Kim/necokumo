@@ -569,6 +569,10 @@ const addProduct = async () => {
       createdBy: auth.currentUser.uid,
       createdAt: Timestamp.fromDate(new Date()),
       updatedAt: Timestamp.fromDate(new Date()),
+      isSellCafe24: false,
+      isSellYoutube: false,
+      isSellVue: false,
+      isActive: true,
     };
 
     await setDoc(doc(db, "product", uuid), productData);

@@ -203,7 +203,7 @@
             <p>상품 등록하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link to="/admin/product/category" class="admin-menu-item">
           <div>
             <p>카테고리 관리하기</p>
           </div>

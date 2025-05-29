@@ -92,6 +92,9 @@ const deleteSelectedItems = async () => {
           }
         })
       );
+    } else {
+      isBusy.value = false;
+      return;
     }
     alert("상품이 삭제되었습니다!");
     isBusy.value = false;
@@ -127,6 +130,9 @@ const setSellCafe24 = async () => {
           }
         })
       );
+    } else {
+      isBusy.value = false;
+      return;
     }
     alert("상품이 Cafe24 판매중으로 설정되었습니다!");
     isBusy.value = false;
@@ -161,6 +167,9 @@ const unsetSellCafe24 = async () => {
           }
         })
       );
+    } else {
+      isBusy.value = false;
+      return;
     }
     alert("상품이 Cafe24 판매중지로 설정되었습니다!");
     isBusy.value = false;
@@ -195,6 +204,9 @@ const setSellYoutube = async () => {
           }
         })
       );
+    } else {
+      isBusy.value = false;
+      return;
     }
     alert("상품이 Youtube 판매중으로 설정되었습니다!");
     isBusy.value = false;
@@ -229,6 +241,9 @@ const unsetSellYoutube = async () => {
           }
         })
       );
+    } else {
+      isBusy.value = false;
+      return;
     }
     alert("상품이 Youtube 판매중지로 설정되었습니다!");
     isBusy.value = false;
@@ -263,6 +278,9 @@ const setSellVue = async () => {
           }
         })
       );
+    } else {
+      isBusy.value = false;
+      return;
     }
     alert("상품이 Vue 판매중으로 설정되었습니다!");
     isBusy.value = false;
@@ -297,6 +315,9 @@ const unsetSellVue = async () => {
           }
         })
       );
+    } else {
+      isBusy.value = false;
+      return;
     }
     alert("상품이 Vue 판매중지로 설정되었습니다!");
     isBusy.value = false;

@@ -7,22 +7,37 @@
         <div>
           <p class="count-title">전체 등록 상품</p>
           <p class="count-text">
-            <span class="count-number">{{ productCount }}</span> 개
+            <router-link to="/admin/product/list"
+              ><span class="count-number">{{ productAllCount }}</span>
+              개</router-link
+            >
           </p>
         </div>
         <div>
           <p class="count-title">판매 중인 상품</p>
           <p class="count-text">
-            <span class="count-number">{{ productCount }}</span> 개
+            <router-link to="/admin/product/list"
+              ><span class="count-number">{{ productActiveCount }}</span>
+              개</router-link
+            >
           </p>
         </div>
         <div>
           <p class="count-title">품절 상품</p>
-          <p class="count-text"><span class="count-number">0</span> 개</p>
+          <p class="count-text">
+            <router-link to=""
+              ><span class="count-number">0</span> 개</router-link
+            >
+          </p>
         </div>
         <div>
           <p class="count-title">삭제 상품</p>
-          <p class="count-text"><span class="count-number">0</span> 개</p>
+          <p class="count-text">
+            <router-link to="/admin/product/deleted-list"
+              ><span class="count-number">{{ productInactiveCount }}</span>
+              개</router-link
+            >
+          </p>
         </div>
       </div>
     </div>
@@ -34,11 +49,19 @@ import { getDocs, collection } from "firebase/firestore";
 import { onMounted, ref } from "vue";
 import { db } from "@/lib/firebase";
 
-const productCount = ref(0);
+const productAllCount = ref(0);
+const productActiveCount = ref(0);
+const productInactiveCount = ref(0);
 
 onMounted(async () => {
   const data = await getDocs(collection(db, "product"));
-  productCount.value = data.size;
+  productAllCount.value = data.docs.length;
+  productActiveCount.value = data.docs.filter(
+    (doc) => doc.data().isActive === true
+  ).length;
+  productInactiveCount.value = data.docs.filter(
+    (doc) => doc.data().isActive === false
+  ).length;
 });
 </script>
 
@@ -74,12 +97,14 @@ onMounted(async () => {
           align-items: center;
           font-size: 14px;
 
-          > .count-number {
-            color: #007bff;
-            font-size: 18px;
-            font-weight: 700;
-            margin-right: 4px;
-            text-decoration: underline;
+          > a {
+            > .count-number {
+              color: #007bff;
+              font-size: 18px;
+              font-weight: 700;
+              margin-right: 4px;
+              text-decoration: underline;
+            }
           }
         }
       }

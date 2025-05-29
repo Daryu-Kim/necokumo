@@ -1,6 +1,23 @@
 <template>
   <div class="admin-product-add">
     <h2>상품 등록하기</h2>
+    <div class="channel-box">
+      <h3>판매 채널</h3>
+      <div>
+        <div>
+          <input id="cafe24" type="checkbox" v-model="isSellCafe24" />
+          <label for="cafe24">카페24</label>
+        </div>
+        <div>
+          <input id="youtube" type="checkbox" v-model="isSellYoutube" />
+          <label for="youtube">유튜브</label>
+        </div>
+        <div>
+          <input id="vue" type="checkbox" v-model="isSellVue" />
+          <label for="vue">Vue.js</label>
+        </div>
+      </div>
+    </div>
     <div class="add-box">
       <h3>기본 정보</h3>
       <div>
@@ -273,6 +290,11 @@ import { useDeepseek } from "@/lib/openrouter";
 import router from "@/router";
 
 const isBusy = ref(false);
+
+const isSellCafe24 = ref(false);
+const isSellYoutube = ref(false);
+const isSellVue = ref(false);
+
 const productName = ref("");
 const productSummary = ref("");
 const productSearchKeyword = ref("");
@@ -569,9 +591,9 @@ const addProduct = async () => {
       createdBy: auth.currentUser.uid,
       createdAt: Timestamp.fromDate(new Date()),
       updatedAt: Timestamp.fromDate(new Date()),
-      isSellCafe24: false,
-      isSellYoutube: false,
-      isSellVue: false,
+      isSellCafe24: isSellCafe24.value,
+      isSellYoutube: isSellYoutube.value,
+      isSellVue: isSellVue.value,
       isActive: true,
     };
 
@@ -603,6 +625,31 @@ onMounted(async () => {
 <style scoped lang="scss">
 .admin-product-add {
   margin-top: 36px;
+
+  > .channel-box {
+    margin-top: 24px;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 24px;
+
+    > div {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-top: 16px;
+
+      > div {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        > input[type="checkbox"] {
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+  }
 
   > .add-box {
     margin-top: 24px;

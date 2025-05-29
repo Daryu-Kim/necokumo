@@ -218,6 +218,11 @@
             <p>진열 방식 설정하기</p>
           </div>
         </router-link>
+        <router-link to="/admin/product/deleted-list" class="admin-menu-item">
+          <div>
+            <p>삭제 상품 목록보기</p>
+          </div>
+        </router-link>
       </div>
     </div>
     <div class="admin-menu-box">

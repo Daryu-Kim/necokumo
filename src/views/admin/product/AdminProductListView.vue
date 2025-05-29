@@ -2,8 +2,33 @@
   <div class="admin-product-list">
     <h2>상품 목록보기</h2>
     <div class="button-box">
-      <button @click="createItems" class="blue">상품 등록</button>
-      <button @click="deleteSelectedItems" class="red">삭제</button>
+      <button @click="console.log()" class="blue" :disabled="isBusy">
+        카페24 / 유튜브 상품 동기화
+      </button>
+      <button @click="createItems" class="blue" :disabled="isBusy">
+        상품 등록
+      </button>
+      <button @click="deleteSelectedItems" class="red" :disabled="isBusy">
+        삭제
+      </button>
+      <button @click="setSellCafe24" class="secondary" :disabled="isBusy">
+        카페24 판매중
+      </button>
+      <button @click="unsetSellCafe24" class="secondary" :disabled="isBusy">
+        카페24 판매중지
+      </button>
+      <button @click="setSellYoutube" class="secondary" :disabled="isBusy">
+        유튜브 판매중
+      </button>
+      <button @click="unsetSellYoutube" class="secondary" :disabled="isBusy">
+        유튜브 판매중지
+      </button>
+      <button @click="setSellVue" class="secondary" :disabled="isBusy">
+        Vue 판매중
+      </button>
+      <button @click="unsetSellVue" class="secondary" :disabled="isBusy">
+        Vue 판매중지
+      </button>
     </div>
     <div class="table-box">
       <h3>상품 목록 테이블</h3>
@@ -17,7 +42,16 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import "frappe-datatable/dist/frappe-datatable.min.css";
 import DataTable from "frappe-datatable";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  where,
+  doc,
+  updateDoc,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const router = useRouter();
@@ -41,12 +75,234 @@ const deleteSelectedItems = async () => {
       isBusy.value = false;
       return;
     }
-    console.log("Selected items to delete:", checkedItems);
-    // firebase.js에 productId 필드를 사용하여 Product Delete 함수를 구현해야함.
+
+    if (confirm("선택한 상품을 삭제하시겠습니까?")) {
+      await Promise.all(
+        checkedItems.map(async (item) => {
+          try {
+            await updateDoc(doc(db, "product", item.productId), {
+              isSellCafe24: false,
+              isSellYoutube: false,
+              isSellVue: false,
+              isActive: false,
+              updatedAt: Timestamp.fromDate(new Date()),
+            });
+          } catch (error) {
+            console.error(`Error updating item ${item.productId}:`, error);
+          }
+        })
+      );
+    }
+    alert("상품이 삭제되었습니다!");
     isBusy.value = false;
+    window.location.reload();
     console.log("Selected items deleted successfully.");
   } catch (error) {
     console.error("Error deleting selected items:", error);
+    isBusy.value = false;
+  }
+};
+
+const setSellCafe24 = async () => {
+  try {
+    isBusy.value = true;
+    const checkedItems = await getCheckedItems();
+    if (!checkedItems.length) {
+      console.log("No items selected to sell on Cafe24.");
+      alert("상품이 선택되지 않았습니다!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (confirm("선택한 상품을 Cafe24 판매중으로 설정하시겠습니까?")) {
+      await Promise.all(
+        checkedItems.map(async (item) => {
+          try {
+            await updateDoc(doc(db, "product", item.productId), {
+              isSellCafe24: true,
+              updatedAt: Timestamp.fromDate(new Date()),
+            });
+          } catch (error) {
+            console.error(`Error updating item ${item.productId}:`, error);
+          }
+        })
+      );
+    }
+    alert("상품이 Cafe24 판매중으로 설정되었습니다!");
+    isBusy.value = false;
+    window.location.reload();
+  } catch (error) {
+    console.error("Error selling selected items on Cafe24:", error);
+    isBusy.value = false;
+  }
+};
+
+const unsetSellCafe24 = async () => {
+  try {
+    isBusy.value = true;
+    const checkedItems = await getCheckedItems();
+    if (!checkedItems.length) {
+      console.log("No items selected to sell on Cafe24.");
+      alert("상품이 선택되지 않았습니다!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (confirm("선택한 상품을 Cafe24 판매중지로 설정하시겠습니까?")) {
+      await Promise.all(
+        checkedItems.map(async (item) => {
+          try {
+            await updateDoc(doc(db, "product", item.productId), {
+              isSellCafe24: false,
+              updatedAt: Timestamp.fromDate(new Date()),
+            });
+          } catch (error) {
+            console.error(`Error updating item ${item.productId}:`, error);
+          }
+        })
+      );
+    }
+    alert("상품이 Cafe24 판매중지로 설정되었습니다!");
+    isBusy.value = false;
+    window.location.reload();
+  } catch (error) {
+    console.error("Error selling selected items on Cafe24:", error);
+    isBusy.value = false;
+  }
+};
+
+const setSellYoutube = async () => {
+  try {
+    isBusy.value = true;
+    const checkedItems = await getCheckedItems();
+    if (!checkedItems.length) {
+      console.log("No items selected to sell on Cafe24.");
+      alert("상품이 선택되지 않았습니다!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (confirm("선택한 상품을 Youtube 판매중으로 설정하시겠습니까?")) {
+      await Promise.all(
+        checkedItems.map(async (item) => {
+          try {
+            await updateDoc(doc(db, "product", item.productId), {
+              isSellYoutube: true,
+              updatedAt: Timestamp.fromDate(new Date()),
+            });
+          } catch (error) {
+            console.error(`Error updating item ${item.productId}:`, error);
+          }
+        })
+      );
+    }
+    alert("상품이 Youtube 판매중으로 설정되었습니다!");
+    isBusy.value = false;
+    window.location.reload();
+  } catch (error) {
+    console.error("Error selling selected items on Youtube:", error);
+    isBusy.value = false;
+  }
+};
+
+const unsetSellYoutube = async () => {
+  try {
+    isBusy.value = true;
+    const checkedItems = await getCheckedItems();
+    if (!checkedItems.length) {
+      console.log("No items selected to sell on Youtube.");
+      alert("상품이 선택되지 않았습니다!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (confirm("선택한 상품을 Youtube 판매중지로 설정하시겠습니까?")) {
+      await Promise.all(
+        checkedItems.map(async (item) => {
+          try {
+            await updateDoc(doc(db, "product", item.productId), {
+              isSellYoutube: false,
+              updatedAt: Timestamp.fromDate(new Date()),
+            });
+          } catch (error) {
+            console.error(`Error updating item ${item.productId}:`, error);
+          }
+        })
+      );
+    }
+    alert("상품이 Youtube 판매중지로 설정되었습니다!");
+    isBusy.value = false;
+    window.location.reload();
+  } catch (error) {
+    console.error("Error selling selected items on Youtube:", error);
+    isBusy.value = false;
+  }
+};
+
+const setSellVue = async () => {
+  try {
+    isBusy.value = true;
+    const checkedItems = await getCheckedItems();
+    if (!checkedItems.length) {
+      console.log("No items selected to sell on Vue.");
+      alert("상품이 선택되지 않았습니다!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (confirm("선택한 상품을 Vue 판매중으로 설정하시겠습니까?")) {
+      await Promise.all(
+        checkedItems.map(async (item) => {
+          try {
+            await updateDoc(doc(db, "product", item.productId), {
+              isSellVue: true,
+              updatedAt: Timestamp.fromDate(new Date()),
+            });
+          } catch (error) {
+            console.error(`Error updating item ${item.productId}:`, error);
+          }
+        })
+      );
+    }
+    alert("상품이 Vue 판매중으로 설정되었습니다!");
+    isBusy.value = false;
+    window.location.reload();
+  } catch (error) {
+    console.error("Error selling selected items on Vue:", error);
+    isBusy.value = false;
+  }
+};
+
+const unsetSellVue = async () => {
+  try {
+    isBusy.value = true;
+    const checkedItems = await getCheckedItems();
+    if (!checkedItems.length) {
+      console.log("No items selected to sell on Vue.");
+      alert("상품이 선택되지 않았습니다!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (confirm("선택한 상품을 Vue 판매중지로 설정하시겠습니까?")) {
+      await Promise.all(
+        checkedItems.map(async (item) => {
+          try {
+            await updateDoc(doc(db, "product", item.productId), {
+              isSellVue: false,
+              updatedAt: Timestamp.fromDate(new Date()),
+            });
+          } catch (error) {
+            console.error(`Error updating item ${item.productId}:`, error);
+          }
+        })
+      );
+    }
+    alert("상품이 Vue 판매중지로 설정되었습니다!");
+    isBusy.value = false;
+    window.location.reload();
+  } catch (error) {
+    console.error("Error selling selected items on Vue:", error);
     isBusy.value = false;
   }
 };
@@ -71,7 +327,11 @@ const getCheckedItems = () => {
 
 onMounted(async () => {
   // 1. Firebase에서 데이터 가져오기
-  const q = query(collection(db, "product"), orderBy("createdAt", "desc"));
+  const q = query(
+    collection(db, "product"),
+    where("isActive", "==", true),
+    orderBy("createdAt", "desc")
+  );
   const querySnapshot = await getDocs(q);
 
   // 2. 문서들을 배열로 변환
@@ -90,6 +350,30 @@ onMounted(async () => {
       {
         content: `<a href="${window.location.origin}/admin/product/edit?id=${doc.id}">${item.productName}</a>`,
         editable: false,
+      },
+      {
+        content: {
+          cafe24: item.isSellCafe24,
+          youtube: item.isSellYoutube,
+          vue: item.isSellVue,
+        },
+        editable: false,
+        format: (value) => {
+          console.log(value);
+          const labels = {
+            cafe24: "카페24",
+            youtube: "유튜브",
+            vue: "Vue",
+          };
+
+          const lines = Object.keys(labels).map((key) => {
+            console.log(value[key]);
+            return `${labels[key]}: <span style="font-weight: 700;color: ${
+              value[key] === true ? "#007bff" : "#dc3545"
+            }">${value[key] === true ? "판매함" : "판매중지"}</span>`;
+          });
+          return `<p>${lines.join("<br/>")}</p>`;
+        },
       },
       {
         content: item.productSellPrice,
@@ -150,6 +434,13 @@ onMounted(async () => {
         format: (value) => {
           return `<p style="color: #007bff;">${value}</p>`;
         },
+      },
+      {
+        name: "판매 채널",
+        editable: false,
+        resizable: false,
+        width: 128,
+        align: "center",
       },
       {
         name: "판매가",

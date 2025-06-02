@@ -10,6 +10,7 @@ import AdminProductAddView from "@/views/admin/product/AdminProductAddView.vue";
 import AdminProductListView from "@/views/admin/product/AdminProductListView.vue";
 import AdminProductDeletedListView from "@/views/admin/product/AdminProductDeletedListView.vue";
 import AdminProductCategoryView from "@/views/admin/product/AdminProductCategoryView.vue";
+import AdminProductCategoryDetailView from "@/views/admin/product/AdminProductCategoryDetailView .vue";
 const routes = [
   {
     path: "/",
@@ -56,6 +57,11 @@ const routes = [
             path: "category",
             name: "admin-product-category",
             component: AdminProductCategoryView,
+          },
+          {
+            path: "category/detail",
+            name: "admin-product-category-detail",
+            component: AdminProductCategoryDetailView,
           },
           {
             path: "deleted-list",

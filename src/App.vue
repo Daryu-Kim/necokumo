@@ -30,6 +30,8 @@ ol {
   font-size: 14px; /* 원하는 크기로 조정 */
   overflow-y: auto;
   line-height: 1.5;
+  text-overflow: unset;
+  white-space: unset;
 }
 
 .datatable .dt-cell__content--col-1 {
@@ -38,5 +40,9 @@ ol {
 
 .datatable .dt-header .dt-row {
   height: 48px;
+}
+
+.datatable .dt-cell__content--header-1 {
+  text-align: center;
 }
 </style>

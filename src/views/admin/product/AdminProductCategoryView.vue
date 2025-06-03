@@ -105,6 +105,7 @@ onMounted(async () => {
         editable: false,
         resizable: false,
         align: "center",
+        width: 72,
         format: (value) => {
           return `<a style="font-weight: 700; color: #007bff;" href="/admin/product/category/detail?id=${value}">${value}</a>`;
         },

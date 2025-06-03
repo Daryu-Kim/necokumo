@@ -109,7 +109,7 @@ import {
   where,
 } from "firebase/firestore";
 import { onMounted, ref, computed } from "vue";
-import { db } from "@/lib/firebase";
+import { db, updateDoc, deleteDoc } from "@/lib/firebase";
 import { useDeepseek } from "@/lib/openrouter";
 import router from "@/router";
 import { useRoute } from "vue-router";
@@ -161,25 +161,75 @@ const generateSeoKeywords = async () => {
 };
 
 const deleteCategory = async () => {
-  if (
-    confirm("카테고리를 삭제하시겠습니까?\n하위 카테고리까지 모두 삭제됩니다!")
-  ) {
-    let categoryIds = [route.query.id];
-    // const categoryRef = getDoc(doc(db, "category", route.query.id));
-    const childCategoryRef = getDocs(
-      query(
-        collection(db, "category"),
-        where("categoryParentId", "==", route.query.id)
+  try {
+    isBusy.value = true;
+    if (
+      confirm(
+        "카테고리를 삭제하시겠습니까?\n하위 카테고리까지 모두 삭제됩니다!"
       )
-    );
-    if (!childCategoryRef.empty) {
-      categoryIds = [
-        ...categoryIds,
-        ...childCategoryRef.docs.map((doc) => doc.id),
-      ];
+    ) {
+      let categoryIds = [route.query.id];
+      // const categoryRef = await getDoc(doc(db, "category", route.query.id));
+      const childCategoryRef = await getDocs(
+        query(
+          collection(db, "category"),
+          where("categoryParentId", "==", route.query.id)
+        )
+      );
+      if (!childCategoryRef.empty) {
+        categoryIds = [
+          ...categoryIds,
+          ...childCategoryRef.docs.map((doc) => doc.id),
+        ];
+      }
+
+      // 카테고리 내부 상품들 categoryId 1로 업데이트
+      const updateProducts = await getDocs(
+        query(
+          collection(db, "product").where(
+            "productCategory",
+            "array-contains-any",
+            categoryIds
+          )
+        )
+      );
+
+      const updatePromises = updateProducts.docs.map(async (docSnapshot) => {
+        const data = docSnapshot.data();
+        const originalArray = data.productCategory || [];
+
+        const updatedArray = originalArray.filter(
+          (id) => !categoryIds.includes(id)
+        );
+
+        if (updatedArray.length === 0) {
+          updatedArray.push("1");
+        }
+
+        await updateDoc(docSnapshot.ref, {
+          productCategory: updatedArray,
+        });
+      });
+
+      await Promise.all(updatePromises);
+
+      const deletePromises = categoryIds.map((id) =>
+        deleteDoc(doc(db, "category", id))
+      );
+
+      await Promise.all(deletePromises);
+
+      isBusy.value = false;
+      alert("카테고리를 성공적으로 삭제하였습니다.");
+      window.location.reload();
+    } else {
+      isBusy.value = false;
+      return;
     }
-    console.log("categoryIds", categoryIds);
-    // TODO: deleteCategory
+  } catch (error) {
+    console.error(error);
+    isBusy.value = false;
+    return;
   }
 };
 
@@ -439,7 +489,7 @@ onMounted(async () => {
       cursor: pointer;
 
       &.red {
-        background-color: #ff0000;
+        background-color: #dc3546;
       }
     }
   }

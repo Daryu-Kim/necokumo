@@ -107,9 +107,11 @@ import {
   getDoc,
   query,
   where,
+  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { onMounted, ref, computed } from "vue";
-import { db, updateDoc, deleteDoc } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { useDeepseek } from "@/lib/openrouter";
 import router from "@/router";
 import { useRoute } from "vue-router";
@@ -186,11 +188,8 @@ const deleteCategory = async () => {
       // 카테고리 내부 상품들 categoryId 1로 업데이트
       const updateProducts = await getDocs(
         query(
-          collection(db, "product").where(
-            "productCategory",
-            "array-contains-any",
-            categoryIds
-          )
+          collection(db, "product"),
+          where("productCategory", "array-contains-any", categoryIds)
         )
       );
 
@@ -221,7 +220,7 @@ const deleteCategory = async () => {
 
       isBusy.value = false;
       alert("카테고리를 성공적으로 삭제하였습니다.");
-      window.location.reload();
+      router.push("/admin/product/category");
     } else {
       isBusy.value = false;
       return;

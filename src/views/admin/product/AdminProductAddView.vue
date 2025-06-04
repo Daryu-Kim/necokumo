@@ -446,7 +446,7 @@ const deleteOption2 = (element) => {
     isBusy.value = true;
     optionList.value = [];
     option2List.value = option2List.value.filter(
-      (item) => item !== element.value
+      (item) => item !== element.target.value
     );
     isBusy.value = false;
   } catch (error) {
@@ -600,7 +600,7 @@ const addProduct = async () => {
     await setDoc(doc(db, "product", uuid), productData);
     alert("상품이 성공적으로 등록되었습니다.");
     isBusy.value = false;
-    router.push("/admin/product");
+    router.push("/admin/product/list");
   } catch (error) {
     console.error("Error adding product:", error);
     isBusy.value = false;

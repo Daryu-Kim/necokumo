@@ -450,7 +450,7 @@ onMounted(async () => {
         name: "상품명",
         editable: false,
         resizable: false,
-        width: 320,
+        width: 192,
         align: "center",
         format: (value) => {
           return `<p style="color: #007bff;">${value}</p>`;
@@ -488,7 +488,7 @@ onMounted(async () => {
         name: "옵션",
         editable: false,
         resizable: false,
-        width: 256,
+        width: 280,
         align: "center",
       },
       {

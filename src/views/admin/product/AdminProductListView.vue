@@ -29,6 +29,7 @@
       <button @click="unsetSellVue" class="secondary" :disabled="isBusy">
         Vue 판매중지
       </button>
+      <button @click="test">테스트</button>
     </div>
     <div class="table-box">
       <h3>상품 목록 테이블</h3>
@@ -64,6 +65,10 @@ const originData = ref([]);
 const createItems = () => {
   router.push("/admin/product/add");
 };
+
+const test = async () => {
+  
+}
 
 const deleteSelectedItems = async () => {
   try {

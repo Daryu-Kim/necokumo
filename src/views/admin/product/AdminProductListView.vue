@@ -2,14 +2,20 @@
   <div class="admin-product-list">
     <h2>상품 목록보기</h2>
     <div class="button-box">
-      <button @click="console.log()" class="blue" :disabled="isBusy">
-        카페24 / 유튜브 상품 동기화
-      </button>
       <button @click="createItems" class="blue" :disabled="isBusy">
         상품 등록
       </button>
       <button @click="deleteSelectedItems" class="red" :disabled="isBusy">
         삭제
+      </button>
+      <button class="blue" @click="uploadProducts" :disabled="isBusy">
+        카페24 업로드하기
+      </button>
+      <button @click="console.log()" class="blue" :disabled="isBusy">
+        카페24 상품 매칭하기
+      </button>
+      <button @click="console.log()" class="blue" :disabled="isBusy">
+        카페24 상품 옵션 매칭하기
       </button>
       <button @click="setSellCafe24" class="secondary" :disabled="isBusy">
         카페24 판매중
@@ -29,7 +35,6 @@
       <button @click="unsetSellVue" class="secondary" :disabled="isBusy">
         Vue 판매중지
       </button>
-      <button @click="test">테스트</button>
     </div>
     <div class="table-box">
       <h3>상품 목록 테이블</h3>
@@ -53,6 +58,7 @@ import {
   updateDoc,
   Timestamp,
 } from "firebase/firestore";
+import { uploadProduct } from "@/lib/cafe24";
 import { db } from "@/lib/firebase";
 
 const router = useRouter();
@@ -66,9 +72,17 @@ const createItems = () => {
   router.push("/admin/product/add");
 };
 
-const test = async () => {
-  
-}
+const uploadProducts = async () => {
+  try {
+    isBusy.value = true;
+    await uploadProduct();
+    isBusy.value = false;
+    console.log("Selected items deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting selected items:", error);
+    isBusy.value = false;
+  }
+};
 
 const deleteSelectedItems = async () => {
   try {

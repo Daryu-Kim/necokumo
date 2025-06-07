@@ -595,6 +595,7 @@ const addProduct = async () => {
       isSellYoutube: isSellYoutube.value,
       isSellVue: isSellVue.value,
       isActive: true,
+      updatedAtCafe24: Timestamp.fromDate(new Date(1970, 1, 1)),
     };
 
     await setDoc(doc(db, "product", uuid), productData);

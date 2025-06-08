@@ -5,15 +5,15 @@
       <h3>판매 채널</h3>
       <div>
         <div>
-          <input id="cafe24" type="checkbox" v-model="isSellCafe24" />
+          <input id="cafe24" type="checkbox" checked v-model="isSellCafe24" />
           <label for="cafe24">카페24</label>
         </div>
         <div>
-          <input id="youtube" type="checkbox" v-model="isSellYoutube" />
+          <input id="youtube" type="checkbox" checked v-model="isSellYoutube" />
           <label for="youtube">유튜브</label>
         </div>
         <div>
-          <input id="vue" type="checkbox" v-model="isSellVue" />
+          <input id="vue" type="checkbox" checked v-model="isSellVue" />
           <label for="vue">Vue.js</label>
         </div>
       </div>
@@ -70,6 +70,21 @@
           <div>
             <button @click="crawlProduct('medusa')" :disabled="isBusy">
               메두사
+            </button>
+            <button @click="crawlProduct('vapetopia')" :disabled="isBusy">
+              베이프토피아
+            </button>
+            <button @click="crawlProduct('purecloud')" :disabled="isBusy">
+              퓨어클라우드
+            </button>
+            <button @click="crawlProduct('vapecompany')" :disabled="isBusy">
+              베이프컴퍼니
+            </button>
+            <button @click="crawlProduct('0vape')" :disabled="isBusy">
+              영베이프
+            </button>
+            <button @click="crawlProduct('emvape')" :disabled="isBusy">
+              이엠베이프
             </button>
             <button
               @click="openDialog"
@@ -291,9 +306,9 @@ import router from "@/router";
 
 const isBusy = ref(false);
 
-const isSellCafe24 = ref(false);
-const isSellYoutube = ref(false);
-const isSellVue = ref(false);
+const isSellCafe24 = ref(true);
+const isSellYoutube = ref(true);
+const isSellVue = ref(true);
 
 const productName = ref("");
 const productSummary = ref("");
@@ -301,7 +316,7 @@ const productSearchKeyword = ref("");
 const productDetail = ref("");
 const productSellPrice = ref(0);
 const productBuyPrice = ref(0);
-const productBuyDeliveryPrice = ref(0);
+const productBuyDeliveryPrice = ref(3000);
 const dialogRef = ref(null);
 
 const category0List = ref([]);
@@ -486,6 +501,27 @@ const crawlProduct = async (buyer) => {
       switch (buyer) {
         case "medusa":
           replaceUrl = "https://medusamall.com";
+          break;
+        case "vapetopia":
+          replaceUrl = "";
+          break;
+        case "purecloud":
+          replaceUrl = "";
+          break;
+        case "vapecompany":
+          replaceUrl = "https://vapecompany.co.kr";
+          img.getAttribute("ec-data-src")
+            ? (img.src = replaceUrl + img.getAttribute("ec-data-src"))
+            : "";
+          break;
+        case "0vape":
+          replaceUrl = "";
+          img.getAttribute("data-src")
+            ? (img.src = replaceUrl + img.getAttribute("data-src"))
+            : "";
+          break;
+        case "emvape":
+          replaceUrl = "";
           break;
         default:
           replaceUrl = "";

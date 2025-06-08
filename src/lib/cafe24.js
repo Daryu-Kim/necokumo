@@ -1,9 +1,7 @@
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
-  or,
   query,
   Timestamp,
   updateDoc,
@@ -15,72 +13,108 @@ import Papa from "papaparse";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
-async function downloadImage(url) {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  const img = new Image();
-  const imgUrl = URL.createObjectURL(blob);
+async function parseCSVFromUrl(url) {
+  const response = await axios.get(url);
   return new Promise((resolve, reject) => {
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = imgUrl;
+    Papa.parse(response.data, {
+      header: false,
+      skipEmptyLines: true,
+      complete: (parsed) => resolve(parsed.data),
+      error: (err) => reject(err),
+    });
   });
 }
 
-function resizeImage(image, width, height) {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(image, 0, 0, width, height);
-  return canvas.toDataURL("image/png");
+async function downloadImage(url) {
+  const response = await axios.get(url, { responseType: "blob" });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(response.data);
+  });
+}
+
+function resizeImage(base64, width, height) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous"; // CORS 문제 방지
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      const resizedBase64 = canvas.toDataURL("image/png");
+      resolve(resizedBase64);
+    };
+    img.onerror = reject;
+    img.src = base64;
+  });
+}
+
+function parseCSVFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      Papa.parse(reader.result, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => resolve(results.data),
+        error: (err) => reject(err),
+      });
+    };
+
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
 }
 
 export async function matchProductByCode(file) {
   try {
-    let csvData = [];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result;
-        Papa.parse(result, {
-          complete: (parsedData) => {
-            csvData = parsedData.data;
-          },
-          header: true,
-          skipEmptyLines: true,
-        });
-      };
-      reader.readAsText(file);
-
-      const productSnapshot = await getDocs(collection(db, "product"));
-      const productList = productSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      for (let item of csvData) {
-        const matchingProduct = productList.find(
-          (product) => product.productName === item.상품명
-        );
-
-        const currentDateTime = Timestamp.fromDate(new Date());
-
-        if (matchingProduct) {
-          await updateDoc(doc(db, "product", matchingProduct.id), {
-            productCodeCafe24: item.상품코드,
-            updatedAt: currentDateTime,
-            updatedAtCafe24: currentDateTime,
-          });
-        }
-      }
-      return true;
-    } else {
+    if (!file) {
       alert("상품 목록 CSV 파일을 업로드하세요!");
       return false;
     }
+
+    // 👉 1. CSV 파싱을 기다림
+    const csvData = await parseCSVFile(file);
+
+    // 👉 2. 전체 상품을 미리 가져옴
+    const productSnapshot = await getDocs(collection(db, "product"));
+    const productList = productSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    console.log("✅ 상품 목록 불러옴");
+
+    // 👉 3. 매칭 및 업데이트
+    for (let item of csvData) {
+      console.log("🔍 상품 매칭 시작:", item);
+
+      const matchingProduct = productList.find(
+        (product) => product.productName === item.상품명
+      );
+
+      if (matchingProduct) {
+        const currentDateTime = Timestamp.fromDate(new Date());
+
+        await updateDoc(doc(db, "product", matchingProduct.id), {
+          productCodeCafe24: item.상품코드,
+          updatedAt: currentDateTime,
+          updatedAtCafe24: currentDateTime,
+        });
+
+        console.log(`✔️ 상품 업데이트 완료: ${item.상품명} → ${item.상품코드}`);
+      } else {
+        console.warn(`❌ 매칭 실패: ${item.상품명}`);
+      }
+    }
+
+    return true;
   } catch (error) {
-    console.error(error);
+    console.error("❌ 상품 코드 매칭 오류:", error);
     alert("상품 코드를 매치할 수 없습니다!");
     return false;
   }
@@ -88,49 +122,60 @@ export async function matchProductByCode(file) {
 
 export async function matchProductOptionsByCode(file) {
   try {
-    let csvData = [];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result;
-        Papa.parse(result, {
-          complete: (parsedData) => {
-            csvData = parsedData.data;
-          },
-          header: true,
-          skipEmptyLines: true,
-        });
-      };
-      reader.readAsText(file);
-
-      for (let item of csvData) {
-        const productSnapshot = await getDoc(doc(db, "product", item.상품코드));
-        const product = productSnapshot.data();
-
-        const currentDateTime = Timestamp.fromDate(new Date());
-
-        const updatedOptionList = product.optionList.map((option) => {
-          if (option.optionName === item.품목명) {
-            return {
-              ...option,
-              optionCodeCafe24: item.품목코드,
-            };
-          }
-          return option;
-        });
-
-        await updateDoc(doc(db, "product", item.상품코드), {
-          optionList: updatedOptionList,
-          updatedAt: currentDateTime,
-          updatedAtCafe24: currentDateTime,
-        });
-      }
-    } else {
-      alert("상퓸 옵션 CSV 파일을 업로드하세요!");
+    if (!file) {
+      alert("상품 옵션 CSV 파일을 업로드하세요!");
       return false;
     }
+
+    // 👉 1. 파일 파싱을 Promise로 처리
+    const csvData = await parseCSVFile(file);
+
+    // 👉 2. 각 아이템에 대해 Firebase 업데이트
+    for (let item of csvData) {
+      console.log("상품 옵션 매칭 시작: ", item);
+
+      const productSnapshot = await getDocs(
+        query(
+          collection(db, "product"),
+          where("productCodeCafe24", "==", item.상품코드)
+        )
+      );
+
+      const productDocs = productSnapshot.docs;
+      if (productDocs.length === 0) {
+        console.warn(
+          `상품코드 ${item.상품코드}에 해당하는 문서를 찾을 수 없습니다.`
+        );
+        continue;
+      }
+
+      const product = productDocs[0];
+      const productData = product.data();
+
+      const currentDateTime = Timestamp.fromDate(new Date());
+
+      const updatedOptionList = productData.optionList.map((option) => {
+        if (option.optionName === item.품목명) {
+          return {
+            ...option,
+            optionCodeCafe24: item.품목코드,
+          };
+        }
+        return option;
+      });
+
+      await updateDoc(product.ref, {
+        optionList: updatedOptionList,
+        updatedAt: currentDateTime,
+        updatedAtCafe24: currentDateTime,
+      });
+
+      console.log(`✔️ 상품 업데이트 완료: ${item.상품코드} / ${item.품목명}`);
+    }
+
+    return true;
   } catch (error) {
-    console.error(error);
+    console.error("❌ 상품 옵션 매칭 중 오류:", error);
     alert("상품 옵션 코드를 매치할 수 없습니다!");
     return false;
   }
@@ -138,147 +183,160 @@ export async function matchProductOptionsByCode(file) {
 
 export async function uploadProduct() {
   try {
-    console.log("업로드 시작");
+    console.log("📦 업로드 시작");
+
+    // 1. 상품 전체 로드 및 JS에서 조건 필터링
     const productSnapshot = await getDocs(
       query(
         collection(db, "product"),
-        or(
-          where("updatedAtCafe24", "==", "null"),
-          where("updatedAtCafe24", "!=", "updatedAt")
-        )
+        where("isActive", "==", true),
+        where("isSellCafe24", "==", true)
       )
     );
-    const productList = productSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    console.log("업로드할 상품 수", productList.length);
-    axios
-      .get("/files/excelUploadProductDefault.csv")
-      .then((response) => {
-        Papa.parse(response.data, {
-          complete: async (parsedData) => {
-            const csvData = parsedData.data;
-            const zip = new JSZip();
-            const today = new Date();
 
-            // 연도 (yyyy)
-            const year = today.getFullYear();
+    let productList = productSnapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .filter(
+        (p) =>
+          !p.updatedAtCafe24 ||
+          p.updatedAtCafe24.toMillis?.() !== p.updatedAt?.toMillis?.()
+      );
 
-            // 월 (MM) - 0부터 시작하므로 1을 더해야 함
-            const month = (today.getMonth() + 1).toString().padStart(2, "0");
+    console.log("✅ 업로드 대상 상품 수:", productList.length);
 
-            // 일 (dd)
-            const day = today.getDate().toString().padStart(2, "0");
+    if (productList.length === 0) {
+      alert("업로드할 상품이 없습니다.");
+      return false;
+    }
 
-            // yyyyMMdd 형식으로 합치기
-            const formattedDate = `${year}${month}${day}`;
-            productList.sort((a, b) => {
-              return b.createdBy - a.createdBy;
-            });
-            for (let product of productList) {
-              // zip 추가 파트
-              const imageSizes = {
-                big: { width: 500, height: 500 },
-                medium: { width: 300, height: 300 },
-                tiny: { width: 100, height: 100 },
-                small: { width: 220, height: 220 },
-              };
+    // 2. CSV 템플릿 불러오기
+    const csvData = await parseCSVFromUrl(
+      "/files/excelUploadProductDefault.csv"
+    );
 
-              const img = await downloadImage(
-                product.productThumbnailUrl.originalUrl
-              );
+    // 3. 날짜 포맷 준비
+    const today = new Date();
+    const formattedDate = `${today.getFullYear()}${(today.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}${today.getDate().toString().padStart(2, "0")}`;
 
-              for (const [key, size] of Object.entries(imageSizes)) {
-                const resizedImage = resizeImage(img, size.width, size.height);
-                const imageData = resizedImage.split(",")[1]; // base64 data
-                zip.file(
-                  `product/${key}/${formattedDate}/${product.productId}.png`,
-                  imageData,
-                  {
-                    base64: true,
-                  }
-                );
-              }
+    const zip = new JSZip();
 
-              // csvData 추가 파트
-              let detailUrls = "<div>";
-              for (let detail of product.productDetailUrl) {
-                detailUrls += `<img style="width: 100%;" src="${detail.imageOriginUrl}">`;
-              }
-              detailUrls += "</div>";
-              const newRow = [
-                `${product.productCodeCafe24 ? product.productCodeCafe24 : ""}`, // 상품코드
-                "", // 자체 상품코드
-                `${product.isSellCafe24 ? "Y" : "N"}`, // 진열상태
-                `${product.isSellCafe24 ? "Y" : "N"}`, // 판매상태
-                `${product.productCategory.join("|")}`, // 상품분류 번호 00|00|00
-                `${product.productCategory.map(() => "N").join("|")}`, // 상품분류 신상품영역
-                `${product.productCategory.map(() => "N").join("|")}`, // 상품분류 추천상품영역
-                `${product.productName}`, // 상품명
-                "", // 영문상품명
-                "", // 상품명 (관리용)
-                "", // 공급사 상품명
-                "", // 모델명
-                `${product.productSummary}`, // 상품 요약설명
-                `${product.productSummary}`, // 상품 간략설명
-                detailUrls, // 상품 상세설명
-                "M", // 모바일 상품 상세설명 설정
-                detailUrls, // 모바일 상품 상세설명
-                `${product.productSearchKeyword}`, // 검색어설정
-                "A|10", // 과세구분
-                "0.00", // 소비자가
-                "0.00", // 공급가
-                `${Math.ceil((product.productSellPrice / 11) * 10)}`, // 상품가
-                `${product.productSellPrice}`, // 판매가
-                "N", // 판매가 대체문구 사용
-                "", // 판매가 대체문구
-                "O", // 주문수량 제한 기준
-                "1", // 최소 주문수량 (이상)
-                "", // 최대 주문수량 (이하)
-                "0.00", // 적립금
-                "P", // 적립금 구분
-                "Y", // 공통 이벤트 정보
-                "N", // 성인인증
-                "Y", // 옵션사용
-                "T", // 품목 구성방식
-                "S", // 옵션 표시방식
-                "", // 옵션 세트명
-                `옵션1{${product.option1List.join(
-                  "|"
-                )}}//옵션2{${product.option2List.join("|")}}`, // 옵션입력
-                "", // 옵션 스타일
-                "", // 버튼이미지 설정
-                "", // 색상 설정
-                "F|F", // 필수여부
-                "", // 품절 표시 문구
-                "F", // 추가 입력 옵션
-                "", // 추가 입력 옵션 명칭
-                "", // 추가 입력 옵션 선택 / 필수여부
-                "", // 입력 글자 수 (자)
-                `${formattedDate}/${product.productId}.png`, // 이미지등록 (상세)
-                `${formattedDate}/${product.productId}.png`, // 이미지등록 (목록)
-                `${formattedDate}/${product.productId}.png`, // 이미지등록 (작은목록)
-                `${formattedDate}/${product.productId}.png`, // 이미지등록 (축소)
-                "", // 이미지등록 (추가)
-                "M0000000", // 제조사
-                "S0000000", // 공급사
-                "B0000000", // 브랜드
-                "T0000000", // 트렌드
-                "C000000A", // 자체분류 코드
-                "", // 제조일자
-                "", // 출시일자
-                "F", // 유효기간 사용여부
-                "", // 유효기간
-                "1798", // 원산지
-                "", // 상품부피 (cm)
-                `고액결제의 경우 안전을 위해 카드사에서 확인전화를 드릴 수도 있습니다. 확인과정에서 도난 카드의 사용이나 타인 명의의 주문등 정상적인 주문이 아니라고 판단될 경우 임의로 주문을 보류 또는 취소할 수 있습니다.  
+    // 4. 병렬로 이미지 및 CSV 처리
+    await Promise.all(
+      productList
+        .sort((a, b) => a.createdAt.toDate() - b.createdAt.toDate())
+        .map(async (product) => {
+          console.log("🚚 상품 처리 중:", product.productName);
+
+          const imageSizes = {
+            big: { width: 500, height: 500 },
+            medium: { width: 300, height: 300 },
+            tiny: { width: 100, height: 100 },
+            small: { width: 220, height: 220 },
+          };
+
+          const img = await downloadImage(
+            product.productThumbnailUrl.originalUrl
+          );
+
+          for (const [key, size] of Object.entries(imageSizes)) {
+            const resizedImage = await resizeImage(
+              img,
+              size.width,
+              size.height
+            ); // 구현 필요
+            const imageData = resizedImage.split(",")[1];
+            zip.file(
+              `product/${key}/${formattedDate}/${product.productId}.png`,
+              imageData,
+              { base64: true }
+            );
+          }
+
+          // 상세 이미지 HTML 생성
+          let detailUrls = "<div>";
+          for (let detail of product.productDetailUrl || []) {
+            detailUrls += `<img style="width: 100%;" src="${detail.imageOriginUrl}">`;
+          }
+          detailUrls += "</div>";
+
+          // CSV 행 구성
+          const newRow = [
+            `${product.productCodeCafe24 || ""}`,
+            "",
+            `${product.isSellCafe24 ? "Y" : "N"}`,
+            `${product.isSellCafe24 ? "Y" : "N"}`,
+            `${product.productCategory?.join("|") || ""}`,
+            `${product.productCategory?.map(() => "N").join("|") || ""}`,
+            `${product.productCategory?.map(() => "N").join("|") || ""}`,
+            `${product.productName}`,
+            "",
+            "",
+            "",
+            "",
+            `${product.productSummary}`,
+            `${product.productSummary}`,
+            detailUrls,
+            "M",
+            detailUrls,
+            "",
+            "A|10",
+            "0.00",
+            "0.00",
+            `${Math.ceil((product.productSellPrice / 11) * 10)}`,
+            `${product.productSellPrice}`,
+            "N",
+            "",
+            "O",
+            "1",
+            "",
+            "0.00",
+            "P",
+            "Y",
+            "N",
+            "Y",
+            "T",
+            "S",
+            "",
+            `옵션1{${product.option1List?.join("|") || ""}}//옵션2{${
+              product.option2List?.join("|") || ""
+            }}`,
+            "",
+            "",
+            "",
+            "F|F",
+            "",
+            "F",
+            "",
+            "",
+            "",
+            `${formattedDate}/${product.productId}.png`,
+            `${formattedDate}/${product.productId}.png`,
+            `${formattedDate}/${product.productId}.png`,
+            `${formattedDate}/${product.productId}.png`,
+            "",
+            "M0000000",
+            "S0000000",
+            "B0000000",
+            "T0000000",
+            "C000000A",
+            "",
+            "",
+            "F",
+            "",
+            "1798",
+            "",
+            `고액결제의 경우 안전을 위해 카드사에서 확인전화를 드릴 수도 있습니다. 확인과정에서 도난 카드의 사용이나 타인 명의의 주문등 정상적인 주문이 아니라고 판단될 경우 임의로 주문을 보류 또는 취소할 수 있습니다.  
 
 무통장 입금은 상품 구매 대금은 PC뱅킹, 인터넷뱅킹, 텔레뱅킹 혹은 가까운 은행에서 직접 입금하시면 됩니다.  
 주문시 입력한 입금자명과 실제입금자의 성명이 반드시 일치하여야 하며, 7일 이내로 입금을 하셔야 하며 입금되지 않은 주문은 자동취소 됩니다.`, // 상품 결제안내
-                `- 산간벽지나 도서지방은 별도의 추가금액을 지불하셔야 하는 경우가 있습니다.
+            `- 산간벽지나 도서지방은 별도의 추가금액을 지불하셔야 하는 경우가 있습니다.
 고객님께서 주문하신 상품은 입금 확인후 배송해 드립니다. 다만, 상품종류에 따라서 상품의 배송이 다소 지연될 수 있습니다.`, // 상품 배송안내
-                `교환 및 반품 주소
+            `교환 및 반품 주소
  - #supplier_return_address_info#
  
 교환 및 반품이 가능한 경우
@@ -295,55 +353,47 @@ export async function uploadProduct() {
  
 ※ 고객님의 마음이 바뀌어 교환, 반품을 하실 경우 상품반송 비용은 고객님께서 부담하셔야 합니다.
  (색상 교환, 사이즈 교환 등 포함)`, // 교환 / 반품안내
-                "", // 서비스 문의 / 안내
-                "F", // 배송정보
-                "", // 배송방법
-                "", // 국내 / 해외배송
-                "", // 배송지역
-                "", // 배송비 선결제 설정
-                "3|7", // 배송기간
-                "", // 배송비 구분
-                "", // 배송비입력
-                "", // 스토어픽업 설정
-                "", // 상품 전체 중량(kg)
-                "", // HS코드
-                "", // 상품구분 (해외통관)
-                "", // 상품소재
-                "", // 영문 상품소재 (해외통관)
-                "", // 옷감 (해외통관)
-                "Y", // SEO 노출설정
-                `${product.productName} - 네코쿠모`, // SEO 제목
-                "네코쿠모", // SEO 제작자
-                `${product.productSummary}`, // SEO 설명
-                `${product.productSearchKeyword}`, // SEO 키워드
-                "", // SEO ALT
-                "", // 개별 결제수단 설정
-                "C", // 상품 배송유형 코드
-                "", // 메모
-              ];
-              csvData.push(newRow);
-            }
+            "",
+            "F",
+            "",
+            "",
+            "",
+            "",
+            "3|7",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "Y",
+            `${product.productName} - 네코쿠모`,
+            "네코쿠모",
+            `${product.productSummary}`,
+            `${product.productSearchKeyword}`,
+            "",
+            "",
+            "C",
+            "",
+          ];
 
-            const csvContent = Papa.unparse(csvData); // 수정된 데이터를 CSV로 변환
-            zip.file("cafe24_upload.csv", csvContent);
+          csvData.push(newRow);
+        })
+    );
 
-            zip.generateAsync({ type: "blob" }).then(function (content) {
-              saveAs(content, "cafe24_upload_files.zip"); // Zip 파일 다운로드
-            });
+    // 5. CSV 만들고 Zip으로 묶기
+    const csvContent = Papa.unparse(csvData);
+    zip.file("cafe24_upload.csv", csvContent);
 
-            return true;
-          },
-          header: false,
-          skipEmptyLines: true,
-        });
-      })
-      .catch((error) => {
-        console.error(error);
-        alert("상품 등록에 실패했습니다!");
-        return false;
-      });
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(blob, "cafe24_upload_files.zip");
+
+    console.log("✅ ZIP 파일 생성 완료");
+    return true;
   } catch (error) {
-    console.error(error);
+    console.error("❌ 상품 업로드 오류:", error);
     alert("상품 등록에 실패했습니다!");
     return false;
   }

@@ -11,12 +11,30 @@
       <button class="blue" @click="uploadProducts" :disabled="isBusy">
         카페24 업로드하기
       </button>
-      <button @click="console.log()" class="blue" :disabled="isBusy">
+      <button @click="triggerProductMatch" class="blue" :disabled="isBusy">
         카페24 상품 매칭하기
       </button>
-      <button @click="console.log()" class="blue" :disabled="isBusy">
+      <input
+        type="file"
+        ref="productMatchRef"
+        accept=".csv"
+        @change="handleProductMatchFileChange"
+        style="display: none"
+      />
+      <button
+        @click="triggerProductOptionMatch"
+        class="blue"
+        :disabled="isBusy"
+      >
         카페24 상품 옵션 매칭하기
       </button>
+      <input
+        type="file"
+        ref="productOptionMatchRef"
+        accept=".csv"
+        @change="handleProductOptionMatchFileChange"
+        style="display: none"
+      />
       <button @click="setSellCafe24" class="secondary" :disabled="isBusy">
         카페24 판매중
       </button>
@@ -58,11 +76,17 @@ import {
   updateDoc,
   Timestamp,
 } from "firebase/firestore";
-import { uploadProduct } from "@/lib/cafe24";
+import {
+  uploadProduct,
+  matchProductByCode,
+  matchProductOptionsByCode,
+} from "@/lib/cafe24";
 import { db } from "@/lib/firebase";
 
 const router = useRouter();
 
+const productMatchRef = ref(null);
+const productOptionMatchRef = ref(null);
 const tableRef = ref(null);
 const dataTable = ref(null);
 const isBusy = ref(false);
@@ -70,6 +94,52 @@ const originData = ref([]);
 
 const createItems = () => {
   router.push("/admin/product/add");
+};
+
+const triggerProductMatch = () => {
+  productMatchRef.value.click();
+};
+
+const triggerProductOptionMatch = () => {
+  productOptionMatchRef.value.click();
+};
+
+const handleProductMatchFileChange = async (event) => {
+  try {
+    const file = event.target.files[0];
+    isBusy.value = true;
+    if (file && file.type === "text/csv") {
+      await matchProductByCode(file); // 원하는 함수로 전달
+      isBusy.value = false;
+      alert("상품 매칭이 완료되었습니다!");
+      window.location.reload();
+    } else {
+      alert("CSV 파일만 업로드해주세요.");
+      isBusy.value = false;
+    }
+  } catch (error) {
+    console.error("Error matching product by code:", error);
+    isBusy.value = false;
+  }
+};
+
+const handleProductOptionMatchFileChange = async (event) => {
+  try {
+    const file = event.target.files[0];
+    isBusy.value = true;
+    if (file && file.type === "text/csv") {
+      await matchProductOptionsByCode(file); // 원하는 함수로 전달
+      isBusy.value = false;
+      alert("상품 옵션 매칭이 완료되었습니다!");
+      window.location.reload();
+    } else {
+      alert("CSV 파일만 업로드해주세요.");
+      isBusy.value = false;
+    }
+  } catch (error) {
+    console.error("Error matching product options by code:", error);
+    isBusy.value = false;
+  }
 };
 
 const uploadProducts = async () => {
@@ -449,6 +519,10 @@ onMounted(async () => {
       },
       item.createdAt?.toDate().toLocaleString() || "",
       item.updatedAt?.toDate().toLocaleString() || "",
+      item.updatedAt.toDate().getTime() !==
+      item.updatedAtCafe24.toDate().getTime()
+        ? "<span style='color: #007bff; font-weight: 700;'>변동사항 있음</span>"
+        : "<span style='color: #ff0000; font-weight: 700;'>변동사항 없음</span>",
     ];
   });
 
@@ -522,6 +596,13 @@ onMounted(async () => {
         editable: false,
         resizable: false,
         width: 192,
+        align: "center",
+      },
+      {
+        name: "상품 변동사항",
+        editable: false,
+        resizable: false,
+        width: 128,
         align: "center",
       },
     ],

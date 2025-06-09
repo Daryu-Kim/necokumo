@@ -93,9 +93,10 @@ export async function matchProductByCode(file) {
     for (let item of csvData) {
       console.log("🔍 상품 매칭 시작:", item);
 
-      const matchingProduct = productList.find(
-        (product) => product.productName === item.상품명
-      );
+      const matchingProduct =
+        productList.find(
+          (product) => product.productCodeCafe24 === item.상품코드
+        ) || productList.find((product) => product.productName === item.상품명);
 
       if (matchingProduct) {
         const currentDateTime = Timestamp.fromDate(new Date());
@@ -278,8 +279,8 @@ export async function uploadProduct() {
             "",
             "",
             "",
-            `${product.productSummary}`,
-            `${product.productSummary}`,
+            "",
+            "",
             detailUrls,
             "M",
             detailUrls,
@@ -360,6 +361,7 @@ export async function uploadProduct() {
             "",
             "",
             "3|7",
+            "",
             "",
             "",
             "",

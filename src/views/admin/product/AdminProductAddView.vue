@@ -18,6 +18,62 @@
         </div>
       </div>
     </div>
+    <div class="category-box">
+      <h3>카테고리 설정</h3>
+      <p>{{ selectedCategory }}</p>
+      <div>
+        <div>
+          <h4>대분류</h4>
+          <div>
+            <div v-for="(item, index) in category0List" :key="index">
+              <input
+                :value="item"
+                :id="item.categoryId"
+                type="radio"
+                name="0"
+                v-model="category0Select"
+                @change="changeCategory0"
+                :disabled="isBusy"
+              />
+              <label :for="item.categoryId">{{ item.categoryName }}</label>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h4>중분류</h4>
+          <div>
+            <div v-for="(item, index) in category1List" :key="index">
+              <input
+                :value="item"
+                :id="item.categoryId"
+                type="radio"
+                name="1"
+                v-model="category1Select"
+                @change="changeCategory1"
+                :disabled="isBusy"
+              />
+              <label :for="item.categoryId">{{ item.categoryName }}</label>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h4>소분류</h4>
+          <div>
+            <div v-for="(item, index) in category2List" :key="index">
+              <input
+                :value="item"
+                :id="item.categoryId"
+                type="radio"
+                name="2"
+                v-model="category2Select"
+                :disabled="isBusy"
+              />
+              <label :for="item.categoryId">{{ item.categoryName }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="add-box">
       <h3>기본 정보</h3>
       <div>
@@ -27,21 +83,6 @@
           v-model="productName"
           placeholder="예시) 긱베이프 피크 입호흡 전자담배 기기"
         />
-      </div>
-      <div>
-        <h4>상품 요약설명</h4>
-        <div>
-          <input
-            type="text"
-            v-model="productSummary"
-            placeholder="예시) 발라리안을 잡으려고 긱베이프가 작정했다!"
-          />
-          <div>
-            <button @click="generateProductSummary" :disabled="isBusy">
-              자동 완성
-            </button>
-          </div>
-        </div>
       </div>
       <div>
         <h4>상품 검색 키워드</h4>
@@ -124,62 +165,6 @@
           placeholder="예시) 3,000"
         />
         <span>원</span>
-      </div>
-    </div>
-    <div class="category-box">
-      <h3>카테고리 설정</h3>
-      <p>{{ selectedCategory }}</p>
-      <div>
-        <div>
-          <h4>대분류</h4>
-          <div>
-            <div v-for="(item, index) in category0List" :key="index">
-              <input
-                :value="item"
-                :id="item.categoryId"
-                type="radio"
-                name="0"
-                v-model="category0Select"
-                @change="changeCategory0"
-                :disabled="isBusy"
-              />
-              <label :for="item.categoryId">{{ item.categoryName }}</label>
-            </div>
-          </div>
-        </div>
-        <div>
-          <h4>중분류</h4>
-          <div>
-            <div v-for="(item, index) in category1List" :key="index">
-              <input
-                :value="item"
-                :id="item.categoryId"
-                type="radio"
-                name="1"
-                v-model="category1Select"
-                @change="changeCategory1"
-                :disabled="isBusy"
-              />
-              <label :for="item.categoryId">{{ item.categoryName }}</label>
-            </div>
-          </div>
-        </div>
-        <div>
-          <h4>소분류</h4>
-          <div>
-            <div v-for="(item, index) in category2List" :key="index">
-              <input
-                :value="item"
-                :id="item.categoryId"
-                type="radio"
-                name="2"
-                v-model="category2Select"
-                :disabled="isBusy"
-              />
-              <label :for="item.categoryId">{{ item.categoryName }}</label>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     <div class="option-box">
@@ -311,7 +296,6 @@ const isSellYoutube = ref(true);
 const isSellVue = ref(true);
 
 const productName = ref("");
-const productSummary = ref("");
 const productSearchKeyword = ref("");
 const productDetail = ref("");
 const productSellPrice = ref(0);
@@ -358,7 +342,6 @@ const conditionProductAdd = computed(() => {
   return (
     productName.value &&
     typeof productName.value === "string" &&
-    productSummary.value &&
     productDetailImages.value.length > 0 &&
     productSellPrice.value > 0 &&
     productBuyPrice.value > 0 &&
@@ -547,23 +530,18 @@ const closeDialog = () => {
   dialogRef.value.close();
 };
 
-const generateProductSummary = async () => {
-  try {
-    isBusy.value = true;
-    const prompt = `"${productName.value}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 다른 불필요한 대답 없이(상품 요약설명, 정리, 대답 필요없음, 보충설명 필요없음. 쓸데없는 말 부조건 제외.) 특장점을 바탕으로 소비자가 알기 쉽고 구매욕구가 들게 50글자 내의 1문장으로 마케팅 제안 문구만 간결하게 딱 말해줘. api로 content 받아낼거라 그냥 output만 내주면돼.`;
-    const data = await useDeepseek(prompt);
-    productSummary.value = data.choices[0].message.content.replaceAll(/"/g, "");
-    isBusy.value = false;
-  } catch (error) {
-    console.error(error);
-    isBusy.value = false;
-  }
-};
-
 const generateProductSearchKeyword = async () => {
   try {
+    if (!category1Select.value) {
+      alert("카테고리를 선택하세요.");
+      return;
+    }
     isBusy.value = true;
-    const prompt = `"${productName.value}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 불필요한 상품 요약설명, 정리, 대답 필요없으니까 전부 제외하고 소비자가 알기 쉽고 구매욕구가 들게 SEO에 노출 잘되게 50개의 키워드를 콤마로 연결하고 띄어쓰기를 모두 없애서 딱 말해줘. 무조건 키워드의 총합은 50을 넘어가면 안되고, 50개의 키워드 중에서 무조건 "네코쿠모", "네코쿠모전자담배", "네코쿠모전담", "냥이네구름가게", "냥이네구름가게전자담배", "냥이네구름가게전담" 키워드들은 무조건 들어가야해.`;
+    const prompt = `"${productName.value}${
+      category2Select.value ? " " + category2Select.value.categoryName : ""
+    }${
+      category1Select.value ? " " + category1Select.value.categoryName : ""
+    }}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 불필요한 상품 요약설명, 정리, 대답 필요없으니까 전부 제외하고 소비자가 알기 쉽고 구매욕구가 들게 SEO에 노출 잘되게 50개의 키워드를 콤마로 연결하고 띄어쓰기를 모두 없애서 딱 말해줘. 무조건 키워드의 총합은 50을 넘어가면 안되고, 50개의 키워드 중에서 무조건 "네코쿠모", "네코쿠모전자담배", "네코쿠모전담", "냥이네구름가게", "냥이네구름가게전자담배", "냥이네구름가게전담" 키워드들은 무조건 들어가야해.`;
     const data = await useDeepseek(prompt);
     productSearchKeyword.value = data.choices[0].message.content.replaceAll(
       /"/g,
@@ -609,7 +587,6 @@ const addProduct = async () => {
     const productData = {
       productId: uuid,
       productName: productName.value,
-      productSummary: productSummary.value,
       productSearchKeyword: productSearchKeyword.value,
       productSellPrice: productSellPrice.value,
       productBuyPrice: productBuyPrice.value,

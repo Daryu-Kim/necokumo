@@ -96,7 +96,12 @@ export async function matchProductByCode(file) {
       const matchingProduct =
         productList.find(
           (product) => product.productCodeCafe24 === item.상품코드
-        ) || productList.find((product) => product.productName === item.상품명);
+        ) ||
+        productList.find(
+          (product) =>
+            product.productName.replaceAll(" ", "") ===
+            item.상품명.replaceAll(" ", "")
+        );
 
       if (matchingProduct) {
         const currentDateTime = Timestamp.fromDate(new Date());
@@ -156,7 +161,10 @@ export async function matchProductOptionsByCode(file) {
       const currentDateTime = Timestamp.fromDate(new Date());
 
       const updatedOptionList = productData.optionList.map((option) => {
-        if (option.optionName === item.품목명) {
+        if (
+          option.optionName.replaceAll(" ", "") ===
+          item.품목명.replaceAll(" ", "")
+        ) {
           return {
             ...option,
             optionCodeCafe24: item.품목코드,

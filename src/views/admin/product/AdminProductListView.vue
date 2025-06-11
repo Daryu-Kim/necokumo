@@ -53,11 +53,30 @@
       <button @click="unsetSellVue" class="secondary" :disabled="isBusy">
         Vue 판매중지
       </button>
+      <button @click="openImportDialog" :disabled="isBusy">
+        엑셀 자동화 툴
+      </button>
     </div>
     <div class="table-box">
       <h3>상품 목록 테이블</h3>
       <div ref="tableRef"></div>
     </div>
+    <dialog ref="dialogRef">
+      <header>
+        <h2>엑셀 자동화 툴</h2>
+        <button @click="closeImportDialog">
+          <span class="material-icons-round">close</span>
+        </button>
+      </header>
+      <main>
+        <textarea v-model="importHtmlText"></textarea>
+        <div class="button-box">
+          <button @click="convertHtmlToTable('medusa_liquid')">
+            메두사 액상
+          </button>
+        </div>
+      </main>
+    </dialog>
   </div>
 </template>
 
@@ -91,6 +110,57 @@ const tableRef = ref(null);
 const dataTable = ref(null);
 const isBusy = ref(false);
 const originData = ref([]);
+const dialogRef = ref(null);
+const importHtmlText = ref("");
+
+const openImportDialog = () => {
+  importHtmlText.value = "";
+  dialogRef.value.showModal();
+};
+
+const closeImportDialog = () => {
+  dialogRef.value.close();
+};
+
+const convertHtmlToTable = (url) => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(importHtmlText.value, "text/html");
+  let convertDatas = "";
+  switch (url) {
+    case "medusa_liquid": {
+      const items = doc.querySelectorAll(".item.DB_rate.xans-record-");
+      console.log(items);
+      items.forEach((item) => {
+        const itemName = item
+          .querySelector("div.description > p.name > a > span:nth-child(2)")
+          .textContent.split("(")[0]
+          .replace("기성액상", "입호흡 액상")
+          .replace("모드액상", "폐호흡 액상")
+          .trim();
+        const consumerPrice = item
+          .querySelector("div.description > ul > li:nth-child(1) > span")
+          .textContent.replaceAll("원", "")
+          .replaceAll(",", "")
+          .trim();
+        const sellingPrice = item
+          .querySelector(
+            "div.description > ul > li:nth-child(2) > span:nth-child(2)"
+          )
+          .textContent.replaceAll("원", "")
+          .replaceAll(",", "")
+          .trim();
+        convertDatas += `${itemName}\t\t${consumerPrice}\t${sellingPrice}\n`;
+      });
+      navigator.clipboard.writeText(convertDatas).then(() => {
+        alert("데이터가 클립보드에 복사되었습니다!");
+      });
+      break;
+    }
+
+    default:
+      break;
+  }
+};
 
 const createItems = () => {
   router.push("/admin/product/add");
@@ -673,6 +743,74 @@ onMounted(async () => {
       margin-top: 16px;
       width: 100%;
       height: fit-content;
+    }
+  }
+
+  > dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border-radius: 8px;
+    width: 90%;
+    height: 90%;
+    max-width: 600px;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25);
+
+    &::backdrop {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    > header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+      background: #efefef;
+
+      > h2 {
+        font-size: 18px;
+      }
+
+      > button {
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        background-color: #007bff;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+
+        > span {
+          font-size: 16px;
+        }
+      }
+    }
+
+    > main {
+      padding: 16px;
+      > textarea {
+        width: 100%;
+        height: 300px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+
+      button {
+        border: none;
+        border-radius: 4px;
+        padding: 6px 12px;
+        background-color: #007bff;
+        color: #fff;
+        font-weight: 500;
+        cursor: pointer;
+        font-size: 14px;
+      }
     }
   }
 }

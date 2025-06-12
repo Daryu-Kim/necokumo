@@ -132,6 +132,9 @@
             <button @click="crawlProduct('versayou')" :disabled="isBusy">
               베르사유
             </button>
+            <button @click="crawlProduct('vanom')" :disabled="isBusy">
+              베놈
+            </button>
             <button
               @click="openDialog"
               :disabled="productDetailImages.length === 0"
@@ -460,6 +463,20 @@ const crawlProduct = async (buyer) => {
         break;
       case "vapecompany":
         replaceUrl = "https://vapecompany.co.kr";
+        thumbnailImage = doc.querySelector(
+          "#contents > div.xans-element-.xans-product.xans-product-detail.section > div.detailArea > div.xans-element-.xans-product.xans-product-image.imgArea > div.RW > div.prdImg > div > a > img"
+        );
+        detailImages = doc.querySelectorAll(
+          "#prdDetail > div:nth-child(1) > div img"
+        );
+        options = doc.querySelectorAll(
+          "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "table.xans-element-.xans-product.xans-product-option.xans-record- option"
+          );
+        }
         break;
       case "0vape":
         replaceUrl = "";
@@ -507,6 +524,17 @@ const crawlProduct = async (buyer) => {
           );
         }
         break;
+      case "vanom":
+        replaceUrl = "";
+        thumbnailImage = doc.querySelector("img.ThumbImage");
+        detailImages = doc.querySelectorAll("#prdDetail img");
+        options = doc.querySelectorAll(
+          "#M_mode > div.in > table optgroup option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll("#M_mode > div.in > table option");
+        }
+        break;
       default:
         replaceUrl = "";
         break;
@@ -514,6 +542,7 @@ const crawlProduct = async (buyer) => {
 
     switch (buyer) {
       case "versayou": {
+        console.log(thumbnailImage);
         const backgroundImage = thumbnailImage.style.backgroundImage;
         productThumbnail.value = backgroundImage.match(
           /url\(["']?(.*?)["']?\)/

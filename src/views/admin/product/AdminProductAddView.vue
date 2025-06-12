@@ -75,6 +75,20 @@
       </div>
     </div>
     <div class="add-box">
+      <h3>엑셀 정보</h3>
+      <div>
+        <h4>엑셀 복사 내용</h4>
+        <div>
+          <input type="text" v-model="excelContent" />
+          <div>
+            <button @click="generateExcelContent" :disabled="isBusy">
+              자동 완성
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="add-box">
       <h3>기본 정보</h3>
       <div>
         <h4>상품명</h4>
@@ -83,21 +97,6 @@
           v-model="productName"
           placeholder="예시) 긱베이프 피크 입호흡 전자담배 기기"
         />
-      </div>
-      <div>
-        <h4>상품 검색 키워드</h4>
-        <div>
-          <input
-            type="text"
-            v-model="productSearchKeyword"
-            placeholder="검색어는 콤마로 구분, 검색어 당 최대 125자까지 입력 가능"
-          />
-          <div>
-            <button @click="generateProductSearchKeyword" :disabled="isBusy">
-              자동 완성
-            </button>
-          </div>
-        </div>
       </div>
       <div>
         <h4>상품 상세설명</h4>
@@ -173,47 +172,23 @@
         <h4>옵션1</h4>
         <input
           type="text"
-          placeholder="Enter 키로 구분 (색상, 맛 등 1차 옵션)"
-          @keydown.enter="insertOption1"
+          placeholder="콤마(,)로 구분 (색상, 맛 등 1차 옵션)"
+          @input="resetOption"
           @compositionstart="isComposingOption1 = true"
           @compositionend="isComposingOption1 = false"
           v-model="option1Text"
         />
-        <div>
-          <button
-            v-for="(item, index) in option1List"
-            :key="index"
-            :value="item"
-            @click="deleteOption1"
-            :disabled="isBusy"
-          >
-            {{ item }}
-            <span class="material-icons-round">close</span>
-          </button>
-        </div>
       </div>
       <div>
         <h4>옵션2</h4>
         <input
           type="text"
-          placeholder="Enter 키로 구분 (수량 등 2차 옵션)"
-          @keydown.enter="insertOption2"
+          placeholder="콤마(,)로 구분 (수량 등 2차 옵션)"
+          @input="resetOption"
           v-model="option2Text"
           @compositionstart="isComposingOption2 = true"
           @compositionend="isComposingOption2 = false"
         />
-        <div>
-          <button
-            v-for="(item, index) in option2List"
-            :key="index"
-            :value="item"
-            @click="deleteOption2"
-            :disabled="isBusy"
-          >
-            {{ item }}
-            <span class="material-icons-round">close</span>
-          </button>
-        </div>
       </div>
       <button @click="addOptionList" :disabled="isBusy">
         모든 옵션 품목추가
@@ -249,6 +224,24 @@
           v-model="productThumbnail"
           placeholder="예시) https://picsum.photos/200"
         />
+      </div>
+    </div>
+    <div class="add-box">
+      <h3>선택 정보</h3>
+      <div>
+        <h4>상품 검색 키워드</h4>
+        <div>
+          <input
+            type="text"
+            v-model="productSearchKeyword"
+            placeholder="검색어는 콤마로 구분, 검색어 당 최대 125자까지 입력 가능"
+          />
+          <div>
+            <button @click="generateProductSearchKeyword" :disabled="isBusy">
+              자동 완성
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="button-box">
@@ -295,6 +288,7 @@ const isSellCafe24 = ref(true);
 const isSellYoutube = ref(true);
 const isSellVue = ref(true);
 
+const excelContent = ref("");
 const productName = ref("");
 const productSearchKeyword = ref("");
 const productDetail = ref("");
@@ -352,6 +346,20 @@ const conditionProductAdd = computed(() => {
   );
 });
 
+const resetOption = () => {
+  option1List.value = [];
+  option2List.value = [];
+  optionList.value = [];
+};
+
+const generateExcelContent = () => {
+  const data = excelContent.value.split(",");
+  productName.value = data[0];
+  option1Text.value = data[0];
+  productSellPrice.value = parseInt(data[1]);
+  productBuyPrice.value = parseInt(data[2]);
+};
+
 const changeCategory0 = async () => {
   try {
     isBusy.value = true;
@@ -393,70 +401,12 @@ const changeCategory1 = async () => {
   }
 };
 
-const insertOption1 = async () => {
-  try {
-    if (!isComposingOption1.value) {
-      isBusy.value = true;
-      optionList.value = [];
-      const option = option1Text.value;
-      option1List.value = [...option1List.value, option];
-      option1Text.value = "";
-      isBusy.value = false;
-    }
-  } catch (error) {
-    console.error(error);
-    isBusy.value = false;
-  }
-};
-
-const insertOption2 = async () => {
-  try {
-    if (!isComposingOption2.value) {
-      isBusy.value = true;
-      optionList.value = [];
-      const option = option2Text.value;
-      option2List.value = [...option2List.value, option];
-      option2Text.value = "";
-      isBusy.value = false;
-    }
-  } catch (error) {
-    console.error(error);
-    isBusy.value = false;
-  }
-};
-
-const deleteOption1 = (element) => {
-  try {
-    isBusy.value = true;
-    optionList.value = [];
-    option1List.value = option1List.value.filter(
-      (item) => item !== element.target.value
-    );
-    isBusy.value = false;
-  } catch (error) {
-    console.error(error);
-    isBusy.value = false;
-  }
-};
-
-const deleteOption2 = (element) => {
-  try {
-    isBusy.value = true;
-    optionList.value = [];
-    option2List.value = option2List.value.filter(
-      (item) => item !== element.target.value
-    );
-    isBusy.value = false;
-  } catch (error) {
-    console.error(error);
-    isBusy.value = false;
-  }
-};
-
 const addOptionList = async () => {
   try {
     isBusy.value = true;
     optionList.value = [];
+    option1List.value = option1Text.value.split(",");
+    option2List.value = option2Text.value.split(",");
     option1List.value.forEach((option1) => {
       option2List.value.forEach((option2) => {
         optionList.value.push({
@@ -478,43 +428,101 @@ const crawlProduct = async (buyer) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(productDetail.value, "text/html");
 
-    const images = doc.querySelectorAll("img");
-    productDetailImages.value = Array.from(images).map((img) => {
-      let replaceUrl = "";
+    let replaceUrl = "";
+    switch (buyer) {
+      case "medusa":
+        replaceUrl = "https://medusamall.com";
+        break;
+      case "vapetopia":
+        replaceUrl = "";
+        break;
+      case "purecloud":
+        replaceUrl = "";
+        break;
+      case "vapecompany":
+        replaceUrl = "https://vapecompany.co.kr";
+        break;
+      case "0vape":
+        replaceUrl = "";
+        break;
+      case "emvape":
+        replaceUrl = "";
+        break;
+      default:
+        replaceUrl = "";
+        break;
+    }
+
+    const thumbnailImage = doc.querySelector("#big_img_box > div > img");
+    const detailImages = doc.querySelectorAll("#prdDetail > div.cont img");
+    let options = doc.querySelectorAll(
+      "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
+    );
+    if (options.length == 0) {
+      options = doc.querySelectorAll(
+        "table.xans-element-.xans-product.xans-product-option.xans-record- option"
+      );
+    }
+    console.log(options);
+    productDetailImages.value = Array.from(detailImages).map((img) => {
       switch (buyer) {
-        case "medusa":
-          replaceUrl = "https://medusamall.com";
-          break;
-        case "vapetopia":
-          replaceUrl = "";
-          break;
-        case "purecloud":
-          replaceUrl = "";
-          break;
         case "vapecompany":
-          replaceUrl = "https://vapecompany.co.kr";
           img.getAttribute("ec-data-src")
             ? (img.src = replaceUrl + img.getAttribute("ec-data-src"))
             : "";
           break;
         case "0vape":
-          replaceUrl = "";
           img.getAttribute("data-src")
             ? (img.src = replaceUrl + img.getAttribute("data-src"))
             : "";
           break;
-        case "emvape":
-          replaceUrl = "";
-          break;
         default:
-          replaceUrl = "";
           break;
       }
-
       return img.src.replace(window.location.origin, replaceUrl);
     });
+    productThumbnail.value = thumbnailImage.src.replace(
+      window.location.origin,
+      replaceUrl
+    );
+    option1Text.value = productName.value;
+    option2Text.value = Array.from(options)
+      .filter((opt) => {
+        if (opt.value === "*" || opt.value === "**") return false;
 
-    console.log(productDetailImages.value);
+        let text = opt.textContent.replace("[품절]", "").trim();
+
+        if (text.includes("[")) return false;
+        if (text.includes("제조")) return false;
+
+        return true;
+      })
+      .map((opt) => {
+        let text = opt.textContent;
+
+        // [품절] 제거
+        text = text.replace("[품절]", "").trim();
+
+        // (…원) 패턴을 임시 치환
+        const pricePatterns = [];
+        text = text.replace(/\(-?\d{1,3}(,\d{3})*원\)/g, (match) => {
+          pricePatterns.push(match);
+          return `__PRICE${pricePatterns.length - 1}__`;
+        });
+
+        // 나머지 괄호 및 괄호 안 내용 제거
+        text = text.replace(/\([^()]*\)/g, "");
+
+        // 가격 패턴 복원
+        pricePatterns.forEach((price, idx) => {
+          const placeholder = `__PRICE${idx}__`;
+          text = text.replace(placeholder, price);
+        });
+
+        // 남은 공백 정리
+        return text.trim();
+      })
+      .join(",");
     isBusy.value = false;
   } catch (error) {
     console.error(error);

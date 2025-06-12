@@ -1,5 +1,5 @@
 export async function uploadImageByUrl(imageUrl) {
-  const apiKey = "6221bec863b163b309ff04448fcdeb1a";
+  const apiKey = "e21dac7c34ec112c860e6157544bd23a";
   const formData = new FormData();
   formData.append("image", imageUrl);
   formData.append("key", apiKey);

@@ -126,6 +126,12 @@
             <button @click="crawlProduct('emvape')" :disabled="isBusy">
               이엠베이프
             </button>
+            <button @click="crawlProduct('siasiu')" :disabled="isBusy">
+              샤슈베이프
+            </button>
+            <button @click="crawlProduct('versayou')" :disabled="isBusy">
+              베르사유
+            </button>
             <button
               @click="openDialog"
               :disabled="productDetailImages.length === 0"
@@ -336,7 +342,6 @@ const conditionProductAdd = computed(() => {
   return (
     productName.value &&
     typeof productName.value === "string" &&
-    productDetailImages.value.length > 0 &&
     productSellPrice.value > 0 &&
     productBuyPrice.value > 0 &&
     productBuyDeliveryPrice.value > 0 &&
@@ -428,10 +433,24 @@ const crawlProduct = async (buyer) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(productDetail.value, "text/html");
 
+    let thumbnailImage = null;
+    let detailImages = [];
+    let options = [];
+
     let replaceUrl = "";
     switch (buyer) {
       case "medusa":
         replaceUrl = "https://medusamall.com";
+        thumbnailImage = doc.querySelector("#big_img_box > div > img");
+        detailImages = doc.querySelectorAll("#prdDetail > div.cont img");
+        options = doc.querySelectorAll(
+          "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "table.xans-element-.xans-product.xans-product-option.xans-record- option"
+          );
+        }
         break;
       case "vapetopia":
         replaceUrl = "";
@@ -447,23 +466,69 @@ const crawlProduct = async (buyer) => {
         break;
       case "emvape":
         replaceUrl = "";
+        thumbnailImage = doc.querySelector(
+          "#contents > div.xans-element-.xans-product.xans-product-detail.section > div.detailArea > div.xans-element-.xans-product.xans-product-image.imgArea > div.RW > div.prdImg > div > a > img"
+        );
+        detailImages = doc.querySelectorAll("#prdDetail img");
+        options = doc.querySelectorAll(
+          "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "table.xans-element-.xans-product.xans-product-option.xans-record- option"
+          );
+        }
+        break;
+      case "siasiu":
+        replaceUrl = "";
+        thumbnailImage = doc.querySelector(
+          "#contents > div > div.xans-element-.xans-product.xans-product-detail.timesale-active > div.detailArea > div.xans-element-.xans-product.xans-product-image.imgArea > div.RW > div.prdImg > div.thumbnail > img"
+        );
+        detailImages = doc.querySelectorAll("#prdDetail > div.cont img");
+        options = doc.querySelectorAll(
+          "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "table.xans-element-.xans-product.xans-product-option.xans-record- option"
+          );
+        }
+        break;
+      case "versayou":
+        replaceUrl = "";
+        thumbnailImage = doc.querySelector("div.zoomContainer > div.zoomLens");
+        detailImages = doc.querySelectorAll("#sit_tail_explan img");
+        options = doc.querySelectorAll(
+          "#realopt > div > div.toggle-wrap > section optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "#realopt > div > div.toggle-wrap > section option"
+          );
+        }
         break;
       default:
         replaceUrl = "";
         break;
     }
 
-    const thumbnailImage = doc.querySelector("#big_img_box > div > img");
-    const detailImages = doc.querySelectorAll("#prdDetail > div.cont img");
-    let options = doc.querySelectorAll(
-      "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
-    );
-    if (options.length == 0) {
-      options = doc.querySelectorAll(
-        "table.xans-element-.xans-product.xans-product-option.xans-record- option"
-      );
+    switch (buyer) {
+      case "versayou": {
+        const backgroundImage = thumbnailImage.style.backgroundImage;
+        productThumbnail.value = backgroundImage.match(
+          /url\(["']?(.*?)["']?\)/
+        )[1];
+        break;
+      }
+      default: {
+        productThumbnail.value = thumbnailImage.src.replace(
+          window.location.origin,
+          replaceUrl
+        );
+        break;
+      }
     }
-    console.log(options);
+
     productDetailImages.value = Array.from(detailImages).map((img) => {
       switch (buyer) {
         case "vapecompany":
@@ -481,14 +546,12 @@ const crawlProduct = async (buyer) => {
       }
       return img.src.replace(window.location.origin, replaceUrl);
     });
-    productThumbnail.value = thumbnailImage.src.replace(
-      window.location.origin,
-      replaceUrl
-    );
+
     option1Text.value = productName.value;
     option2Text.value = Array.from(options)
       .filter((opt) => {
-        if (opt.value === "*" || opt.value === "**") return false;
+        if (opt.value === "" || opt.value === "*" || opt.value === "**")
+          return false;
 
         let text = opt.textContent.replace("[품절]", "").trim();
 

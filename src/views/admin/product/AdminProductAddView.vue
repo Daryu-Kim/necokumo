@@ -135,6 +135,9 @@
             <button @click="crawlProduct('vanom')" :disabled="isBusy">
               베놈
             </button>
+            <button @click="crawlProduct('cigarman')" :disabled="isBusy">
+              시가맨
+            </button>
             <button
               @click="openDialog"
               :disabled="productDetailImages.length === 0"
@@ -457,6 +460,18 @@ const crawlProduct = async (buyer) => {
         break;
       case "vapetopia":
         replaceUrl = "";
+        thumbnailImage = doc.querySelector(
+          "#contents > div.xans-element-.xans-product.xans-product-detail.section > div.detailArea > div.xans-element-.xans-product.xans-product-image.imgArea > div.RW > div.prdImg > div > a > img"
+        );
+        detailImages = doc.querySelectorAll("#prdDetail img");
+        options = doc.querySelectorAll(
+          "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "table.xans-element-.xans-product.xans-product-option.xans-record- option"
+          );
+        }
         break;
       case "purecloud":
         replaceUrl = "";
@@ -469,6 +484,9 @@ const crawlProduct = async (buyer) => {
         detailImages = doc.querySelectorAll(
           "#prdDetail > div:nth-child(1) > div img"
         );
+        if (detailImages.length == 0) {
+          detailImages = doc.querySelectorAll("#prdDetail > div img");
+        }
         options = doc.querySelectorAll(
           "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
         );
@@ -533,6 +551,19 @@ const crawlProduct = async (buyer) => {
         );
         if (options.length == 0) {
           options = doc.querySelectorAll("#M_mode > div.in > table option");
+        }
+        break;
+      case "cigarman":
+        replaceUrl = "https://cigarman.co.kr/";
+        thumbnailImage = doc.querySelector("img.ThumbImage");
+        detailImages = doc.querySelectorAll("#prdDetail > div.cont img");
+        options = doc.querySelectorAll(
+          "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "table.xans-element-.xans-product.xans-product-option.xans-record- option"
+          );
         }
         break;
       default:

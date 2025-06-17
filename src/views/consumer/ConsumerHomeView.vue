@@ -9,6 +9,22 @@
           >{{ item.title }}</router-link
         >
       </nav>
+      <div class="top-banner-box">
+        <swiper :space-between="24">
+          <swiper-slide v-for="item in topBannerDatas" :key="item.id">
+            <router-link :to="item.redirect">
+              <img :src="item.url" />
+            </router-link>
+          </swiper-slide>
+        </swiper>
+        <div class="topic-box">
+          <ul>
+            <li>test</li>
+            <li>test</li>
+            <li>test</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -17,8 +33,11 @@
 import { onMounted, ref } from 'vue';
 import { db } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy } from "firebase/firestore";
+import { Swiper, SwiperSlide } from "swiper/vue";
+import "swiper/css";
 
 const categoryDatas = ref([]);
+const topBannerDatas = ref([]);
 
 onMounted(async () => {
     try {
@@ -26,6 +45,12 @@ onMounted(async () => {
         const category = await getDocs(query(collection(db, "category"), where("categoryGrade", "==", 0), orderBy("categoryOrder", "asc")));
         categoryDatas.value = category.docs.filter(doc => doc.id !== '1').map(doc => ({ id: doc.id,title: doc.data().categoryName }));
         console.log("Category Data Fetched Successfully!: ", categoryDatas.value);
+
+        console.log("Fetching Top Banner Data...");
+        const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
+        topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, url: doc.data().url, redirect: doc.data().redirect }));
+        console.log("Top Banner Data Fetched Successfully!: ", topBannerDatas.value);
+
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
@@ -39,6 +64,7 @@ onMounted(async () => {
   max-width: 1280px;
   > .main-content-box {
     display: flex;
+    gap: 24px;
 
     > nav {
       display: flex;
@@ -72,6 +98,15 @@ onMounted(async () => {
             background-color: #0069d9;
           }
         }
+      }
+    }
+
+    > .top-banner-box {
+      display: flex;
+      gap: 8px;
+      img {
+        border-radius: 8px;
+        width: 640px;
       }
     }
   }

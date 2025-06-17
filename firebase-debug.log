@@ -1,0 +1,270 @@
+[debug] [2025-06-17T02:18:13.344Z] ----------------------------------------------------------------------
+[debug] [2025-06-17T02:18:13.348Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\dev_d\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-06-17T02:18:13.348Z] CLI Version:   14.7.0
+[debug] [2025-06-17T02:18:13.349Z] Platform:      win32
+[debug] [2025-06-17T02:18:13.349Z] Node Version:  v22.13.1
+[debug] [2025-06-17T02:18:13.349Z] Time:          Tue Jun 17 2025 11:18:13 GMT+0900 (대한민국 표준시)
+[debug] [2025-06-17T02:18:13.349Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-17T02:18:13.662Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-17T02:18:13.663Z] > authorizing via signed-in user (necokumo23@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\dev_d\necokumo
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-06-17T02:18:45.756Z] Using project from CLI flag: necokumo-c21e3
+[debug] [2025-06-17T02:18:45.758Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:45.758Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:45.762Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/necokumo-c21e3 [none]
+[debug] [2025-06-17T02:18:46.261Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/necokumo-c21e3 200
+[debug] [2025-06-17T02:18:46.261Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/necokumo-c21e3 {"projectId":"necokumo-c21e3","projectNumber":"334611024410","displayName":"necokumo","name":"projects/necokumo-c21e3","resources":{"hostingSite":"necokumo-c21e3","realtimeDatabaseInstance":"necokumo-c21e3-default-rtdb"},"state":"ACTIVE","etag":"1_46a6d707-9b4b-4c7b-a609-23bec8a9fa28"}
+[info] i  Using project necokumo-c21e3 (necokumo) 
+[info] 
+=== Firestore Setup
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2025-06-17T02:18:46.268Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:46.269Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:46.269Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/firestore.googleapis.com [none]
+[debug] [2025-06-17T02:18:46.269Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/firestore.googleapis.com x-goog-quota-user=projects/necokumo-c21e3
+[debug] [2025-06-17T02:18:47.492Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/firestore.googleapis.com 200
+[debug] [2025-06-17T02:18:47.492Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/firestore.googleapis.com [omitted]
+[info] +  firestore: required API firestore.googleapis.com is enabled 
+[debug] [2025-06-17T02:18:47.492Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:47.493Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:47.493Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases [none]
+[debug] [2025-06-17T02:18:48.015Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases 200
+[debug] [2025-06-17T02:18:48.015Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases {"databases":[{"name":"projects/necokumo-c21e3/databases/(default)","uid":"85bbfbc7-7a90-4ef8-9b16-25d7d117968a","createTime":"2025-05-21T05:02:43.245658Z","updateTime":"2025-05-21T05:02:43.245658Z","locationId":"asia-northeast3","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2025-06-17T01:18:48.013068Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"v","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"etag":"IJnbpo+y940DMLjLi9fls40D"}]}
+[info] 
+[info] Firestore Security Rules allow you to define how and when to allow
+[info] requests. You can keep these rules in your project directory
+[info] and publish them with firebase deploy.
+[info] 
+[debug] [2025-06-17T02:18:48.016Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:48.016Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:48.017Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/releases pageSize=10&pageToken=
+[debug] [2025-06-17T02:18:49.269Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/releases 200
+[debug] [2025-06-17T02:18:49.270Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/releases {"releases":[{"name":"projects/necokumo-c21e3/releases/cloud.firestore","rulesetName":"projects/necokumo-c21e3/rulesets/ea189ee4-29e2-432e-a3a7-6b9df9d9766d","createTime":"2025-05-21T05:02:51.421143Z","updateTime":"2025-05-21T05:03:10.111449Z"},{"name":"projects/necokumo-c21e3/releases/firebase.storage/necokumo-c21e3.firebasestorage.app","rulesetName":"projects/necokumo-c21e3/rulesets/037321e3-88a5-4bf4-9581-bf4a7505151f","createTime":"2025-06-17T02:05:59.872110Z","updateTime":"2025-06-17T02:05:59.872110Z"}]}
+[debug] [2025-06-17T02:18:49.284Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:49.285Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:18:49.285Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/rulesets/ea189ee4-29e2-432e-a3a7-6b9df9d9766d [none]
+[debug] [2025-06-17T02:18:50.308Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/rulesets/ea189ee4-29e2-432e-a3a7-6b9df9d9766d 200
+[debug] [2025-06-17T02:18:50.308Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/rulesets/ea189ee4-29e2-432e-a3a7-6b9df9d9766d [omitted]
+[info] i  Downloaded the existing Firestore Security Rules from the Firebase console 
+[info] i  Skipping write of firestore.rules 
+[info] 
+[info] Firestore indexes allow you to perform complex queries while
+[info] maintaining performance that scales with the size of the result
+[info] set. You can keep index definitions in your project directory
+[info] and publish them with firebase deploy.
+[info] 
+[debug] [2025-06-17T02:20:21.024Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:21.024Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:21.024Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:21.024Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:21.024Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/indexes [none]
+[debug] [2025-06-17T02:20:21.026Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* [none]
+[debug] [2025-06-17T02:20:21.159Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* 200
+[debug] [2025-06-17T02:20:21.159Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* {"fields":[{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/__default__/fields/*","indexConfig":{"indexes":[{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"ASCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"DESCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","arrayConfig":"CONTAINS"}],"state":"READY"}]}}]}
+[debug] [2025-06-17T02:20:21.159Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/indexes 200
+[debug] [2025-06-17T02:20:21.159Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/indexes {"indexes":[{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/category/indexes/CICAgOjXh4EK","queryScope":"COLLECTION","fields":[{"fieldPath":"categoryGrade","order":"ASCENDING"},{"fieldPath":"categoryParentId","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/product/indexes/CICAgJiUpoMK","queryScope":"COLLECTION","fields":[{"fieldPath":"isActive","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/category/indexes/CICAgOi3kJAK","queryScope":"COLLECTION","fields":[{"fieldPath":"categoryGrade","order":"ASCENDING"},{"fieldPath":"categoryOrder","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/product/indexes/CICAgJiUsZIK","queryScope":"COLLECTION","fields":[{"fieldPath":"isActive","order":"ASCENDING"},{"fieldPath":"updatedAtCafe24","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"}]}
+[info] i  Downloaded the existing Firestore indexes from the Firebase console 
+[info] i  Skipping write of firestore.indexes.json 
+[info] +  Wrote firestore.indexes.json 
+[info] 
+=== Functions Setup
+[debug] [2025-06-17T02:20:25.125Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-17T02:20:25.126Z] > authorizing via signed-in user (necokumo23@gmail.com)
+[debug] [2025-06-17T02:20:25.126Z] [iam] checking project necokumo-c21e3 for permissions ["firebase.projects.get"]
+[debug] [2025-06-17T02:20:25.127Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:25.127Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:25.127Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions [none]
+[debug] [2025-06-17T02:20:25.127Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions x-goog-quota-user=projects/necokumo-c21e3
+[debug] [2025-06-17T02:20:25.127Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-06-17T02:20:26.027Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions 200
+[debug] [2025-06-17T02:20:26.027Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-06-17T02:20:26.028Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:26.028Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:26.028Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:26.028Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:20:26.028Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-06-17T02:20:26.028Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/necokumo-c21e3
+[debug] [2025-06-17T02:20:26.031Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-06-17T02:20:26.031Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/necokumo-c21e3
+[debug] [2025-06-17T02:20:27.141Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/runtimeconfig.googleapis.com 200
+[debug] [2025-06-17T02:20:27.141Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2025-06-17T02:20:27.158Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/cloudfunctions.googleapis.com 200
+[debug] [2025-06-17T02:20:27.158Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/cloudfunctions.googleapis.com [omitted]
+[info] Let's create a new codebase for your functions.
+[info] A directory corresponding to the codebase will be created in your project
+[info] with sample code pre-configured.
+
+[info] See https://firebase.google.com/docs/functions/organize-functions for
+[info] more information on organizing your functions using codebases.
+
+[info] Functions can be deployed with firebase deploy.
+
+[info] +  Wrote functions/requirements.txt 
+[info] +  Wrote functions/.gitignore 
+[info] +  Wrote functions/main.py 
+[debug] [2025-06-17T02:27:00.960Z] Running command with virtualenv: command="C:\Users\dev_d\necokumo\functions\venv\Scripts\activate.bat", args=["","&&","pip3","install","--upgrade","pip"]
+[debug] [2025-06-17T02:27:05.997Z] Error: spawn "C:\Users\dev_d\necokumo\functions\venv\Scripts\activate.bat" ENOENT
+    at notFoundError (C:\Users\dev_d\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\cross-spawn\lib\enoent.js:6:26)
+    at verifyENOENT (C:\Users\dev_d\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\cross-spawn\lib\enoent.js:40:16)
+    at cp.emit (C:\Users\dev_d\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\cross-spawn\lib\enoent.js:27:25)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    at Process.callbackTrampoline (node:internal/async_hooks:130:17)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2025-06-17T02:28:52.638Z] ----------------------------------------------------------------------
+[debug] [2025-06-17T02:28:52.641Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\dev_d\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-06-17T02:28:52.642Z] CLI Version:   14.7.0
+[debug] [2025-06-17T02:28:52.642Z] Platform:      win32
+[debug] [2025-06-17T02:28:52.642Z] Node Version:  v22.13.1
+[debug] [2025-06-17T02:28:52.643Z] Time:          Tue Jun 17 2025 11:28:52 GMT+0900 (대한민국 표준시)
+[debug] [2025-06-17T02:28:52.643Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-17T02:28:52.945Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-17T02:28:52.945Z] > authorizing via signed-in user (necokumo23@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\dev_d\necokumo
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-06-17T02:28:59.013Z] Using project from CLI flag: necokumo-c21e3
+[debug] [2025-06-17T02:28:59.015Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:28:59.015Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:28:59.016Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/necokumo-c21e3 [none]
+[debug] [2025-06-17T02:28:59.508Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/necokumo-c21e3 200
+[debug] [2025-06-17T02:28:59.508Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/necokumo-c21e3 {"projectId":"necokumo-c21e3","projectNumber":"334611024410","displayName":"necokumo","name":"projects/necokumo-c21e3","resources":{"hostingSite":"necokumo-c21e3","realtimeDatabaseInstance":"necokumo-c21e3-default-rtdb"},"state":"ACTIVE","etag":"1_46a6d707-9b4b-4c7b-a609-23bec8a9fa28"}
+[info] i  Using project necokumo-c21e3 (necokumo) 
+[info] 
+=== Firestore Setup
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2025-06-17T02:28:59.515Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:28:59.515Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:28:59.516Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/firestore.googleapis.com [none]
+[debug] [2025-06-17T02:28:59.516Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/firestore.googleapis.com x-goog-quota-user=projects/necokumo-c21e3
+[debug] [2025-06-17T02:29:00.774Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/firestore.googleapis.com 200
+[debug] [2025-06-17T02:29:00.774Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/firestore.googleapis.com [omitted]
+[info] +  firestore: required API firestore.googleapis.com is enabled 
+[debug] [2025-06-17T02:29:00.775Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:00.775Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:00.775Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases [none]
+[debug] [2025-06-17T02:29:01.295Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases 200
+[debug] [2025-06-17T02:29:01.295Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases {"databases":[{"name":"projects/necokumo-c21e3/databases/(default)","uid":"85bbfbc7-7a90-4ef8-9b16-25d7d117968a","createTime":"2025-05-21T05:02:43.245658Z","updateTime":"2025-05-21T05:02:43.245658Z","locationId":"asia-northeast3","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2025-06-17T01:29:01.287427Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"v","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"etag":"INyC3rO0940DMLjLi9fls40D"}]}
+[info] 
+[info] Firestore Security Rules allow you to define how and when to allow
+[info] requests. You can keep these rules in your project directory
+[info] and publish them with firebase deploy.
+[info] 
+[debug] [2025-06-17T02:29:01.300Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:01.300Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:01.301Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/releases pageSize=10&pageToken=
+[debug] [2025-06-17T02:29:02.500Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/releases 200
+[debug] [2025-06-17T02:29:02.500Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/releases {"releases":[{"name":"projects/necokumo-c21e3/releases/cloud.firestore","rulesetName":"projects/necokumo-c21e3/rulesets/ea189ee4-29e2-432e-a3a7-6b9df9d9766d","createTime":"2025-05-21T05:02:51.421143Z","updateTime":"2025-05-21T05:03:10.111449Z"},{"name":"projects/necokumo-c21e3/releases/firebase.storage/necokumo-c21e3.firebasestorage.app","rulesetName":"projects/necokumo-c21e3/rulesets/037321e3-88a5-4bf4-9581-bf4a7505151f","createTime":"2025-06-17T02:05:59.872110Z","updateTime":"2025-06-17T02:05:59.872110Z"}]}
+[debug] [2025-06-17T02:29:02.514Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:02.514Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:02.514Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/rulesets/ea189ee4-29e2-432e-a3a7-6b9df9d9766d [none]
+[debug] [2025-06-17T02:29:03.553Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/rulesets/ea189ee4-29e2-432e-a3a7-6b9df9d9766d 200
+[debug] [2025-06-17T02:29:03.553Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/necokumo-c21e3/rulesets/ea189ee4-29e2-432e-a3a7-6b9df9d9766d [omitted]
+[info] i  Downloaded the existing Firestore Security Rules from the Firebase console 
+[info] i  Skipping write of firestore.rules 
+[info] 
+[info] Firestore indexes allow you to perform complex queries while
+[info] maintaining performance that scales with the size of the result
+[info] set. You can keep index definitions in your project directory
+[info] and publish them with firebase deploy.
+[info] 
+[debug] [2025-06-17T02:29:04.419Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:04.419Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:04.419Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:04.419Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:04.420Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/indexes [none]
+[debug] [2025-06-17T02:29:04.420Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* [none]
+[debug] [2025-06-17T02:29:04.502Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/indexes 200
+[debug] [2025-06-17T02:29:04.502Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/indexes {"indexes":[{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/category/indexes/CICAgOjXh4EK","queryScope":"COLLECTION","fields":[{"fieldPath":"categoryGrade","order":"ASCENDING"},{"fieldPath":"categoryParentId","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/product/indexes/CICAgJiUpoMK","queryScope":"COLLECTION","fields":[{"fieldPath":"isActive","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/category/indexes/CICAgOi3kJAK","queryScope":"COLLECTION","fields":[{"fieldPath":"categoryGrade","order":"ASCENDING"},{"fieldPath":"categoryOrder","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/product/indexes/CICAgJiUsZIK","queryScope":"COLLECTION","fields":[{"fieldPath":"isActive","order":"ASCENDING"},{"fieldPath":"updatedAtCafe24","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"}]}
+[debug] [2025-06-17T02:29:04.511Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* 200
+[debug] [2025-06-17T02:29:04.511Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/necokumo-c21e3/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* {"fields":[{"name":"projects/necokumo-c21e3/databases/(default)/collectionGroups/__default__/fields/*","indexConfig":{"indexes":[{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"ASCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"DESCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","arrayConfig":"CONTAINS"}],"state":"READY"}]}}]}
+[info] i  Downloaded the existing Firestore indexes from the Firebase console 
+[info] i  firestore.indexes.json is unchanged 
+[info] +  Wrote firestore.indexes.json 
+[info] 
+=== Functions Setup
+[debug] [2025-06-17T02:29:04.521Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-17T02:29:04.521Z] > authorizing via signed-in user (necokumo23@gmail.com)
+[debug] [2025-06-17T02:29:04.521Z] [iam] checking project necokumo-c21e3 for permissions ["firebase.projects.get"]
+[debug] [2025-06-17T02:29:04.522Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:04.522Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:04.522Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions [none]
+[debug] [2025-06-17T02:29:04.522Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions x-goog-quota-user=projects/necokumo-c21e3
+[debug] [2025-06-17T02:29:04.522Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-06-17T02:29:05.314Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions 200
+[debug] [2025-06-17T02:29:05.315Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/necokumo-c21e3:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-06-17T02:29:05.315Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:05.315Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:05.315Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:05.315Z] Checked if tokens are valid: true, expires at: 1750129921464
+[debug] [2025-06-17T02:29:05.315Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-06-17T02:29:05.315Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/necokumo-c21e3
+[debug] [2025-06-17T02:29:05.316Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-06-17T02:29:05.316Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/necokumo-c21e3
+[debug] [2025-06-17T02:29:05.617Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/cloudfunctions.googleapis.com 200
+[debug] [2025-06-17T02:29:05.617Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2025-06-17T02:29:06.418Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/runtimeconfig.googleapis.com 200
+[debug] [2025-06-17T02:29:06.418Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/necokumo-c21e3/services/runtimeconfig.googleapis.com [omitted]
+[info] Let's create a new codebase for your functions.
+[info] A directory corresponding to the codebase will be created in your project
+[info] with sample code pre-configured.
+
+[info] See https://firebase.google.com/docs/functions/organize-functions for
+[info] more information on organizing your functions using codebases.
+
+[info] Functions can be deployed with firebase deploy.
+
+[info] i  functions/requirements.txt is unchanged 
+[info] i  functions/.gitignore is unchanged 
+[info] i  functions/main.py is unchanged 
+[debug] [2025-06-17T02:29:13.130Z] Running command with virtualenv: command="C:\Users\dev_d\necokumo\functions\venv\Scripts\activate.bat", args=["","&&","pip3","install","--upgrade","pip"]
+[debug] [2025-06-17T02:29:16.795Z] Error: spawn "C:\Users\dev_d\necokumo\functions\venv\Scripts\activate.bat" ENOENT
+    at notFoundError (C:\Users\dev_d\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\cross-spawn\lib\enoent.js:6:26)
+    at verifyENOENT (C:\Users\dev_d\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\cross-spawn\lib\enoent.js:40:16)
+    at cp.emit (C:\Users\dev_d\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\cross-spawn\lib\enoent.js:27:25)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    at Process.callbackTrampoline (node:internal/async_hooks:130:17)
+[error] 
+[error] Error: An unexpected error has occurred.

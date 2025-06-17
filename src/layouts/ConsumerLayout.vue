@@ -2,9 +2,9 @@
   <div class="consumer-layout">
     <div class="header">
       <router-link to="">판매자</router-link>
-      <hr />
       <router-link to="">관리자</router-link>
     </div>
+    <hr />
     <header>
       <router-link to="/" class="home-btn">
         <img src="@/assets/logo.png" alt="logo" />
@@ -82,17 +82,19 @@
     display: flex;
     align-items: center;
     justify-content: end;
-    border-bottom: 1px solid #efefef;
     padding: 8px 24px;
+    margin: auto;
+    max-width: 1280px;
     gap: 8px;
-
-    > hr {
-      height: 10px;
-    }
 
     > a {
       font-size: 12px;
     }
+  }
+
+  > hr {
+    border: none;
+    border-bottom: 1px solid #efefef;
   }
 
   > header {
@@ -101,6 +103,8 @@
     justify-content: space-between;
     padding: 16px 24px;
     gap: 16px;
+    margin: auto;
+    max-width: 1280px;
 
     > .home-btn {
       > img {
@@ -158,13 +162,15 @@
     }
   }
   > footer {
+    background-color: #efefef;
+    border-top: 1px solid #cccccc;
     > div.footer-content {
+      margin: auto;
+      max-width: 1280px;
       padding: 36px 24px;
       display: flex;
       justify-content: space-between;
       gap: 16px;
-      background-color: #efefef;
-      border-top: 1px solid #cccccc;
 
       > div {
         &:nth-child(2) {

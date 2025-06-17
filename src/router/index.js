@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { auth, db } from "../lib/firebase";
-import HomeView from "../views/HomeView.vue";
 import AdminMainView from "../views/admin/AdminMainView.vue";
 import AdminLoginView from "@/views/admin/AdminLoginView.vue";
 import { doc, getDoc } from "firebase/firestore";
@@ -11,11 +10,21 @@ import AdminProductListView from "@/views/admin/product/AdminProductListView.vue
 import AdminProductDeletedListView from "@/views/admin/product/AdminProductDeletedListView.vue";
 import AdminProductCategoryView from "@/views/admin/product/AdminProductCategoryView.vue";
 import AdminProductCategoryDetailView from "@/views/admin/product/AdminProductCategoryDetailView .vue";
+import ConsumerHomeView from "@/views/consumer/ConsumerHomeView.vue";
+import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
 const routes = [
   {
     path: "/",
     name: "home",
-    component: HomeView,
+    component: ConsumerLayout,
+    redirect: "/home",
+    children: [
+      {
+        path: "home",
+        name: "consumer-home",
+        component: ConsumerHomeView,
+      },
+    ],
   },
   {
     path: "/login",

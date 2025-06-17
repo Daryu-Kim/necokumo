@@ -9,20 +9,46 @@
           >{{ item.title }}</router-link
         >
       </nav>
-      <div class="top-banner-box">
-        <swiper :space-between="24">
-          <swiper-slide v-for="item in topBannerDatas" :key="item.id">
-            <router-link :to="item.redirect">
-              <img :src="item.url" />
-            </router-link>
-          </swiper-slide>
-        </swiper>
-        <div class="topic-box">
-          <ul>
-            <li>test</li>
-            <li>test</li>
-            <li>test</li>
-          </ul>
+      <div>
+        <div class="top-banner-box">
+          <swiper class="banner-container">
+            <swiper-slide
+              class="banner-slide"
+              v-for="(item, index) in topBannerDatas"
+              :key="index"
+            >
+              <router-link :to="item.redirect">
+                <img :src="item.url" />
+              </router-link>
+            </swiper-slide>
+          </swiper>
+          <div class="topic-box">
+            <ul>
+              <li>
+                <router-link to=""
+                  >testouqwefpoijqweffoiuqwhofuiwehuoif</router-link
+                >
+              </li>
+              <li>
+                <router-link to=""
+                  >testouiqhwfoiuqwhefoiuqwhofuiwehuoif</router-link
+                >
+              </li>
+              <li>
+                <router-link to=""
+                  >testouiqhwfoiuqwhefoiuqwhofuiwehuoif</router-link
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="top-news-box">
+          <div class="news-container"></div>
+          <div class="sale-container">
+            <div class="sale-box"></div>
+            <div class="sale-banner"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -61,7 +87,7 @@ onMounted(async () => {
 .consumer-home {
   padding: 16px 24px;
   margin: auto;
-  max-width: 1280px;
+  max-width: 1200px;
   > .main-content-box {
     display: flex;
     gap: 24px;
@@ -71,7 +97,7 @@ onMounted(async () => {
       flex-direction: column;
       border-radius: 8px;
       background-color: #007bff;
-      width: 180px;
+      min-width: 180px;
       > a {
         width: 100%;
         height: 42px;
@@ -101,12 +127,96 @@ onMounted(async () => {
       }
     }
 
-    > .top-banner-box {
+    > div {
       display: flex;
-      gap: 8px;
-      img {
-        border-radius: 8px;
-        width: 640px;
+      flex-direction: column;
+      > .top-banner-box {
+        flex: 1;
+        display: flex;
+        gap: 16px;
+        height: fit-content;
+
+        > .banner-container {
+          height: fit-content;
+          .banner-slide {
+            > a {
+              width: fit-content;
+              height: fit-content;
+              > img {
+                width: 720px;
+                border-radius: 8px;
+                object-fit: cover;
+              }
+            }
+          }
+        }
+
+        > .topic-box {
+          padding: 8px;
+          background-color: #efefef;
+          border-radius: 8px;
+          width: 212px;
+          height: 128px;
+
+          > ul {
+            list-style: disc;
+            padding-left: 24px;
+            font-size: 14px;
+
+            > li {
+              word-wrap: break-word;
+              white-space: normal;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              &:not(:first-child) {
+                margin-top: 2px;
+              }
+
+              > a:hover {
+                text-decoration: underline;
+              }
+            }
+          }
+        }
+      }
+
+      > .top-news-box {
+        display: flex;
+        gap: 16px;
+        flex: 1;
+        > .news-container {
+          border-radius: 8px;
+          flex: 2;
+          border: 1px solid #efefef;
+          height: 100%;
+        }
+
+        > .sale-container {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          height: 100%;
+          > .sale-box {
+            flex: 1;
+            border-radius: 8px;
+            border: 1px solid #efefef;
+          }
+
+          > .sale-banner {
+            border-radius: 8px;
+            height: 42px;
+            > a {
+              width: fit-content;
+              height: fit-content;
+              > img {
+                width: 720px;
+                border-radius: 8px;
+                object-fit: cover;
+              }
+            }
+          }
+        }
       }
     }
   }

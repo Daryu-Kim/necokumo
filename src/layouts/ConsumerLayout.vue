@@ -84,7 +84,7 @@
     justify-content: end;
     padding: 8px 24px;
     margin: auto;
-    max-width: 1280px;
+    min-width: 1200px;
     gap: 8px;
 
     > a {
@@ -104,7 +104,8 @@
     padding: 16px 24px;
     gap: 16px;
     margin: auto;
-    max-width: 1280px;
+    max-width: 1200px;
+    min-width: 1200px;
 
     > .home-btn {
       > img {
@@ -166,9 +167,10 @@
     border-top: 1px solid #cccccc;
     > div.footer-content {
       margin: auto;
-      max-width: 1280px;
+      min-width: 1200px;
       padding: 36px 24px;
       display: flex;
+      max-width: 1200px;
       justify-content: space-between;
       gap: 16px;
 
@@ -200,6 +202,8 @@
     > div.copyright {
       background-color: black;
       padding: 6px;
+      margin: auto;
+      min-width: 1200px;
       > p {
         color: white;
         font-size: 12px;

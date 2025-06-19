@@ -368,6 +368,7 @@ watch(() => route.query.category, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
     await fetchChildCategoryData();
     await fetchProductData();
+    await fetchFilteredData();
   }
 });
 

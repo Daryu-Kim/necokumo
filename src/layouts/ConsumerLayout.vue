@@ -1,6 +1,10 @@
 <template>
   <div class="consumer-layout">
     <div class="header">
+      <a href="https://instagram.com/necokumo.shop" target="_blank"
+        >인스타그램</a
+      >
+      <a href="https://discord.gg/mGWqRdz4bN" target="_blank">디스코드</a>
       <router-link to="">판매자</router-link>
       <router-link to="">관리자</router-link>
     </div>

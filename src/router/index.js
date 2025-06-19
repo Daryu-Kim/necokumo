@@ -12,6 +12,7 @@ import AdminProductCategoryView from "@/views/admin/product/AdminProductCategory
 import AdminProductCategoryDetailView from "@/views/admin/product/AdminProductCategoryDetailView .vue";
 import ConsumerHomeView from "@/views/consumer/ConsumerHomeView.vue";
 import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
+import ConsumerProductList from "@/views/consumer/ConsumerProductList.vue";
 const routes = [
   {
     path: "/",
@@ -23,6 +24,11 @@ const routes = [
         path: "home",
         name: "consumer-home",
         component: ConsumerHomeView,
+      },
+      {
+        path: "list",
+        name: "consumer-product-list",
+        component: ConsumerProductList,
       },
     ],
   },

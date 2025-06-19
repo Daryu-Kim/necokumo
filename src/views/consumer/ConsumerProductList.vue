@@ -241,7 +241,7 @@ const childCategoryDatas = ref([]);
 const productDatas = ref([]);
 const topBannerDatas = ref([]);
 const orderFilterData = ref("popular");
-const viewFilterData = ref("list");
+const viewFilterData = ref("grid");
 const categoryRows = computed(() => {
   const result = []
   const chunkSize = 5
@@ -621,6 +621,100 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
         > .product {
           padding: 8px;
           border: 1px solid #efefef;
+
+          > a {
+            > img {
+              width: 100%;
+              aspect-ratio: 1 / 1;
+              border-radius: 8px;
+              object-fit: cover;
+              border: 1px solid #efefef;
+              padding: 4px;
+            }
+          }
+
+          > .desc-container {
+            margin-top: 8px;
+            > .name-container {
+              display: flex;
+              gap: 8px;
+              > p {
+                color: white;
+                font-size: 12px;
+                min-width: 24px !important;
+                width: 24px !important;
+                height: 24px !important;
+                text-align: center;
+                line-height: 24px;
+                font-weight: 700;
+              }
+
+              > a {
+                font-weight: 700;
+                font-size: 16px;
+              }
+            }
+
+            > .description-container {
+              margin-top: 16px;
+              > p {
+                font-size: 14px;
+                font-weight: 500;
+                word-break: keep-all;
+              }
+            }
+
+            > .footer-container {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-top: 12px;
+              > p,
+              button {
+                color: #999;
+                font-size: 12px;
+                font-weight: 500;
+
+                > span {
+                  color: #007bff;
+                }
+              }
+              > hr {
+                width: 1px;
+                height: 12px;
+              }
+            }
+          }
+
+          > .price-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            > .origin-price {
+              display: none;
+            }
+
+            > .sell-price {
+              font-size: 18px;
+              font-weight: 700;
+              margin-top: 2px;
+
+              > span {
+                font-size: 14px;
+                color: #007bff;
+                margin-right: 2px;
+              }
+            }
+
+            > .fee-price {
+              font-size: 14px;
+              font-weight: 500;
+              color: #666;
+              text-align: end;
+              margin-top: 8px;
+            }
+          }
         }
       }
     }

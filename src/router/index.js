@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { auth, db } from "../lib/firebase";
 import AdminMainView from "../views/admin/AdminMainView.vue";
-import AdminLoginView from "@/views/admin/AdminLoginView.vue";
+import LoginView from "@/views/LoginView.vue";
 import { doc, getDoc } from "firebase/firestore";
 import AdminProductDashboardView from "@/views/admin/product/AdminProductDashboardView.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
@@ -13,6 +13,7 @@ import AdminProductCategoryDetailView from "@/views/admin/product/AdminProductCa
 import ConsumerHomeView from "@/views/consumer/ConsumerHomeView.vue";
 import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
 import ConsumerProductList from "@/views/consumer/ConsumerProductList.vue";
+import JoinView from "@/views/JoinView.vue";
 const routes = [
   {
     path: "/",
@@ -26,15 +27,21 @@ const routes = [
         component: ConsumerHomeView,
       },
       {
+        path: "/login",
+        name: "login",
+        component: LoginView,
+      },
+      {
+        path: "/join",
+        name: "join",
+        component: JoinView,
+      },
+      {
         path: "list",
         name: "consumer-product-list",
         component: ConsumerProductList,
       },
     ],
-  },
-  {
-    path: "/login",
-    name: "login",
   },
   {
     path: "/admin",
@@ -87,11 +94,6 @@ const routes = [
       },
     ],
   },
-  {
-    path: "/admin/login",
-    name: "admin-login",
-    component: AdminLoginView,
-  },
 ];
 
 const router = createRouter({
@@ -119,7 +121,7 @@ router.beforeEach((to, from, next) => {
         }
       } else {
         alert("관리자 로그인 후 이용가능합니다.");
-        next({ path: "/admin/login" });
+        next({ path: "/login" });
       }
     });
   } else {

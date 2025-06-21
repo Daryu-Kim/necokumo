@@ -28,7 +28,7 @@
           <span class="material-icons-outlined"> favorite_border </span>
           <p>관심</p>
         </router-link>
-        <router-link to="">
+        <router-link to="/login">
           <span class="material-icons-outlined"> person </span>
           <p>로그인</p>
         </router-link>

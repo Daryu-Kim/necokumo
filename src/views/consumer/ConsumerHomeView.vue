@@ -76,7 +76,6 @@ onMounted(async () => {
         const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
         topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, url: doc.data().url, redirect: doc.data().redirect }));
         console.log("Top Banner Data Fetched Successfully!: ", topBannerDatas.value);
-
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }

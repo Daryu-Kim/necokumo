@@ -5,8 +5,8 @@
         >인스타그램</a
       >
       <a href="https://discord.gg/mGWqRdz4bN" target="_blank">디스코드</a>
-      <router-link to="">판매자</router-link>
-      <router-link to="">관리자</router-link>
+      <router-link to="/company">판매자</router-link>
+      <router-link to="/admin">관리자</router-link>
     </div>
     <hr />
     <header>
@@ -20,17 +20,21 @@
         </button>
       </div>
       <div class="user-info">
-        <router-link to="">
-          <span class="material-icons-outlined"> schedule </span>
-          <p>최근</p>
-        </router-link>
-        <router-link to="">
-          <span class="material-icons-outlined"> favorite_border </span>
-          <p>관심</p>
-        </router-link>
-        <router-link to="/login">
+        <router-link to="/mypage" v-if="isLogged">
           <span class="material-icons-outlined"> person </span>
-          <p>로그인</p>
+          <p>MY</p>
+        </router-link>
+        <router-link to="" v-if="isLogged">
+          <span class="material-icons-outlined"> shopping_cart </span>
+          <p>CART</p>
+        </router-link>
+        <button @click="logout" v-if="isLogged">
+          <span class="material-icons-outlined"> logout </span>
+          <p>LOGOUT</p>
+        </button>
+        <router-link to="/login" v-else>
+          <span class="material-icons-outlined"> login </span>
+          <p>LOGIN</p>
         </router-link>
       </div>
     </header>
@@ -78,7 +82,36 @@
   </div>
 </template>
 
-<script setup lang="js"></script>
+<script setup lang="js">
+import { auth, db } from '@/lib/firebase';
+import router from '@/router';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { computed, ref, onMounted } from 'vue';
+
+const currentUser = ref(null);
+
+onMounted(async () => {
+  auth.onAuthStateChanged(async (user) => {
+    currentUser.value = user;
+    if (user) {
+      await updateDoc(doc(db, "users", user.uid), {
+        visitedAt: Timestamp.fromDate(new Date()),
+      });
+    }
+  });
+});
+
+const isLogged = computed(() => currentUser.value !== null);
+
+const logout = async () => {
+  try {
+    await auth.signOut();
+    router.push("/");
+  } catch (error) {
+    console.error('Failed to log out:', error);
+  }
+}
+</script>
 
 <style lang="scss" scoped>
 .consumer-layout {
@@ -150,11 +183,15 @@
       align-items: center;
       gap: 36px;
 
-      > a {
+      > a,
+      button {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 4px;
+        background: none;
+        border: none;
+        cursor: pointer;
 
         > span {
           font-size: 36px;

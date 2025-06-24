@@ -210,19 +210,18 @@
           </div>
           <div class="price-container">
             <p class="origin-price">
-              {{ item.productSellPrice.toLocaleString() }}
+              {{ item.productSellPrice.toLocaleString() }}원
             </p>
-            <router-link :to="`/detail?id=${item.id}`" class="sell-price">
-              <span>할인가</span>
-              {{ (item.productSellPrice * 0.9).toLocaleString() }}원
-            </router-link>
-            <p class="fee-price">
-              {{
-                item.productSellPrice * 0.9 >= 60000
-                  ? "배송비 무료"
-                  : "배송비 4,000원"
-              }}
-            </p>
+            <div class="sell-price-container">
+              <router-link :to="`/detail?id=${item.id}`" class="sell-price">
+                <span>계좌이체가</span>
+                {{ (item.productSellPrice * 0.9).toLocaleString() }}원
+              </router-link>
+              <router-link :to="`/detail?id=${item.id}`" class="sell-price">
+                <span>카드결제가</span>
+                {{ (item.productSellPrice * 0.95).toLocaleString() }}원
+              </router-link>
+            </div>
           </div>
         </div>
       </div>
@@ -241,7 +240,7 @@ const childCategoryDatas = ref([]);
 const productDatas = ref([]);
 const topBannerDatas = ref([]);
 const orderFilterData = ref("popular");
-const viewFilterData = ref("grid");
+const viewFilterData = ref("list");
 const categoryRows = computed(() => {
   const result = []
   const chunkSize = 5
@@ -592,15 +591,20 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
               text-align: end;
             }
 
-            > .sell-price {
-              font-size: 18px;
-              font-weight: 700;
-              margin-top: 2px;
+            > .sell-price-container {
+              display: flex;
+              flex-direction: column;
+              text-align: end;
+              > .sell-price {
+                font-size: 18px;
+                font-weight: 700;
+                margin-top: 2px;
 
-              > span {
-                font-size: 14px;
-                color: #007bff;
-                margin-right: 2px;
+                > span {
+                  font-size: 14px;
+                  color: #007bff;
+                  margin-right: 2px;
+                }
               }
             }
 
@@ -688,32 +692,29 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
           }
 
           > .price-container {
+            margin-top: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 16px;
+
             > .origin-price {
               display: none;
             }
 
-            > .sell-price {
-              font-size: 18px;
-              font-weight: 700;
-              margin-top: 2px;
+            > .sell-price-container {
+              display: flex;
+              flex-direction: column;
+              > .sell-price {
+                font-size: 18px;
+                font-weight: 700;
+                margin-top: 2px;
 
-              > span {
-                font-size: 14px;
-                color: #007bff;
-                margin-right: 2px;
+                > span {
+                  font-size: 14px;
+                  color: #007bff;
+                  margin-right: 2px;
+                }
               }
-            }
-
-            > .fee-price {
-              font-size: 14px;
-              font-weight: 500;
-              color: #666;
-              text-align: end;
-              margin-top: 8px;
             }
           }
         }

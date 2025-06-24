@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { auth, db } from "../lib/firebase";
 import AdminMainView from "../views/admin/AdminMainView.vue";
 import LoginView from "@/views/LoginView.vue";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, where, getDocs, query } from "firebase/firestore";
 import AdminProductDashboardView from "@/views/admin/product/AdminProductDashboardView.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 import AdminProductAddView from "@/views/admin/product/AdminProductAddView.vue";
@@ -13,7 +13,8 @@ import AdminProductCategoryDetailView from "@/views/admin/product/AdminProductCa
 import ConsumerHomeView from "@/views/consumer/ConsumerHomeView.vue";
 import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
 import ConsumerProductList from "@/views/consumer/ConsumerProductList.vue";
-import JoinView from "@/views/JoinView.vue";
+import AdminConsumerDashboardView from "@/views/admin/consumer/AdminConsumerDashboardView.vue";
+import AdminConsumerListView from "@/views/admin/consumer/AdminConsumerListView.vue";
 const routes = [
   {
     path: "/",
@@ -32,14 +33,19 @@ const routes = [
         component: LoginView,
       },
       {
-        path: "/join",
-        name: "join",
-        component: JoinView,
-      },
-      {
         path: "list",
         name: "consumer-product-list",
         component: ConsumerProductList,
+      },
+      {
+        path: "mypage",
+        name: "consumer-mypage",
+        meta: { requiresAuthConsumer: true },
+      },
+      {
+        path: "cart",
+        name: "consumer-cart",
+        meta: { requiresAuthConsumer: true },
       },
     ],
   },
@@ -92,6 +98,23 @@ const routes = [
           },
         ],
       },
+      {
+        path: "consumer",
+        name: "admin-consumer",
+        redirect: "/admin/consumer/dashboard",
+        children: [
+          {
+            path: "dashboard",
+            name: "admin-consumer-dashboard",
+            component: AdminConsumerDashboardView,
+          },
+          {
+            path: "list",
+            name: "admin-consumer-list",
+            component: AdminConsumerListView,
+          },
+        ],
+      },
     ],
   },
 ];
@@ -102,13 +125,69 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  if (to.matched.some((record) => record.meta.requiresAuthConsumer)) {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      unsubscribe(); // Unsubscribe the listener immediately after getting the result
+      if (user) {
+        next();
+      } else {
+        alert("로그인 후 이용가능합니다.");
+        next({ path: "/login" });
+      }
+    });
+  } else {
+    next();
+  }
+});
+
+router.beforeEach((to, from, next) => {
+  if (to.matched.some((record) => record.meta.requiresAuthCompany)) {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      unsubscribe(); // Unsubscribe the listener immediately after getting the result
+      if (user) {
+        try {
+          const userDocs = await getDocs(
+            query(
+              collection(db, "managers"),
+              where("uid", "==", user.uid),
+              where("role", "==", "company")
+            )
+          );
+          if (userDocs.size > 0) {
+            next();
+          } else {
+            console.warn(`No document found for user ID: ${user.uid}`);
+            alert("협력사만 접근할 수 있습니다.");
+            next({ path: "/" });
+          }
+        } catch (error) {
+          alert("협력사만 접근할 수 있습니다.");
+          next({ path: "/" });
+        }
+      } else {
+        alert("협력사 로그인 후 이용가능합니다.");
+        next({ path: "/login" });
+      }
+    });
+  } else {
+    next();
+  }
+});
+
+router.beforeEach((to, from, next) => {
   if (to.matched.some((record) => record.meta.requiresAuthAdmin)) {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       unsubscribe(); // Unsubscribe the listener immediately after getting the result
       if (user) {
         try {
-          const userDoc = await getDoc(doc(db, "managers", user.uid));
-          if (userDoc.exists()) {
+          const userDocs = await getDocs(
+            query(
+              collection(db, "managers"),
+              where("uid", "==", user.uid),
+              where("role", "==", "admin")
+            )
+          );
+          if (userDocs.size > 0) {
             next();
           } else {
             console.warn(`No document found for user ID: ${user.uid}`);

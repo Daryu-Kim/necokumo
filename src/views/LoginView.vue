@@ -37,10 +37,10 @@
       </div>
       <div class="form">
         <input
-          type="email"
+          type="text"
           v-model="email"
           required
-          placeholder="이메일 주소를 입력하세요."
+          placeholder="아이디 또는 이메일 주소"
         />
       </div>
       <div class="form">
@@ -48,46 +48,46 @@
           type="password"
           v-model="password"
           required
-          placeholder="비밀번호를 입력하세요."
+          placeholder="비밀번호 [초기 비밀번호: '-' 제외 전화번호]"
         />
       </div>
       <button type="submit">로그인</button>
       <div class="tool-container">
-        <button @click="openSearchIdDialog">이메일 찾기</button>
+        <button @click="openSearchIdDialog">아이디 / 이메일 찾기</button>
         <hr />
-        <button @click="openSearchPwDialog">비밀번호 찾기</button>
-        <hr />
-        <router-link to="/join">회원가입</router-link>
+        <button @click="openSearchPwDialog">비밀번호 초기화</button>
       </div>
+      <p>기존 네코쿠모 사이트 계정 이메일로 로그인 가능합니다!</p>
     </form>
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
     <dialog ref="searchIdDialogRef">
       <header>
-        <h2>이메일 찾기</h2>
+        <h2>아이디 / 이메일 찾기</h2>
         <button @click="closeSearchIdDialog">
           <span class="material-icons-round">close</span>
         </button>
       </header>
       <main>
         <input type="text" v-model="searchIdName" placeholder="이름" />
+        <input type="date" v-model="searchIdBirthday" placeholder="생년월일" />
         <input
           type="text"
           v-model="searchIdPhone"
           placeholder="전화번호 (- 없이 입력)"
         />
-        <button @click="searchId">이메일 찾기</button>
+        <button @click="searchId">아이디 / 이메일 찾기</button>
       </main>
     </dialog>
     <dialog ref="searchPwDialogRef">
       <header>
-        <h2>비밀번호 찾기</h2>
+        <h2>비밀번호 초기화</h2>
         <button @click="closeSearchPwDialog">
           <span class="material-icons-round">close</span>
         </button>
       </header>
       <main>
         <input type="text" v-model="searchPwEmail" placeholder="이메일 주소" />
-        <button @click="searchPw">비밀번호 찾기</button>
+        <button @click="searchPw">비밀번호 초기화</button>
       </main>
     </dialog>
   </div>
@@ -106,10 +106,11 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 const email = ref("");
 const password = ref("");
 const errorMessage = ref("");
-const role = ref("");
+const role = ref("consumer");
 const searchIdDialogRef = ref(null);
 const searchPwDialogRef = ref(null);
 const searchIdName = ref("");
+const searchIdBirthday = ref("");
 const searchIdPhone = ref("");
 const searchPwEmail = ref("");
 
@@ -140,13 +141,15 @@ const searchId = async () => {
       query(
         collection(db, "users"),
         where("userName", "==", searchIdName.value),
-        where("userPhone", "==", searchIdPhone.value)
+        where("userBirthday", "==", searchIdBirthday.value),
+        where("userPhone", "==", searchIdPhone.value.replaceAll("-", ""))
       )
     );
-    console.log(doc);
     if (doc.size > 0) {
       alert(
-        "고객님의 아이디는 아래와 같습니다!\n" + doc.docs[0].data().userEmail
+        `고객님의 아이디와 이메일은 아래와 같습니다!\n\n아이디: ${
+          doc.docs[0].data().userId
+        }\n이메일: ${doc.docs[0].data().userEmail}`
       );
       email.value = doc.docs[0].data().userEmail;
       searchIdDialogRef.value.close();
@@ -171,7 +174,19 @@ const searchPw = async () => {
 
 const login = async () => {
   try {
-    await signInWithEmailAndPassword(auth, email.value, password.value);
+    let inputEmail = email.value.trim();
+    if (!inputEmail.includes("@")) {
+      const data = await getDocs(
+        query(collection(db, "users"), where("userId", "==", inputEmail))
+      );
+      if (data.size > 0) {
+        inputEmail = data.docs[0].data().userEmail;
+      } else {
+        errorMessage.value = "일치하는 정보가 없습니다.";
+        return;
+      }
+    }
+    await signInWithEmailAndPassword(auth, inputEmail, password.value);
     switch (role.value) {
       case "consumer":
         router.push("/");
@@ -306,6 +321,13 @@ const login = async () => {
       > hr {
         height: 12px;
       }
+    }
+
+    > p {
+      font-size: 14px;
+      margin-top: 8px;
+      font-weight: 700;
+      color: #007bff;
     }
   }
 

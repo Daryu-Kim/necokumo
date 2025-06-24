@@ -3,7 +3,9 @@
     <NavComponent />
     <div class="admin-content">
       <ShortcutComponent />
-      <router-view />
+      <div class="content-container">
+        <router-view />
+      </div>
     </div>
   </div>
 </template>
@@ -26,6 +28,11 @@ import ShortcutComponent from '@/components/admin/ShortcutComponent.vue';
 
     &::-webkit-scrollbar {
       display: none;
+    }
+
+    > .content-container {
+      max-width: 960px;
+      margin: 0 auto;
     }
   }
 }

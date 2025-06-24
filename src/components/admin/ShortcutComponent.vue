@@ -9,7 +9,7 @@
       <p>자사몰</p>
     </a>
     <a
-      href="https://necokumo.web.app/"
+      href="https://냥이네구름가게.shop/"
       target="_blank"
       class="admin-shortcut-item primary"
     >

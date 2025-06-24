@@ -3,11 +3,12 @@ import {
   doc,
   getDocs,
   query,
+  setDoc,
   Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { auth, db } from "./firebase";
 import axios from "axios";
 import Papa from "papaparse";
 import JSZip from "jszip";
@@ -69,6 +70,48 @@ function parseCSVFile(file) {
     reader.onerror = () => reject(reader.error);
     reader.readAsText(file);
   });
+}
+
+export async function matchConsumerByEmail(file) {
+  try {
+    if (!file) {
+      alert("회원 정보 CSV 파일을 업로드하세요!");
+      return false;
+    }
+
+    // 👉 1. CSV 파싱을 기다림
+    const csvData = await parseCSVFile(file);
+    console.log("✅ 회원 목록 불러옴");
+
+    // 👉 2. 매칭 및 업데이트
+    for (let item of csvData) {
+      console.log("🔍 회원 정보 동기화 시작:", item);
+
+      const matchingConsumers = await getDocs(query(collection(db, "users"), where("userEmail", "==", item.이메일)));
+      let currentUserUid = "";
+      if (matchingConsumers.size > 0) {
+        // 가입 처리 되어있는 기존 회원
+        currentUserUid = matchingConsumers.docs[0].id;
+      } else {
+        // 가입 처리 되어있지 않은 회원
+        console.warn(`❌ 가입되어 있지 않음: ${item.이름} / ${item.이메일}`);
+        // create a new user 작업 필요.
+        currentUserUid = auth.currentUser.uid;
+      }
+
+      await setDoc(doc(db, "users", currentUserUid), {
+        userId: item.아이디,
+      }, { merge: true });
+
+      console.log(`✔️ 회원 정보 동기화 완료: ${item.이름} → ${item.이메일}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("❌ 회원 정보 동기화 오류:", error);
+    alert("회원 정보를 동기화할 수 없습니다!");
+    return false;
+  }
 }
 
 export async function matchProductByCode(file) {

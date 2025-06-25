@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   setDoc,
@@ -13,6 +14,12 @@ import axios from "axios";
 import Papa from "papaparse";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+import { sleep } from "./utils";
 
 async function parseCSVFromUrl(url) {
   const response = await axios.get(url);
@@ -83,11 +90,16 @@ export async function matchConsumerByEmail(file) {
     const csvData = await parseCSVFile(file);
     console.log("✅ 회원 목록 불러옴");
 
+    const originalUserUid = auth.currentUser.uid;
+    await signOut(auth);
+
     // 👉 2. 매칭 및 업데이트
     for (let item of csvData) {
       console.log("🔍 회원 정보 동기화 시작:", item);
 
-      const matchingConsumers = await getDocs(query(collection(db, "users"), where("userEmail", "==", item.이메일)));
+      const matchingConsumers = await getDocs(
+        query(collection(db, "users"), where("userEmail", "==", item.이메일))
+      );
       let currentUserUid = "";
       if (matchingConsumers.size > 0) {
         // 가입 처리 되어있는 기존 회원
@@ -96,16 +108,75 @@ export async function matchConsumerByEmail(file) {
         // 가입 처리 되어있지 않은 회원
         console.warn(`❌ 가입되어 있지 않음: ${item.이름} / ${item.이메일}`);
         // create a new user 작업 필요.
-        currentUserUid = auth.currentUser.uid;
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          item.이메일,
+          item.휴대폰번호.replaceAll("-", "")
+        );
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          isAdmin: false,
+        });
+        currentUserUid = userCredential.user.uid;
       }
 
-      await setDoc(doc(db, "users", currentUserUid), {
-        userId: item.아이디,
-      }, { merge: true });
+      const createdAtDate = item["회원 가입일"]
+        .split("-")
+        .map((date) => parseInt(date));
+      const createdAtTime = item["가입시간"]
+        .split(":")
+        .map((time) => parseInt(time));
 
+      await setDoc(
+        doc(db, "users", currentUserUid),
+        {
+          userId: item.아이디,
+          userEmail: item.이메일,
+          userName: item.이름,
+          userAge: parseInt(item.나이),
+          userBirthday: item.생년월일,
+          userGender: item.성별,
+          userCarrier: item.추가사항1,
+          userPhone: item.휴대폰번호.replaceAll("-", ""),
+          userGrade: item.회원등급,
+          userPostCode: item.우편번호,
+          userAddress1: item.주소1,
+          userAddress2: item.주소2,
+          userActualPaymentAmount: parseInt(item.실결제금액),
+          userTotalActualOrderCount: parseInt(item["총 실주문건수"]),
+          userAvailablePoint: parseInt(item["사용가능 적립금"]),
+          userTotalUsedPoint: parseInt(item["총 사용 적립금"]),
+          userTotalPoint: parseInt(item.총적립금),
+          userReferralId: item["추천인 아이디"],
+          userRefundAccount: item["환불계좌정보(은행/계좌/예금주)"].replaceAll(
+            "-",
+            ""
+          ),
+          createdAt: Timestamp.fromDate(
+            new Date(
+              createdAtDate[0],
+              createdAtDate[1] - 1,
+              createdAtDate[2],
+              createdAtTime[0],
+              createdAtTime[1],
+              createdAtTime[2]
+            )
+          ),
+        },
+        { merge: true }
+      );
+      await signOut(auth);
       console.log(`✔️ 회원 정보 동기화 완료: ${item.이름} → ${item.이메일}`);
+      await sleep(50);
     }
 
+    const originalUser = (
+      await getDoc(doc(db, "users", originalUserUid))
+    ).data();
+    await signInWithEmailAndPassword(
+      auth,
+      originalUser.userEmail,
+      originalUser.userPassword
+    );
     return true;
   } catch (error) {
     console.error("❌ 회원 정보 동기화 오류:", error);

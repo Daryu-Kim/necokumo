@@ -27,6 +27,7 @@ import DataTable from "frappe-datatable";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { matchConsumerByEmail } from "@/lib/cafe24";
+import { formatDate } from "@/lib/utils";
 
 const tableRef = ref(null);
 const dataTable = ref(null);
@@ -71,7 +72,7 @@ onMounted(async () => {
     const item = doc.data();
     return [
       {
-        content: `<a href="${window.location.origin}/admin/consumer/detail?id=${doc.id}">${item.userId}</a>`,
+        content: `<a href="${window.location.origin}/admin/consumer/detail?id=${doc.id}" style="color: #007bff; font-weight: 700">${item.userId}</a>`,
         editable: false,
       },
       {
@@ -119,23 +120,23 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: item.userActualPaymentAmount,
+        content: `${item.userActualPaymentAmount.toLocaleString()}원`,
         editable: false,
       },
       {
-        content: item.userTotalActualOrderCount,
+        content: `${item.userTotalActualOrderCount.toLocaleString()}건`,
         editable: false,
       },
       {
-        content: item.userAvailablePoint,
+        content: `${item.userAvailablePoint.toLocaleString()} 냥코인`,
         editable: false,
       },
       {
-        content: item.userTotalUsedPoint,
+        content: `${item.userTotalUsedPoint.toLocaleString()} 냥코인`,
         editable: false,
       },
       {
-        content: item.userTotalPoint,
+        content: `${item.userTotalPoint.toLocaleString()} 냥코인`,
         editable: false,
       },
       {
@@ -143,15 +144,18 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: item.userRefundAccount,
+        content: item.userRefundAccount.split("/"),
+        editable: false,
+        format: (value) => {
+          return `<p>${value.join("<br/>")}</p>`;
+        },
+      },
+      {
+        content: formatDate(new Date(item.createdAt.seconds * 1000)),
         editable: false,
       },
       {
-        content: item.visitedAt,
-        editable: false,
-      },
-      {
-        content: item.createdAt,
+        content: formatDate(item.createdAt.toDate()),
         editable: false,
       },
     ];
@@ -171,14 +175,14 @@ onMounted(async () => {
         name: "이메일",
         editable: false,
         resizable: false,
-        width: 192,
+        width: 216,
         align: "center",
       },
       {
         name: "이름",
         editable: false,
         resizable: false,
-        width: 96,
+        width: 72,
         align: "center",
       },
       {
@@ -206,35 +210,35 @@ onMounted(async () => {
         name: "통신사",
         editable: false,
         resizable: false,
-        width: 160,
+        width: 128,
         align: "center",
       },
       {
         name: "전화번호",
         editable: false,
         resizable: false,
-        width: 144,
+        width: 128,
         align: "center",
       },
       {
         name: "회원등급",
         editable: false,
         resizable: false,
-        width: 192,
+        width: 112,
         align: "center",
       },
       {
         name: "우편번호",
         editable: false,
         resizable: false,
-        width: 128,
+        width: 96,
         align: "center",
       },
       {
         name: "주소1",
         editable: false,
         resizable: false,
-        width: 128,
+        width: 320,
         align: "center",
       },
       {
@@ -248,21 +252,21 @@ onMounted(async () => {
         name: "실결제금액",
         editable: false,
         resizable: false,
-        width: 128,
+        width: 112,
         align: "center",
       },
       {
         name: "총 실주문건",
         editable: false,
         resizable: false,
-        width: 128,
+        width: 108,
         align: "center",
       },
       {
         name: "사용가능 적립금",
         editable: false,
         resizable: false,
-        width: 128,
+        width: 136,
         align: "center",
       },
       {
@@ -290,7 +294,7 @@ onMounted(async () => {
         name: "환불계좌 정보",
         editable: false,
         resizable: false,
-        width: 128,
+        width: 144,
         align: "center",
       },
       {
@@ -312,7 +316,7 @@ onMounted(async () => {
     checkboxColumn: true,
     serialNoColumn: false,
     inlineFilters: true,
-    cellHeight: 48,
+    cellHeight: 84,
   });
 });
 </script>

@@ -11,7 +11,22 @@
       </nav>
       <div>
         <div class="top-banner-box">
-          <swiper class="banner-container">
+          <swiper class="banner-container" :space-between="16">
+            <swiper-slide class="banner-slide usd-price">
+              <div>
+                <h2>실시간 카드결제 환율</h2>
+                <span>({{ formatDate(new Date()) }} 한국 표준시 기준)</span>
+              </div>
+              <h3>1.00 USD</h3>
+              <div>
+                <h4>KRW</h4>
+                <div>
+                  <h1>{{ parseInt(usdPrice[0]).toLocaleString() }}</h1>
+                  <span>.</span>
+                  <h1>{{ parseInt(usdPrice[1]) }}</h1>
+                </div>
+              </div>
+            </swiper-slide>
             <swiper-slide
               class="banner-slide"
               v-for="(item, index) in topBannerDatas"
@@ -61,9 +76,12 @@ import { db } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
+import { fetchExchangeRate } from '@/lib/paypal';
+import { formatDate } from '@/lib/utils';
 
 const categoryDatas = ref([]);
 const topBannerDatas = ref([]);
+const usdPrice = ref([]);
 
 onMounted(async () => {
     try {
@@ -76,6 +94,12 @@ onMounted(async () => {
         const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
         topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, url: doc.data().url, redirect: doc.data().redirect }));
         console.log("Top Banner Data Fetched Successfully!: ", topBannerDatas.value);
+
+        console.log("Fetching USD Price...");
+        const usd = await fetchExchangeRate();
+        usdPrice.value = usd.toFixed(2).split(".");
+        console.log(typeof usdPrice.value[0])
+        console.log("USD Price Fetched Successfully!: ", usdPrice.value);
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
@@ -136,13 +160,54 @@ onMounted(async () => {
         height: fit-content;
 
         > .banner-container {
-          height: fit-content;
+          width: 720px;
+          height: 128px;
+
           .banner-slide {
+            width: 100%;
+            height: 100%;
+            &.usd-price {
+              background-color: #000;
+              border-radius: 8px;
+              color: white;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              padding: 12px 24px;
+              > h3 {
+                margin-top: 4px;
+                align-self: flex-end;
+              }
+
+              > div {
+                display: flex;
+                align-items: end;
+                gap: 8px;
+
+                > div {
+                  display: flex;
+                  gap: 4px;
+
+                  > h1 {
+                    background-color: white;
+                    color: #000;
+                    padding: 2px 4px;
+                  }
+
+                  > span {
+                    font-weight: 700;
+                    font-size: 32px;
+                  }
+                }
+              }
+            }
+
             > a {
               width: fit-content;
               height: fit-content;
               > img {
                 width: 720px;
+                height: 128px;
                 border-radius: 8px;
                 object-fit: cover;
               }

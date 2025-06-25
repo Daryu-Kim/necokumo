@@ -15,6 +15,7 @@ import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
 import ConsumerProductList from "@/views/consumer/ConsumerProductList.vue";
 import AdminConsumerDashboardView from "@/views/admin/consumer/AdminConsumerDashboardView.vue";
 import AdminConsumerListView from "@/views/admin/consumer/AdminConsumerListView.vue";
+import ConsumerProductDetail from "@/views/consumer/ConsumerProductDetailView.vue";
 const routes = [
   {
     path: "/",
@@ -36,6 +37,12 @@ const routes = [
         path: "list",
         name: "consumer-product-list",
         component: ConsumerProductList,
+      },
+      {
+        path: "product",
+        name: "consumer-product-detail",
+        component: ConsumerProductDetail,
+        meta: { requiresAuthConsumer: true },
       },
       {
         path: "mypage",

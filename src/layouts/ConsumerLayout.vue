@@ -79,6 +79,17 @@
         <p>Copyrightⓒ 2025 네코쿠모 폐쇄몰. All rights reserved.</p>
       </div>
     </footer>
+    <a
+      href="https://open.kakao.com/o/sUuhRGDh"
+      target="_blank"
+      style="position: fixed; bottom: 72px; right: 24px; z-index: 100"
+    >
+      <img
+        src="https://cdn.imweb.me/upload/S201612155852553de8738/636646a526ac3.png"
+        width="64px"
+        height="64px"
+      />
+    </a>
   </div>
 </template>
 

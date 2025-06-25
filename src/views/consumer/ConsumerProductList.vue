@@ -177,7 +177,7 @@
       </div>
       <div class="product-list-container" :class="viewFilterData">
         <div class="product" v-for="(item, index) in productDatas" :key="index">
-          <router-link :to="`/detail?id=${item.id}`">
+          <router-link :to="`/product?id=${item.id}`">
             <img :src="item.productThumbnailUrl.smallUrl" />
           </router-link>
           <div class="desc-container">
@@ -185,7 +185,7 @@
               <p :style="`background-color: ${index < 3 ? '#007bff' : '#aaa'}`">
                 {{ index + 1 }}
               </p>
-              <router-link :to="`/detail?id=${item.id}`">
+              <router-link :to="`/product?id=${item.id}`">
                 {{ item.productName }}
               </router-link>
             </div>
@@ -213,13 +213,19 @@
               {{ item.productSellPrice.toLocaleString() }}원
             </p>
             <div class="sell-price-container">
-              <router-link :to="`/detail?id=${item.id}`" class="sell-price">
+              <router-link :to="`/product?id=${item.id}`" class="sell-price">
                 <span>계좌이체가</span>
-                {{ (item.productSellPrice * 0.9).toLocaleString() }}원
-              </router-link>
-              <router-link :to="`/detail?id=${item.id}`" class="sell-price">
-                <span>카드결제가</span>
                 {{ (item.productSellPrice * 0.95).toLocaleString() }}원
+              </router-link>
+              <router-link :to="`/product?id=${item.id}`" class="sell-price">
+                <span>카드결제가</span>
+                {{
+                  (
+                    Math.ceil(
+                      ((item.productSellPrice * 0.97) / usdPrice) * 100
+                    ) / 100
+                  ).toLocaleString()
+                }}$
               </router-link>
             </div>
           </div>
@@ -234,7 +240,9 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { db } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy } from "firebase/firestore";
 import { useRoute } from 'vue-router';
+import { fetchExchangeRate } from '@/lib/paypal';
 
+const usdPrice = ref(0);
 const categoryDatas = ref([]);
 const childCategoryDatas = ref([]);
 const productDatas = ref([]);
@@ -343,6 +351,16 @@ async function fetchProductData() {
   }
 }
 
+async function fetchUSDPrice() {
+  try {
+    console.log("Fetching USD Price...");
+    usdPrice.value = await fetchExchangeRate();
+    console.log("USD Price Fetched Successfully!: ", usdPrice.value);
+  } catch (error) {
+    console.error('Failed to fetch data:', error);
+  }
+}
+
 onMounted(async () => {
     try {
         console.log("Fetching Category Data...");
@@ -353,6 +371,7 @@ onMounted(async () => {
         await fetchChildCategoryData();
         await fetchProductData();
         await fetchFilteredData();
+        await fetchUSDPrice();
 
         console.log("Fetching Top Banner Data...");
         const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
@@ -368,12 +387,14 @@ watch(() => route.query.category, async (newVal, oldVal) => {
     await fetchChildCategoryData();
     await fetchProductData();
     await fetchFilteredData();
+    await fetchUSDPrice();
   }
 });
 
 watch(() => orderFilterData.value, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
     await fetchFilteredData();
+    await fetchUSDPrice();
   }
 });
 </script>

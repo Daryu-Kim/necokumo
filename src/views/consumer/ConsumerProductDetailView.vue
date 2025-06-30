@@ -126,6 +126,7 @@
         </div>
       </div>
     </div>
+    <hr />
     <div class="product-detail-container">
       <img
         :src="item.imageOriginUrl"
@@ -176,13 +177,9 @@ async function buyNow() {
     const itemsToBuy = [];
 
     for (const selected of selectedOptions.value) {
-      const productOptionCode = productData.value.optionList.find(
-        (opt) => opt.optionName === `${productData.value.productName}/${selected.optionName}`
-      )?.optionCodeCafe24;
-
       itemsToBuy.push({
         productCode: route.query.id,
-        productOptionCode,
+        optionName: selected.optionName,
         count: selected.count,
       });
     }
@@ -212,15 +209,11 @@ async function addCart() {
     const cartList = userData.userProductCartList || [];
 
     selectedOptions.value.forEach((selected) => {
-      const productOptionCode = productData.value.optionList.find(
-        (opt) => opt.optionName === `${productData.value.productName}/${selected.optionName}`
-      )?.optionCodeCafe24;
-      console.log("Product Option Code:", productOptionCode);
 
       const existingItem = cartList.find(
         (item) =>
           item.productCode === route.query.id &&
-          item.productOptionCode === productOptionCode
+          item.optionName === selected.optionName
       );
 
       if (existingItem) {
@@ -228,7 +221,7 @@ async function addCart() {
       } else {
         cartList.push({
           productCode: route.query.id,
-          productOptionCode,
+          optionName: selected.optionName,
           count: selected.count,
         });
       }
@@ -479,8 +472,13 @@ watch(() => option.value, async (newVal, oldVal) => {
     }
   }
 
+  > hr {
+    margin: 48px 0;
+    border: none;
+    border-bottom: 1px solid #efefef;
+  }
+
   > .product-detail-container {
-    margin-top: 48px;
     display: flex;
     flex-direction: column;
     > img {

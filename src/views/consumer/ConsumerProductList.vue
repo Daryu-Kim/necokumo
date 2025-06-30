@@ -178,7 +178,7 @@
       <div class="product-list-container" :class="viewFilterData">
         <div class="product" v-for="(item, index) in productDatas" :key="index">
           <router-link :to="`/product?id=${item.id}`">
-            <img :src="item.productThumbnailUrl.smallUrl" />
+            <img :src="item.productThumbnailUrl.originalUrl" />
           </router-link>
           <div class="desc-container">
             <div class="name-container">

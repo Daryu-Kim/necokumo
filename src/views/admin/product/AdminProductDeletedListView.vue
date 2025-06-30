@@ -108,7 +108,7 @@ onMounted(async () => {
     const item = doc.data();
     return [
       {
-        content: item.productThumbnailUrl.smallUrl,
+        content: item.productThumbnailUrl.originalUrl,
         editable: false,
       },
       {

@@ -697,14 +697,18 @@ const addProduct = async () => {
     const uuid = await generateUUIDFromSeed(productName.value);
     console.log(uuid);
 
-    const thumbnailURL = await uploadImageByUrl(productThumbnail.value);
+    const thumbnailURL = await uploadImageByUrl(
+      "thumbnail",
+      productThumbnail.value,
+      uuid,
+      0
+    );
 
     const detailImageURL = await Promise.all(
-      Array.from(productDetailImages.value).map(async (item) => {
-        const data = await uploadImageByUrl(item);
+      Array.from(productDetailImages.value).map(async (item, index) => {
+        const data = await uploadImageByUrl("detail", item, uuid, index);
         return {
-          imageOriginUrl: data?.data?.image?.url || "",
-          imageDeleteUrl: data?.data?.delete_url || "",
+          imageOriginUrl: data?.imageOriginUrl,
         };
       })
     );
@@ -726,12 +730,10 @@ const addProduct = async () => {
       option1List: option1List.value,
       option2List: option2List.value,
       optionList: optionList.value,
-      productThumbnailUrl: {
-        originalUrl: thumbnailURL?.data?.image?.url || "",
-        smallUrl: thumbnailURL?.data?.thumb?.url || "",
-        deleteUrl: thumbnailURL?.data?.delete_url || "",
-      },
+      productThumbnailUrl: thumbnailURL,
       productDetailUrl: detailImageURL,
+      productLikeCount: 0,
+      productReviews: [],
       createdBy: auth.currentUser.uid,
       createdAt: Timestamp.fromDate(new Date()),
       updatedAt: Timestamp.fromDate(new Date()),

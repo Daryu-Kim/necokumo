@@ -17,6 +17,10 @@ import AdminConsumerDashboardView from "@/views/admin/consumer/AdminConsumerDash
 import AdminConsumerListView from "@/views/admin/consumer/AdminConsumerListView.vue";
 import ConsumerProductDetail from "@/views/consumer/ConsumerProductDetailView.vue";
 import ConsumerCheckoutView from "@/views/consumer/ConsumerCheckoutView.vue";
+import ConsumerOrderCompleteView from "@/views/consumer/ConsumerOrderCompleteView.vue";
+import ConsumerMypageProfileView from "@/views/consumer/mypage/ConsumerMypageProfileView.vue";
+import ConsumerMypageWishListView from "@/views/consumer/mypage/ConsumerMypageWishListView.vue";
+import ConsumerSearchResultView from "@/views/consumer/ConsumerSearchView.vue";
 const routes = [
   {
     path: "/",
@@ -30,7 +34,7 @@ const routes = [
         component: ConsumerHomeView,
       },
       {
-        path: "/login",
+        path: "login",
         name: "login",
         component: LoginView,
       },
@@ -38,6 +42,11 @@ const routes = [
         path: "list",
         name: "consumer-product-list",
         component: ConsumerProductList,
+      },
+      {
+        path: "search",
+        name: "consumer-search",
+        component: ConsumerSearchResultView,
       },
       {
         path: "product",
@@ -52,14 +61,35 @@ const routes = [
         meta: { requiresAuthConsumer: true },
       },
       {
-        path: "mypage",
-        name: "consumer-mypage",
+        path: "order-complete",
+        name: "consumer-order-complete",
+        component: ConsumerOrderCompleteView,
         meta: { requiresAuthConsumer: true },
       },
       {
         path: "cart",
         name: "consumer-cart",
         meta: { requiresAuthConsumer: true },
+      },
+      {
+        path: "mypage",
+        name: "consumer-mypage",
+        meta: { requiresAuthConsumer: true },
+        redirect: "/mypage/profile",
+        children: [
+          {
+            path: "profile",
+            name: "consumer-mypage-profile",
+            component: ConsumerMypageProfileView,
+            meta: { requiresAuthConsumer: true },
+          },
+          {
+            path: "wishlist",
+            name: "consumer-mypage-wishlist",
+            component: ConsumerMypageWishListView,
+            meta: { requiresAuthConsumer: true },
+          },
+        ],
       },
     ],
   },

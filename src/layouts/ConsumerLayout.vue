@@ -14,7 +14,12 @@
         <img src="@/assets/logo.png" alt="logo" />
       </router-link>
       <div class="search-bar">
-        <input type="text" placeholder="검색어를 입력해주세요." />
+        <input
+          type="text"
+          placeholder="검색어를 입력해주세요."
+          v-model="searchKeyword"
+          @keyup.enter="handleSearch"
+        />
         <button @click="handleSearch">
           <span class="material-icons-outlined"> search </span>
         </button>
@@ -100,6 +105,7 @@ import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { computed, ref, onMounted } from 'vue';
 
 const currentUser = ref(null);
+const searchKeyword = ref("");
 
 onMounted(async () => {
   auth.onAuthStateChanged(async (user) => {
@@ -120,6 +126,15 @@ const logout = async () => {
     router.push("/");
   } catch (error) {
     console.error('Failed to log out:', error);
+  }
+}
+
+const handleSearch = () => {
+  if (searchKeyword.value.trim() === "") {
+    alert("검색어를 입력하세요.");
+    return;
+  } else {
+    router.push(`/search?keyword=${searchKeyword.value}`);
   }
 }
 </script>

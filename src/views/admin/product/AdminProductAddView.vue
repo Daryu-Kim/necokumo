@@ -719,9 +719,19 @@ const addProduct = async () => {
       category2Select.value?.categoryId,
     ].filter((id) => id != null);
 
+    const cleanProductName = productName.value
+      .replace(/[[]]/g, "")
+      .toLowerCase();
+
+    const productNameKeywords = cleanProductName
+      .split(" ")
+      .map((kw) => kw.trim())
+      .filter(Boolean);
+
     const productData = {
       productId: uuid,
       productName: productName.value,
+      productNameKeywords: [...new Set(productNameKeywords)],
       productSearchKeyword: productSearchKeyword.value,
       productSellPrice: productSellPrice.value,
       productBuyPrice: productBuyPrice.value,

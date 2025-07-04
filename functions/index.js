@@ -1,6 +1,13 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const cors = require("cors")({ origin: true });
+const aligoapi = require("aligoapi");
+
+const aligoAuthData = {
+  key: "o03r6el0zag5nvxdhyk230tyrluj4aja",
+  user_id: "innovape",
+};
 
 exports.getImageBlobFromUrl = onRequest(async (req, res) => {
   // CORS 설정 (모든 도메인 허용)
@@ -48,3 +55,33 @@ exports.getImageBlobFromUrl = onRequest(async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+exports.sendMessage = onRequest(
+  {
+    region: "us-central1",
+    vpcConnector:
+      "projects/necokumo-c21e3/locations/us-central1/connectors/functions-connector",
+    ingressSettings: "ALLOW_ALL", // 외부에서 접근 허용
+    timeoutSeconds: 30,
+    memory: "256MiB",
+    vpcConnectorEgressSettings: "ALL_TRAFFIC",
+  },
+  async (req, res) => {
+    cors(req, res, async () => {
+      if (req.method !== "POST") {
+        return res.status(405).send("Method Not Allowed");
+      }
+
+      try {
+        // 메시지 발송
+        const response = await aligoapi.send(req, aligoAuthData);
+        return res.status(200).json(response);
+      } catch (error) {
+        console.error("Aligo 문자 발송 오류:", error);
+        return res
+          .status(500)
+          .json({ error: "문자 발송 실패", detail: error.message || error });
+      }
+    });
+  }
+);

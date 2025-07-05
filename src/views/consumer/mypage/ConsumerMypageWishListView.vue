@@ -377,6 +377,7 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
   max-width: 1200px;
   display: flex;
   gap: 24px;
+  min-height: 70vh;
 
   > .menu-container {
     width: 256px;

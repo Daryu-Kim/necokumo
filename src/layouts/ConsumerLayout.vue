@@ -29,7 +29,7 @@
           <span class="material-icons-outlined"> person </span>
           <p>MY</p>
         </router-link>
-        <router-link to="" v-if="isLogged">
+        <router-link to="/cart" v-if="isLogged">
           <span class="material-icons-outlined"> shopping_cart </span>
           <p>CART</p>
         </router-link>

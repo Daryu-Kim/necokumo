@@ -21,6 +21,7 @@ import ConsumerOrderCompleteView from "@/views/consumer/ConsumerOrderCompleteVie
 import ConsumerMypageProfileView from "@/views/consumer/mypage/ConsumerMypageProfileView.vue";
 import ConsumerMypageWishListView from "@/views/consumer/mypage/ConsumerMypageWishListView.vue";
 import ConsumerSearchResultView from "@/views/consumer/ConsumerSearchView.vue";
+import ConsumerCartView from "@/views/consumer/ConsumerCartView.vue";
 const routes = [
   {
     path: "/",
@@ -69,6 +70,7 @@ const routes = [
       {
         path: "cart",
         name: "consumer-cart",
+        component: ConsumerCartView,
         meta: { requiresAuthConsumer: true },
       },
       {

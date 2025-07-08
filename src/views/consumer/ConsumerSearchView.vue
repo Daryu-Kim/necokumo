@@ -367,6 +367,7 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
   padding: 16px 24px;
   margin: auto;
   max-width: 1200px;
+  min-height: 70vh;
 
   > h1 {
     margin-bottom: 16px;

@@ -40,29 +40,55 @@
           <div class="topic-box">
             <ul>
               <li>
-                <router-link to=""
-                  >testouqwefpoijqweffoiuqwhofuiwehuoif</router-link
-                >
+                <router-link to="">
+                  현재 게시판에 등록된 토픽이 없습니다.
+                </router-link>
               </li>
               <li>
-                <router-link to=""
-                  >testouiqhwfoiuqwhefoiuqwhofuiwehuoif</router-link
-                >
+                <router-link to="">
+                  현재 게시판에 등록된 토픽이 없습니다.
+                </router-link>
               </li>
               <li>
-                <router-link to=""
-                  >testouiqhwfoiuqwhefoiuqwhofuiwehuoif</router-link
-                >
+                <router-link to="">
+                  현재 게시판에 등록된 토픽이 없습니다.
+                </router-link>
               </li>
             </ul>
           </div>
         </div>
 
         <div class="top-news-box">
-          <div class="news-container"></div>
+          <div class="news-container">
+            <h4>최신 토픽</h4>
+            <div class="news-box">
+              <router-link
+                :to="`/board?id=${item.id}`"
+                v-for="(item, index) in mainNewsDatas"
+                :key="index"
+              >
+                <img :src="item.thumbnail" />
+                <p>{{ item.title }}</p>
+              </router-link>
+            </div>
+          </div>
           <div class="sale-container">
-            <div class="sale-box"></div>
-            <div class="sale-banner"></div>
+            <div class="sale-box">
+              <h4>펀스퀘어 공식 사이트</h4>
+              <a href="" target="_blank">
+                <img src="https://picsum.photos/144/72" />
+                <div class="slogan">
+                  <p>빠르게 맞춤 제작 가능한 영상!</p>
+                </div>
+              </a>
+              <a href="" target="_blank">
+                <div class="company-container">
+                  <img src="https://picsum.photos/20" />
+                  <p class="company">펀스퀘어</p>
+                </div>
+                <p class="btn">지금 바로가기 ></p>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -145,6 +171,7 @@ const topBannerDatas = ref([]);
 const eventProductDatas = ref([]);
 const saleDatasByCategory = ref({});
 const usdPrice = ref([]);
+const mainNewsDatas = ref([]);
 
 const saleCategoryNames = [
   "고농도",
@@ -170,6 +197,14 @@ onMounted(async () => {
         const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
         topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, url: doc.data().url, redirect: doc.data().redirect }));
         console.log("Top Banner Data Fetched Successfully!: ", topBannerDatas.value);
+
+        console.log("Fetching Main News Data...");
+        const mainNewsSnap = await getDocs(query(collection(db, "mainNews"), orderBy("createdAt", "desc"), limit(2)));
+        mainNewsDatas.value = mainNewsSnap.docs.map(doc => ({
+          id: doc.id,
+         ...doc.data()
+        }));
+        console.log("Main News Data Fetched Successfully!: ", mainNewsDatas.value);
 
         console.log("Fetching Event Product Data...");
         const eventProductSnap = await getDocs(query(
@@ -246,8 +281,8 @@ onMounted(async () => {
       min-width: 180px;
       > a {
         width: 100%;
-        height: 42px;
-        line-height: 42px;
+        height: 44px;
+        line-height: 44px;
         padding: 0 16px;
         font-weight: 700;
         color: white;
@@ -376,6 +411,34 @@ onMounted(async () => {
           flex: 2;
           border: 1px solid #efefef;
           height: 100%;
+          padding: 16px;
+
+          > .news-box {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            > a {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              > img {
+                height: 102px;
+                aspect-ratio: 5 / 3;
+                border-radius: 8px;
+                object-fit: cover;
+                border: 1.5px solid #efefef;
+                padding: 4px;
+              }
+
+              > p {
+                flex: 1;
+                font-size: 14px;
+                color: #333;
+                font-weight: 700;
+              }
+            }
+          }
         }
 
         > .sale-container {
@@ -388,18 +451,52 @@ onMounted(async () => {
             flex: 1;
             border-radius: 8px;
             border: 1px solid #efefef;
-          }
+            padding: 16px;
 
-          > .sale-banner {
-            border-radius: 8px;
-            height: 42px;
             > a {
-              width: fit-content;
-              height: fit-content;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-top: 8px;
+              gap: 16px;
+
               > img {
-                width: 720px;
-                border-radius: 8px;
-                object-fit: cover;
+                width: 144px;
+                height: 72px;
+                border-radius: 4px;
+              }
+
+              > .company-container {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                > img {
+                  border-radius: 50%;
+                }
+
+                > p {
+                  font-size: 14px;
+                  color: #666;
+                }
+              }
+
+              > .btn {
+                font-size: 14px;
+                color: #666;
+              }
+
+              > .slogan {
+                height: 72px;
+                font-size: 14px;
+                font-weight: 500;
+                border-top: 1px solid #efefef;
+                border-bottom: 1px solid #efefef;
+                flex: 1;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
               }
             }
           }

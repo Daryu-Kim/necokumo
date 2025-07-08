@@ -141,7 +141,7 @@
                   placeholder="우편번호 (ex. 12345)"
                   v-model="consumerPostCode"
                 />
-                <button>주소검색</button>
+                <button @click="openDaumPostcode">주소검색</button>
               </div>
               <input
                 type="text"
@@ -375,6 +375,31 @@ const totalCardDollar = computed(() => {
   return Math.ceil((total / usdPrice.value) * 100) / 100;
 });
 
+function openDaumPostcode() {
+  new window.daum.Postcode({
+    oncomplete: (data) => {
+      // 기본 주소
+      let extraAddr = '';
+
+      // 참고항목이 있을 경우
+      if (data.addressType === 'R') {
+        if (data.bname !== '') extraAddr += data.bname;
+        if (data.buildingName !== '') {
+          extraAddr += extraAddr !== '' ? `, ${data.buildingName}` : data.buildingName;
+        }
+      }
+
+      consumerPostCode.value = data.zonecode;
+      consumerAddress1.value = data.address;
+      consumerAddress2.value = `(${extraAddr}) `;
+      // 포커스를 상세 주소로 옮김
+      nextTick(() => {
+        document.querySelector('input[placeholder="나머지 주소"]')?.focus();
+      });
+    },
+  }).open();
+}
+
 async function checkout() {
   try {
     if (
@@ -527,7 +552,7 @@ function loadPayPalSDK() {
   return new Promise((resolve, reject) => {
     if (window.paypal) return resolve();
     const script = document.createElement('script');
-    script.src = 'https://www.paypal.com/sdk/js?client-id=AcHP-jWM6BqqFNcF577K7EnGfiB19O28Fs7veSflJJoFq-ye0q0tk9iYng3sc2s2ygevuxd57n_zp_YR&currency=USD';
+    script.src = 'https://www.paypal.com/sdk/js?client-id=AdKgezyAzq_AQhtF4i1R1UT7CnSpGh_Vqck8lCBACg2aCe_TkPLsaTGeyzvHRgOmsB8H0GJ-tINVZ24u&currency=USD';
     script.onload = resolve;
     script.onerror = reject;
     document.head.appendChild(script);
@@ -576,10 +601,11 @@ watch(paymentMethod, async (newVal) => {
             return actions.reject(); // 중요!
           }
 
+          const paymentAmount = totalCardDollar.value + deliveryFee.value;
           return actions.order.create({
             purchase_units: [{
               amount: {
-                value: totalCardDollar.value.toString(),
+                value: paymentAmount.toString(),
                 currency_code: "USD"
               }
             }],

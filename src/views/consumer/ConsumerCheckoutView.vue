@@ -302,7 +302,7 @@
 <script setup lang="js">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { auth, db } from "@/lib/firebase";
-import { getDoc, doc, setDoc, Timestamp } from "firebase/firestore";
+import { getDoc, doc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { fetchExchangeRate } from '@/lib/paypal';
 import { sendAligoMessage } from "@/lib/aligo";
 import router from '@/router';
@@ -426,6 +426,24 @@ async function checkout() {
         currency: "KRW",
         userId: auth.currentUser.uid,
         createdAt: Timestamp.fromDate(date),
+        status: "BEFORE_DEPOSIT",
+        deliveryTrackingNumber: "",
+        deliveryTrackingLink: "",
+        deliveryCompany: "",
+        pointAmount: item.productSellPrice *
+                    item.count *
+                    0.95 * 0.03,
+        pointGived: false,
+        claimType: "",
+        claimReason: "",
+        claimStatus: "",
+        claimRequestedAt: null,
+        claimProcessedAt: null,
+        returnTrackingNumber: "",
+        returnTrackingLink: "",
+        returnCompany: "",
+        returnStatus: "",
+        returnReceivedAt: null,
       });
     });
     await setDoc(doc(db, "order", orderId), {
@@ -450,14 +468,10 @@ async function checkout() {
       userId: auth.currentUser.uid,
       orderChannel: "NECOKUMO",
       deliveryFeePaymentLink: "",
-      refundStatus: "",
-      refundReason: "",
-      refundAt: null,
+      deliveryFeePaied: false,
+      deliveryFeeCardAcceptNumber: "",
       updatedAt: null,
       currency: "KRW",
-      deliveryTrackingNumber: "",
-      status: "BEFORE_DEPOSIT",
-      pointAmount: totalBankPrice.value * 0.03,
       cardAcceptNumber: "",
       memoContent: "",
     });
@@ -467,6 +481,11 @@ async function checkout() {
       msg_type: "LMS",
       title: "[네코쿠모 무통장입금 계좌 안내]",
     });
+    if (history.state?.query === "cart") {
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        userProductCartList: [],
+      });
+    }
     router.push({
       path: "/order-complete",
       state: { orderId },
@@ -608,6 +627,24 @@ watch(paymentMethod, async (newVal) => {
                             ) / 100,
                   currency: "USD",
                   createdAt: Timestamp.fromDate(date),
+                  status: "PAYMENT_COMPLETED",
+                  deliveryTrackingNumber: "",
+                  deliveryTrackingLink: "",
+                  deliveryCompany: "",
+                  pointAmount: item.productSellPrice *
+                              item.count *
+                              0.97 * 0.03,
+                  pointGived: false,
+                  claimType: "",
+                  claimReason: "",
+                  claimStatus: "",
+                  claimRequestedAt: null,
+                  claimProcessedAt: null,
+                  returnTrackingNumber: "",
+                  returnTrackingLink: "",
+                  returnCompany: "",
+                  returnStatus: "",
+                  returnReceivedAt: null,
                 });
               });
               await setDoc(doc(db, "order", orderId), {
@@ -632,14 +669,10 @@ watch(paymentMethod, async (newVal) => {
                 paymentAt: details.update_time,
                 deliveryFeePaymentRequired: false,
                 deliveryFeePaymentLink: "",
-                refundStatus: "",
-                refundReason: "",
-                refundAt: null,
+                deliveryFeePaied: false,
+                deliveryFeeCardAcceptNumber: "",
                 updatedAt: null,
-                deliveryTrackingNumber: "",
-                status: "PAYMENT_COMPLETED",
                 currency: "USD",
-                pointAmount: totalBankPrice.value * 0.03,
                 cardAcceptNumber: details.purchase_units[0].payments.captures[0].id,
                 memoContent: "",
               });
@@ -650,6 +683,11 @@ watch(paymentMethod, async (newVal) => {
                 msg_type: "LMS",
                 title: "[네코쿠모 주문 및 결제 내역 안내]",
               });
+              if (history.state?.query === "cart") {
+                await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                  userProductCartList: [],
+                });
+              }
               router.push({
                 path: "/order-complete",
                 state: { orderId },

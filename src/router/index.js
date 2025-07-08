@@ -22,6 +22,9 @@ import ConsumerMypageProfileView from "@/views/consumer/mypage/ConsumerMypagePro
 import ConsumerMypageWishListView from "@/views/consumer/mypage/ConsumerMypageWishListView.vue";
 import ConsumerSearchResultView from "@/views/consumer/ConsumerSearchView.vue";
 import ConsumerCartView from "@/views/consumer/ConsumerCartView.vue";
+import ConsumerMypageEditView from "@/views/consumer/mypage/ConsumerMypageEditView.vue";
+import ConsumerMypageOrderView from "@/views/consumer/mypage/ConsumerMypageOrderView.vue";
+import ConsumerMypageOrderDetailView from "@/views/consumer/mypage/ConsumerMypageOrderDetailView.vue";
 const routes = [
   {
     path: "/",
@@ -89,6 +92,24 @@ const routes = [
             path: "wishlist",
             name: "consumer-mypage-wishlist",
             component: ConsumerMypageWishListView,
+            meta: { requiresAuthConsumer: true },
+          },
+          {
+            path: "edit",
+            name: "consumer-mypage-edit",
+            component: ConsumerMypageEditView,
+            meta: { requiresAuthConsumer: true },
+          },
+          {
+            path: "order",
+            name: "consumer-mypage-order",
+            component: ConsumerMypageOrderView,
+            meta: { requiresAuthConsumer: true },
+          },
+          {
+            path: "order/detail",
+            name: "consumer-mypage-order-detail",
+            component: ConsumerMypageOrderDetailView,
             meta: { requiresAuthConsumer: true },
           },
         ],

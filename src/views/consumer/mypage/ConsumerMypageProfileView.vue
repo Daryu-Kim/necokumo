@@ -75,9 +75,10 @@
           <h3>나의 정보</h3>
           <ul>
             <li>
-              <router-link to="/mypage/profile/edit">
-                회원 정보 수정
-              </router-link>
+              <router-link to="/mypage/edit">회원 정보 수정</router-link>
+            </li>
+            <li>
+              <button @click="resetPassword">비밀번호 재설정</button>
             </li>
             <li>
               <button @click="logout">로그아웃</button>
@@ -177,38 +178,71 @@
         </div>
         <div>
           <h3>주문내역 조회 <span>(최근 5건)</span></h3>
-          <hr />
-          <table style="width: 100%" v-if="recentOrders.length > 0">
-            <thead>
-              <tr>
-                <th style="width: 25%">주문번호</th>
-                <th style="width: 15%">총 금액</th>
-                <th style="width: 10%">결제수단</th>
-                <th style="width: 10%">처리상태</th>
-                <th style="width: 25%">주문일</th>
-                <th style="width: 15%">상세보기</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="order in recentOrders" :key="order.orderId">
-                <td>{{ order.orderId }}</td>
-                <td>
-                  {{ order.totalPrice.toLocaleString()
-                  }}{{ order.paymentMethod === "bank" ? "원" : "$" }}
-                </td>
-                <td>
-                  {{ order.paymentMethod === "bank" ? "무통장입금" : "PayPal" }}
-                </td>
-                <td>{{ generateOrderStatusLabel(order.status) }}</td>
-                <td>{{ order.createdAt.toDate().toLocaleString() }}</td>
-                <td>
-                  <router-link :to="`/mypage/order/detail?id=${order.orderId}`">
-                    상세보기
-                  </router-link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="order-list-container" v-if="recentOrders.length > 0">
+            <div
+              class="order-item"
+              v-for="(order, index) in recentOrders"
+              :key="order.id"
+            >
+              <div class="order-title-container">
+                <strong
+                  >{{ formatDate(order.createdAt.toDate())
+                  }}<span>({{ order.productOrderId }})</span></strong
+                >
+                <router-link :to="`/mypage/order/detail?id=${order.orderId}`">
+                  <p>상세보기</p>
+                  <span class="material-icons-outlined"> chevron_right </span>
+                </router-link>
+              </div>
+              <div class="order-product-container">
+                <div class="desc-container">
+                  <img
+                    :src="order.productData.productThumbnailUrl.originalUrl"
+                  />
+                  <div>
+                    <p class="name">
+                      {{ order.productData.productName }}
+                    </p>
+                    <p class="price">
+                      {{ order.productPrice.toLocaleString()
+                      }}{{ order.currency === "KRW" ? "원" : "$" }} ({{
+                        order.count
+                      }}개)
+                    </p>
+                    <p class="option">[옵션: {{ order.optionName }}]</p>
+                  </div>
+                </div>
+                <hr />
+                <div class="order-status-container">
+                  <strong>{{ generateOrderStatusLabel(order.status) }}</strong>
+                  <div class="order-total-container">
+                    <p>
+                      총 결제금액:
+                      <span>
+                        {{ order.productPrice.toLocaleString()
+                        }}{{ order.currency === "KRW" ? "원" : "$" }}
+                      </span>
+                    </p>
+                    <p>
+                      적립 냥코인:
+                      <span>
+                        {{ order.pointAmount.toLocaleString() }}냥코인
+                      </span>
+                    </p>
+                    <strong
+                      v-if="
+                        order.orderData.deliveryFeePaymentRequired &&
+                        !order.orderData.deliveryFeePaied
+                      "
+                    >
+                      "상세보기"에서 배송비 추가 결제가 필요합니다!
+                    </strong>
+                  </div>
+                </div>
+                <hr v-if="index === orderData.length - 1" />
+              </div>
+            </div>
+          </div>
           <div class="order-empty-container" v-else>
             <span class="material-icons-outlined"> error_outline </span>
             <p>주문 내역이 없습니다.</p>
@@ -222,12 +256,13 @@
 <script setup lang="js">
 import { db, auth } from '@/lib/firebase';
 import { generateOrderStatusLabel } from '@/lib/utils';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc, getDocs, query, collection, where, orderBy, Timestamp } from 'firebase/firestore';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const userData = ref(null);
-const orderData = ref(null);
+const orderData = ref([]);
 const orderStatus = ref({
   BEFORE_DEPOSIT: [],
   PAYMENT_COMPLETED: [],
@@ -243,9 +278,26 @@ const recentOrders = ref([]);
 
 const router = useRouter();
 
+const resetPassword = async () => {
+  try {
+    await sendPasswordResetEmail(auth, userData.value.userEmail);
+    alert('비밀번호 초기화 링크를 전송하였습니다.\n메일보관함을 확인하세요!');
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    alert('비밀번호 초기화 실패하였습니다.\n관리자에게 문의해주세요!');
+  }
+}
+
 const logout = async () => {
   await auth.signOut();
   router.push('/');
+}
+
+function formatDate(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 const copyAddress = () => {
@@ -263,14 +315,24 @@ onMounted(async () => {
 
   const orderDataRef = await getDocs(
     query(
-      collection(db, "order"),
+      collection(db, "productOrder"),
       where("orderChannel", "==", "NECOKUMO"),
       where("userId", "==", auth.currentUser.uid),
       where("createdAt", ">=", threeMonthsAgoTimestamp), // 3개월 조건 추가
       orderBy("createdAt", "desc") // 반드시 createdAt으로 정렬
     )
   );
-  orderData.value = orderDataRef.docs.map((doc) => doc.data());
+  orderData.value = await Promise.all(
+    orderDataRef.docs.map(async (document) => {
+      const data = document.data();
+      const productSnap = await getDoc(doc(db, "product", data.productId));
+      const productData = productSnap.data();
+      const orderSnap = await getDoc(doc(db, "order", data.orderId));
+      const orderData = orderSnap.data();
+      return { ...data, productData, orderData };
+    })
+  );
+  console.log(orderData.value);
   orderStatus.value = {
     BEFORE_DEPOSIT: orderDataRef.docs.filter((doc) => doc.data().status === 'BEFORE_DEPOSIT'),
     PAYMENT_COMPLETED: orderDataRef.docs.filter((doc) => doc.data().status === 'PAYMENT_COMPLETED'),
@@ -278,15 +340,9 @@ onMounted(async () => {
     PREPARING_DELIVERY: orderDataRef.docs.filter((doc) => doc.data().status === 'PREPARING_DELIVERY'),
     SHIPPING_PROGRESS: orderDataRef.docs.filter((doc) => doc.data().status === 'SHIPPING_PROGRESS'),
     DELIVERY_COMPLETED: orderDataRef.docs.filter((doc) => doc.data().status === 'DELIVERY_COMPLETED'),
-    CANCELLED: orderDataRef.docs.filter((doc) =>
-      ["REQUEST_CANCEL", "PROCESSING_CANCEL", "HOLD_CANCEL", "APPROVED_CANCEL"].includes(doc.data().status)
-    ),
-    EXCHANGE: orderDataRef.docs.filter((doc) =>
-      ["REQUEST_EXCHANGE", "PROCESSING_EXCHANGE", "HOLD_EXCHANGE", "APPROVED_EXCHANGE"].includes(doc.data().status)
-    ),
-    RETURNED: orderDataRef.docs.filter((doc) =>
-      ["REQUEST_RETURN", "PROCESSING_RETURN", "HOLD_RETURN", "APPROVED_RETURN"].includes(doc.data().status)
-    ),
+    CANCELLED: orderDataRef.docs.filter((doc) => doc.data().status === 'CANCELLED'),
+    EXCHANGE: orderDataRef.docs.filter((doc) => doc.data().status === 'EXCHANGE'),
+    RETURNED: orderDataRef.docs.filter((doc) => doc.data().status === 'RETURNED'),
   };
   recentOrders.value = orderData.value.slice(0, 5);
 });
@@ -504,25 +560,107 @@ onMounted(async () => {
           }
         }
 
-        > table {
-          width: 100%;
+        > .order-list-container {
+          margin-top: 24px;
 
-          td {
-            font-size: 14px;
-          }
+          > div {
+            border-top: 2px solid black;
 
-          th,
-          td {
-            padding: 8px 0;
-            text-align: center;
+            &:not(:first-child) {
+              margin-top: 16px;
+            }
 
-            > a {
-              background: #007bff;
-              color: white;
-              font-weight: 700;
-              width: 100%;
-              padding: 6px 16px;
-              border-radius: 4px;
+            > .order-title-container {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              background: #efefef;
+              padding: 12px 16px;
+
+              > strong {
+                font-size: 14px;
+                > span {
+                  font-size: 12px;
+                  font-weight: 400;
+                  color: #666;
+                  margin-left: 4px;
+                }
+              }
+
+              > a {
+                display: flex;
+                align-items: center;
+                > p {
+                  font-weight: 700;
+                  color: #007bff;
+                  font-size: 14px;
+                }
+
+                > span {
+                  color: #007bff;
+                }
+              }
+            }
+
+            > .order-product-container {
+              margin-top: 16px;
+              > .desc-container {
+                display: flex;
+                gap: 16px;
+
+                > img {
+                  width: 144px;
+                  height: 144px;
+                  border-radius: 8px;
+                  object-fit: cover;
+                  border: 1px solid #efefef;
+                  padding: 4px;
+                }
+
+                > div {
+                  > .name {
+                    font-weight: 700;
+                    font-size: 18px;
+                  }
+
+                  > .price {
+                    margin-top: 4px;
+                  }
+
+                  > .option {
+                    margin-top: 16px;
+                    color: #666;
+                  }
+                }
+              }
+
+              > hr {
+                margin: 16px 0;
+              }
+
+              > .order-status-container {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+                > .order-total-container {
+                  > p,
+                  strong {
+                    font-size: 14px;
+                    text-align: end;
+                    line-height: 24px;
+
+                    > span {
+                      font-weight: 700;
+                      color: #007bff;
+                    }
+                  }
+                }
+
+                > hr {
+                  margin-top: 16px;
+                }
+              }
             }
           }
         }

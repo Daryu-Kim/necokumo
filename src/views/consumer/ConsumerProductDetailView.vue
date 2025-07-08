@@ -193,6 +193,7 @@ async function buyNow() {
       path: "/checkout",
       state: {
         orderItems: itemsToBuy,
+        query: "now",
       },
     });
   } catch (error) {
@@ -209,6 +210,7 @@ async function addCart() {
     const cartList = userData.userProductCartList || [];
 
     selectedOptions.value.forEach((selected) => {
+      console.log("Adding to cart:", selected);
 
       const existingItem = cartList.find(
         (item) =>

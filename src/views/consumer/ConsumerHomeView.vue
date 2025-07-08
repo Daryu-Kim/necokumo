@@ -67,13 +67,74 @@
         </div>
       </div>
     </div>
+    <div class="event-products-box">
+      <h2>현재 진행중인 <span>이벤트 특가</span> 상품</h2>
+      <div class="event-products-container">
+        <router-link
+          :to="`/product?id=${item.productId}`"
+          v-for="(item, index) in eventProductDatas"
+          :key="index"
+        >
+          <img :src="item.productThumbnailUrl.originalUrl" />
+          <p class="name">{{ item.productName }}</p>
+          <p class="price">
+            {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+              (
+                Math.ceil(
+                  ((item.productSellPrice * 0.97) /
+                    (Number(usdPrice[0]) + Number(usdPrice[1]) / 100)) *
+                    100
+                ) / 100
+              ).toLocaleString()
+            }}$)
+          </p>
+        </router-link>
+      </div>
+    </div>
+    <div class="popular-products-box">
+      <h2>지금 가장 <span>인기 있는</span> 상품</h2>
+      <div
+        class="products-container"
+        v-for="(products, categoryId) in saleDatasByCategory"
+        :key="categoryId"
+      >
+        <div class="title-container">
+          <h3>{{ categoryId }}</h3>
+        </div>
+        <div class="grid-container" v-if="products.length > 0">
+          <router-link
+            :to="`/product?id=${item.productId}`"
+            v-for="(item, index) in products"
+            :key="index"
+          >
+            <img :src="item.productThumbnailUrl.originalUrl" />
+            <p class="name">{{ item.productName }}</p>
+            <p class="price">
+              {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+                (
+                  Math.ceil(
+                    ((item.productSellPrice * 0.97) /
+                      (Number(usdPrice[0]) + Number(usdPrice[1]) / 100)) *
+                      100
+                  ) / 100
+                ).toLocaleString()
+              }}$)
+            </p>
+          </router-link>
+        </div>
+        <div class="empty-container" v-else>
+          <span class="material-icons-outlined"> error_outline </span>
+          <p>추천 상품이 없습니다.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="js">
 import { onMounted, ref } from 'vue';
 import { db } from "@/lib/firebase";
-import { getDocs, query, collection, where, orderBy } from "firebase/firestore";
+import { getDocs, query, collection, where, orderBy, limit } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import { fetchExchangeRate } from '@/lib/paypal';
@@ -81,7 +142,22 @@ import { formatDate } from '@/lib/utils';
 
 const categoryDatas = ref([]);
 const topBannerDatas = ref([]);
+const eventProductDatas = ref([]);
+const saleDatasByCategory = ref({});
 const usdPrice = ref([]);
+
+const saleCategoryNames = [
+  "고농도",
+  "입호흡 기기",
+  "폐호흡 기기",
+  "입 / 폐호흡 기기",
+  "일회용 기기",
+  "입호흡 액상",
+  "폐호흡 액상",
+  "무화기",
+  "팟 / 코일",
+  "악세사리"
+];
 
 onMounted(async () => {
     try {
@@ -94,6 +170,40 @@ onMounted(async () => {
         const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
         topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, url: doc.data().url, redirect: doc.data().redirect }));
         console.log("Top Banner Data Fetched Successfully!: ", topBannerDatas.value);
+
+        console.log("Fetching Event Product Data...");
+        const eventProductSnap = await getDocs(query(
+          collection(db, "product"),
+          where("productCategory", "array-contains", "43"),
+          orderBy("productLikeCount", "desc"),
+          orderBy("createdAt", "desc"),
+          limit(10)
+        ));
+        eventProductDatas.value = eventProductSnap.docs.map(doc => ({
+          id: doc.id,
+         ...doc.data()
+        }));
+        console.log("Event Product Data Fetched Successfully!: ", eventProductDatas.value);
+
+        console.log("Fetching Sale Data...");
+        for (const categoryName of saleCategoryNames) {
+          const categoryDocs = await getDocs(query(collection(db, "category"), where("categoryName", "==", categoryName)));
+          const categoryId = categoryDocs.docs[0].data().categoryId;
+          const saleSnap = await getDocs(query(
+            collection(db, "product"),
+            where("productCategory", "array-contains", categoryId),
+            orderBy("productLikeCount", "desc"),
+            orderBy("createdAt", "desc"),
+            limit(10)
+          ));
+
+          // 각 카테고리 ID를 키로 하여 데이터 저장
+          saleDatasByCategory.value[categoryName] = saleSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+        }
+        console.log("Sale Data Fetched Successfully!: ", saleDatasByCategory.value);
 
         console.log("Fetching USD Price...");
         const usd = await fetchExchangeRate();
@@ -111,6 +221,19 @@ onMounted(async () => {
   padding: 16px 24px;
   margin: auto;
   max-width: 1200px;
+  min-height: 70vh;
+
+  > div {
+    &:not(:first-child) {
+      margin-top: 48px;
+    }
+    > h2 {
+      > span {
+        color: #007bff;
+      }
+    }
+  }
+
   > .main-content-box {
     display: flex;
     gap: 24px;
@@ -280,6 +403,147 @@ onMounted(async () => {
               }
             }
           }
+        }
+      }
+    }
+  }
+
+  > .event-products-box {
+    > h2 {
+      margin-bottom: 24px;
+    }
+
+    > .event-products-container {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 24px;
+
+      > a {
+        &:hover {
+          > .name {
+            text-decoration: underline;
+          }
+        }
+        > img {
+          width: 100%;
+          aspect-ratio: 1 / 1;
+          border-radius: 8px;
+          object-fit: cover;
+          border: 1.5px solid #efefef;
+          padding: 4px;
+        }
+
+        > p {
+          text-align: center;
+        }
+
+        > .name {
+          font-size: 14px;
+          color: #666;
+          margin-top: 8px;
+
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          word-break: keep-all;
+
+          line-height: 1.5;
+          height: 42px;
+        }
+
+        > .price {
+          font-weight: 800;
+          margin-top: 4px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  > .popular-products-box {
+    > h2 {
+      margin-bottom: 24px;
+    }
+
+    > .products-container {
+      border-top: 2px solid black;
+      display: flex;
+      > .title-container {
+        padding: 24px;
+        border-right: 1px solid #999;
+        width: 240px;
+      }
+      > .grid-container {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        padding: 24px;
+        gap: 24px;
+
+        > a {
+          &:hover {
+            > .name {
+              text-decoration: underline;
+            }
+          }
+          > img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1.5px solid #efefef;
+            padding: 4px;
+          }
+
+          > p {
+            text-align: center;
+          }
+
+          > .name {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: keep-all;
+
+            line-height: 1.5;
+            height: 42px;
+          }
+
+          > .price {
+            font-weight: 800;
+            margin-top: 4px;
+            font-size: 14px;
+          }
+        }
+      }
+
+      > .empty-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px;
+        border-bottom: 1px solid #efefef;
+
+        > span {
+          font-size: 96px;
+          color: #999;
+        }
+
+        > p {
+          color: #999;
+          font-size: 18px;
+          font-weight: 700;
         }
       }
     }

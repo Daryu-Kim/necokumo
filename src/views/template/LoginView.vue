@@ -4,16 +4,9 @@
 </template>
 
 <script setup lang="js">
-import { onMounted, ref } from 'vue';
 import DesktopView from "@/views/desktop/LoginView.vue";
 import MobileView from "@/views/mobile/LoginView.vue";
+import { useMediaQuery } from "@vueuse/core";
 
-const isDesktop = ref(false);
-
-onMounted(() => {
-	isDesktop.value = window.innerWidth >= 1200;
-	window.addEventListener('resize', () => {
-    isDesktop.value = window.innerWidth >= 1200;
-  });
-});
+const isDesktop = useMediaQuery('(min-width: 1200px)');
 </script>

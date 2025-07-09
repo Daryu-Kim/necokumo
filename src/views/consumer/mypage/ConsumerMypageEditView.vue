@@ -297,6 +297,14 @@ const bankNames = [
 
 async function updateUserData() {
   try {
+    if (userData.value.userPhone === "") {
+      alert("전화번호를 입력해주세요.");
+      return;
+    }
+    if (userRefundAccount.value[0] === "" || userRefundAccount.value[1] === "" || userRefundAccount.value[2] === "") {
+      alert("환불 계좌를 등록해주세요.");
+      return;
+    }
     const userRef = doc(db, "users", auth.currentUser.uid);
     userData.value.userRefundAccount = [
       userRefundAccount.value[0],                              // 은행명

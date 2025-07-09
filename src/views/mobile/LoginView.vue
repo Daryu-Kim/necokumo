@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <img src="@/assets/logo.png" alt="Logo" />
-    <form @submit.prevent="login">
+    <div>
       <div class="role-container">
         <div>
           <input
@@ -51,14 +51,14 @@
           placeholder="비밀번호 [초기 비밀번호: '-' 제외 전화번호]"
         />
       </div>
-      <button type="submit">로그인</button>
+      <button @click="login">로그인</button>
       <div class="tool-container">
         <button @click="openSearchIdDialog">아이디 / 이메일 찾기</button>
         <hr />
         <button @click="openSearchPwDialog">비밀번호 초기화</button>
       </div>
       <p>기존 네코쿠모 사이트 계정 이메일로 로그인 가능합니다!</p>
-    </form>
+    </div>
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
     <dialog ref="searchIdDialogRef">
       <header>
@@ -229,6 +229,7 @@ const login = async () => {
 .login-container {
   max-width: 480px;
   margin: 0 auto;
+  min-height: 70vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -239,10 +240,10 @@ const login = async () => {
   text-align: center;
 
   > img {
-    width: 96px;
+    width: 192px;
   }
 
-  > form {
+  > div {
     margin-top: 48px;
     width: 100%;
 

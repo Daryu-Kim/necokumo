@@ -25,6 +25,7 @@ import ConsumerMypageEditView from "@/views/consumer/mypage/ConsumerMypageEditVi
 import ConsumerMypageOrderView from "@/views/consumer/mypage/ConsumerMypageOrderView.vue";
 import ConsumerMypageOrderDetailView from "@/views/consumer/mypage/ConsumerMypageOrderDetailView.vue";
 import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
+import NotFoundView from "@/views/template/NotFoundView.vue";
 const routes = [
   {
     path: "/",
@@ -113,6 +114,11 @@ const routes = [
             meta: { requiresAuthConsumer: true },
           },
         ],
+      },
+      {
+        path: "/:pathMatch(.*)*",
+        name: "not-found",
+        component: NotFoundView,
       },
     ],
   },

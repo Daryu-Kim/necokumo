@@ -186,6 +186,14 @@ const saleCategoryNames = [
   "악세사리"
 ];
 
+const fetchUSDPrice = async () => {
+  console.log("Fetching USD Price...");
+  const usd = await fetchExchangeRate();
+  usdPrice.value = usd.toFixed(2).split(".");
+  console.log(typeof usdPrice.value[0])
+  console.log("USD Price Fetched Successfully!: ", usdPrice.value);
+}
+
 onMounted(async () => {
     try {
         console.log("Fetching Category Data...");
@@ -240,11 +248,11 @@ onMounted(async () => {
         }
         console.log("Sale Data Fetched Successfully!: ", saleDatasByCategory.value);
 
-        console.log("Fetching USD Price...");
-        const usd = await fetchExchangeRate();
-        usdPrice.value = usd.toFixed(2).split(".");
-        console.log(typeof usdPrice.value[0])
-        console.log("USD Price Fetched Successfully!: ", usdPrice.value);
+        await fetchUSDPrice();
+
+        setInterval(async () => {
+          await fetchUSDPrice();
+        }, 60000); // 10 minutes
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }

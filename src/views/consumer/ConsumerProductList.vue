@@ -13,6 +13,19 @@
         <router-link to="">
           <img src="https://picsum.photos/948/180" />
         </router-link>
+        <h3 v-if="currentCategoryData">
+          현재 카테고리:
+          <router-link
+            v-if="parentCategoryData"
+            :to="`/list?category=${parentCategoryData.categoryId}`"
+          >
+            {{ parentCategoryData.categoryName }} </router-link
+          ><span v-if="parentCategoryData"> > </span>
+          <router-link
+            :to="`/list?category=${currentCategoryData.categoryId}`"
+            >{{ currentCategoryData.categoryName }}</router-link
+          >
+        </h3>
         <table>
           <tr v-for="(row, rowIndex) in categoryRows" :key="rowIndex">
             <td v-for="(item, colIndex) in row" :key="colIndex">
@@ -238,7 +251,7 @@
 <script setup lang="js">
 import { computed, onMounted, ref, watch } from 'vue';
 import { db } from "@/lib/firebase";
-import { getDocs, query, collection, where, orderBy } from "firebase/firestore";
+import { getDocs, query, collection, where, orderBy, getDoc, doc } from "firebase/firestore";
 import { useRoute } from 'vue-router';
 import { fetchExchangeRate } from '@/lib/paypal';
 
@@ -249,6 +262,8 @@ const productDatas = ref([]);
 const topBannerDatas = ref([]);
 const orderFilterData = ref("popular");
 const viewFilterData = ref("list");
+const currentCategoryData = ref(null);
+const parentCategoryData = ref(null);
 const categoryRows = computed(() => {
   const result = []
   const chunkSize = 5
@@ -361,6 +376,23 @@ async function fetchUSDPrice() {
   }
 }
 
+async function fetchCurrentCategoryData() {
+  try {
+    console.log("Fetching Current Category Data...");
+    const currentCategory = await getDoc(doc(db, "category", route.query.category));
+    currentCategoryData.value = currentCategory.data();
+    if (currentCategoryData.value.categoryParentId) {
+      const parentCategory = await getDoc(doc(db, "category", currentCategoryData.value.categoryParentId));
+      parentCategoryData.value = parentCategory.data();
+    } else {
+      parentCategoryData.value = null;
+    }
+    console.log("Current Category Data Fetched Successfully!: ", currentCategory.docs[0].id);
+  } catch (error) {
+    console.error('Failed to fetch data:', error);
+  }
+}
+
 onMounted(async () => {
     try {
         console.log("Fetching Category Data...");
@@ -372,6 +404,7 @@ onMounted(async () => {
         await fetchProductData();
         await fetchFilteredData();
         await fetchUSDPrice();
+        await fetchCurrentCategoryData();
 
         console.log("Fetching Top Banner Data...");
         const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
@@ -388,6 +421,7 @@ watch(() => route.query.category, async (newVal, oldVal) => {
     await fetchProductData();
     await fetchFilteredData();
     await fetchUSDPrice();
+    await fetchCurrentCategoryData();
   }
 });
 
@@ -453,6 +487,15 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
           border-radius: 8px;
         }
       }
+      > h3 {
+        margin-top: 24px;
+
+        > a {
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
       > table {
         width: 100%;
         margin-top: 24px;
@@ -479,6 +522,7 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
   > .product-list-box {
     margin-top: 8px;
     > .filter-container {
+      margin-top: 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;

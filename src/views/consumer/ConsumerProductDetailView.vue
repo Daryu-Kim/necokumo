@@ -205,6 +205,10 @@ async function buyNow() {
 async function addCart() {
   try {
     console.log("Adding to Cart...");
+    if (selectedOptions.value.length === 0) {
+      alert("구매할 옵션이 없습니다.");
+      return;
+    }
     const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
     const userData = userSnap.data();
     const cartList = userData.userProductCartList || [];

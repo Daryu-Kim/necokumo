@@ -84,9 +84,9 @@
               <label for="6M">6개월</label>
             </div>
             <div class="date-range-container">
-              <input type="date" v-model="startDate" />
+              <input type="date" v-model="startDate" :max="endDate" />
               <p>~</p>
-              <input type="date" v-model="endDate" />
+              <input type="date" v-model="endDate" disabled />
             </div>
             <button @click="applyFilters">조회</button>
           </div>

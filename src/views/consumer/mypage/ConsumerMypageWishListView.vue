@@ -21,9 +21,10 @@
         <h3>나의 정보</h3>
         <ul>
           <li>
-            <router-link to="/mypage/profile/edit">
-              회원 정보 수정
-            </router-link>
+            <router-link to="/mypage/edit">회원 정보 수정</router-link>
+          </li>
+          <li>
+            <button @click="resetPassword">비밀번호 재설정</button>
           </li>
           <li>
             <button @click="logout">로그아웃</button>
@@ -257,17 +258,29 @@ import { onMounted, ref, watch } from 'vue';
 import { db, auth } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy, getDoc, doc } from "firebase/firestore";
 import { fetchExchangeRate } from '@/lib/paypal';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 const usdPrice = ref(0);
 const productDatas = ref([]);
 const orderFilterData = ref("popular");
 const viewFilterData = ref("list");
+const userData = ref(null);
 
 function formatTimestampToYearMonth(timestamp) {
   const date = timestamp.toDate(); // Firestore Timestamp → JS Date
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-based → 1-based
   return `${year}.${month}`;
+}
+
+const resetPassword = async () => {
+  try {
+    await sendPasswordResetEmail(auth, userData.value.userEmail);
+    alert('비밀번호 초기화 링크를 전송하였습니다.\n메일보관함을 확인하세요!');
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    alert('비밀번호 초기화 실패하였습니다.\n관리자에게 문의해주세요!');
+  }
 }
 
 async function fetchFilteredData() {
@@ -357,6 +370,11 @@ onMounted(async () => {
         await fetchProductData();
         await fetchFilteredData();
         await fetchUSDPrice();
+
+        console.log("Fetch User Data...");
+        const data = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+        userData.value = data;
+        console.log("User Data Fetched Successfully!: ", userData.value);
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }

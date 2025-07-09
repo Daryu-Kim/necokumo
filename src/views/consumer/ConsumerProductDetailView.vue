@@ -121,7 +121,20 @@
               BUY IT NOW
             </button>
             <button class="white" style="flex: 1" @click="addCart">CART</button>
-            <button class="white" style="flex: 1" @click="addWishList">
+            <button
+              class="white"
+              style="flex: 1"
+              @click="addWishList"
+              v-if="!isWishList"
+            >
+              <span class="material-icons-outlined">favorite_border</span>
+            </button>
+            <button
+              class="white"
+              style="flex: 1"
+              @click="removeWishList"
+              v-else
+            >
               <span class="material-icons-outlined">favorite</span>
             </button>
           </div>
@@ -142,7 +155,7 @@
 <script setup lang="js">
 import { nextTick, onMounted, ref, watch, computed } from 'vue';
 import { auth, db } from "@/lib/firebase";
-import { getDoc, doc, setDoc, arrayUnion } from "firebase/firestore";
+import { getDoc, doc, setDoc, arrayUnion, increment, arrayRemove } from "firebase/firestore";
 import { useRoute } from 'vue-router';
 import { fetchExchangeRate } from '@/lib/paypal';
 import router from '@/router';
@@ -151,6 +164,8 @@ const usdPrice = ref(0);
 const productData = ref(null);
 const option = ref("");
 const selectedOptions = ref([]);
+const userData = ref(null);
+const isWishList = ref(false);
 
 const totalCount = computed(() =>
   selectedOptions.value.reduce((sum, item) => sum + item.count, 0)
@@ -172,6 +187,19 @@ const totalCardDollar = computed(() => {
 });
 
 const route = useRoute();
+
+async function fetchWishListData() {
+  try {
+    if (userData.value) {
+      console.log("Fetching wishlist data...");
+      isWishList.value = userData.value.userProductWishList.includes(route.query.id);
+      console.log("Wishlist data fetched successfully.", isWishList.value);
+    }
+  } catch (error) {
+    console.error("Error fetching wishlist data:", error);
+    alert("위시리스트 로딩 실패하였습니다. 다시 시도해주세요.");
+  }
+}
 
 async function buyNow() {
   try {
@@ -265,10 +293,44 @@ async function addWishList() {
       await setDoc(userSnap.ref, {
         userProductWishList: arrayUnion(route.query.id),
       }, { merge: true });
+      await setDoc(doc(db, "product", route.query.id), {
+        productLikeCount: increment(1),
+      }, { merge: true });
       alert("찜한 상품으로 추가했습니다.");
+      await fetchWishListData();
+      window.location.reload();
     }
 
     console.log("Added to Wish List Successfully!");
+  } catch (error) {
+    console.error('Failed to add to wish list:', error);
+  }
+}
+
+async function removeWishList() {
+  try {
+    console.log("Removing to Wish List...");
+    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const userData = userSnap.data();
+    const wishList = userData.userProductWishList || [];
+
+    if (!wishList.includes(route.query.id)) {
+      console.log("Product already in Wish List!");
+      alert("이미 찜 취소한 상품입니다.");
+      return;
+    } else {
+      await setDoc(userSnap.ref, {
+        userProductWishList: arrayRemove(route.query.id),
+      }, { merge: true });
+      await setDoc(doc(db, "product", route.query.id), {
+        productLikeCount: increment(-1),
+      }, { merge: true });
+      alert("상품 찜을 취소하였습니다.");
+      await fetchWishListData();
+      window.location.reload();
+    }
+
+    console.log("Removed to Wish List Successfully!");
   } catch (error) {
     console.error('Failed to add to wish list:', error);
   }
@@ -313,10 +375,23 @@ async function fetchUSDPrice() {
   }
 }
 
+async function fetchUserData() {
+  try {
+    console.log("Fetching User Data...");
+    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    userData.value = userSnap.data();
+    console.log("User Data Fetched Successfully!: ", userData.value);
+  } catch (error) {
+    console.error('Failed to fetch data:', error);
+  }
+}
+
 onMounted(async () => {
   try {
     await fetchProductData();
     await fetchUSDPrice();
+    await fetchUserData();
+    await fetchWishListData();
   } catch (error) {
     console.error('Failed to fetch data:', error);
   }

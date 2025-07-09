@@ -1,7 +1,7 @@
 <template>
   <div class="consumer-search">
     <h1>
-      "{{ route.query.keyword }}"에 대한 검색 결과:
+      "{{ decodeURIComponent(route.query.keyword) }}"에 대한 검색 결과:
       {{ productDatas.length.toLocaleString() }}건
     </h1>
     <div class="product-list-box">

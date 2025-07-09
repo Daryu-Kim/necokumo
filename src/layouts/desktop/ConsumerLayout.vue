@@ -134,7 +134,8 @@ const handleSearch = () => {
     alert("검색어를 입력하세요.");
     return;
   } else {
-    router.push(`/search?keyword=${searchKeyword.value}`);
+    const encodedKeyword = encodeURIComponent(searchKeyword.value);
+    router.push(`/search?keyword=${encodedKeyword}`);
   }
 }
 </script>

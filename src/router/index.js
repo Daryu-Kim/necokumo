@@ -24,7 +24,7 @@ import ConsumerCartView from "@/views/consumer/ConsumerCartView.vue";
 import ConsumerMypageEditView from "@/views/consumer/mypage/ConsumerMypageEditView.vue";
 import ConsumerMypageOrderView from "@/views/consumer/mypage/ConsumerMypageOrderView.vue";
 import ConsumerMypageOrderDetailView from "@/views/consumer/mypage/ConsumerMypageOrderDetailView.vue";
-import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
+import ConsumerLayout from "@/layouts/template/ConsumerLayout.vue";
 import NotFoundView from "@/views/template/NotFoundView.vue";
 const routes = [
   {

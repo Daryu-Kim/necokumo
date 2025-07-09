@@ -229,7 +229,6 @@ const login = async () => {
 .login-container {
   max-width: 480px;
   margin: 0 auto;
-  min-height: 70vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -238,9 +237,10 @@ const login = async () => {
   border-radius: 8px;
   background-color: #fff;
   text-align: center;
+  height: 100%;
 
   > img {
-    width: 192px;
+    width: 128px;
   }
 
   > div {

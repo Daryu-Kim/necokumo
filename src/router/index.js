@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { auth, db } from "../lib/firebase";
 import AdminMainView from "../views/admin/AdminMainView.vue";
-import LoginView from "@/views/LoginView.vue";
+import LoginView from "@/views/template/LoginView.vue";
 import { collection, where, getDocs, query } from "firebase/firestore";
 import AdminProductDashboardView from "@/views/admin/product/AdminProductDashboardView.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
@@ -11,7 +11,6 @@ import AdminProductDeletedListView from "@/views/admin/product/AdminProductDelet
 import AdminProductCategoryView from "@/views/admin/product/AdminProductCategoryView.vue";
 import AdminProductCategoryDetailView from "@/views/admin/product/AdminProductCategoryDetailView .vue";
 import ConsumerHomeView from "@/views/consumer/ConsumerHomeView.vue";
-import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
 import ConsumerProductList from "@/views/consumer/ConsumerProductList.vue";
 import AdminConsumerDashboardView from "@/views/admin/consumer/AdminConsumerDashboardView.vue";
 import AdminConsumerListView from "@/views/admin/consumer/AdminConsumerListView.vue";
@@ -25,6 +24,7 @@ import ConsumerCartView from "@/views/consumer/ConsumerCartView.vue";
 import ConsumerMypageEditView from "@/views/consumer/mypage/ConsumerMypageEditView.vue";
 import ConsumerMypageOrderView from "@/views/consumer/mypage/ConsumerMypageOrderView.vue";
 import ConsumerMypageOrderDetailView from "@/views/consumer/mypage/ConsumerMypageOrderDetailView.vue";
+import ConsumerLayout from "@/layouts/ConsumerLayout.vue";
 const routes = [
   {
     path: "/",

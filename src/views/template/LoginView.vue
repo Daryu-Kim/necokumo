@@ -5,13 +5,12 @@
 
 <script setup lang="js">
 import { onMounted, ref } from 'vue';
-import DesktopView from "@/layouts/desktop/ConsumerLayout.vue";
-import MobileView from "@/layouts/mobile/ConsumerLayout.vue";
+import DesktopView from "@/views/desktop/LoginView.vue";
+import MobileView from "@/views/mobile/LoginView.vue";
 
 const isDesktop = ref(false);
 
 onMounted(() => {
-  console.log(isDesktop.value);
 	isDesktop.value = window.innerWidth >= 1200;
 	window.addEventListener('resize', () => {
     isDesktop.value = window.innerWidth >= 1200;

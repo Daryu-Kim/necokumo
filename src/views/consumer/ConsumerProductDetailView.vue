@@ -72,9 +72,11 @@
                   </div>
                   <input
                     type="number"
-                    :value="item.count"
-                    @input="updateCount($event, index)"
                     min="1"
+                    step="1"
+                    max="99"
+                    v-model.number="item.count"
+                    @input="updateCount(index)"
                   />
                   <button @click="removeOption(index)">
                     <span class="material-icons-outlined">clear</span>
@@ -272,12 +274,18 @@ async function addWishList() {
   }
 }
 
-function updateCount(event, index) {
-  let value = parseInt(event.target.value, 10);
-  if (isNaN(value) || value < 1) {
-    value = 1;
+function updateCount(index) {
+  const updatedItem = selectedOptions.value[index];
+
+  const count = Number(updatedItem.count);
+  if (!Number.isInteger(count) || count <= 0) {
+    console.warn("수량은 1 이상의 정수여야 합니다.");
+    updatedItem.count = 1; // 기본값으로 되돌림
   }
-  selectedOptions.value[index].count = value;
+  if (count > 99) {
+    console.warn("수량은 99개 이하여야 합니다.");
+    updatedItem.count = 99; // 99 이하로 제한
+  }
 }
 
 function removeOption(index) {

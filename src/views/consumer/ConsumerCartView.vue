@@ -33,10 +33,9 @@
               └ [옵션:
               <span>
                 {{
-                  item.optionList.find(
-                    (option) =>
-                      option.optionCodeCafe24 === item.selectedOptionCode
-                  )?.optionName || "옵션 없음"
+                  cartDatas.find((cart) =>
+                    item.option2List.includes(cart.optionName)
+                  )?.optionName || ""
                 }} </span
               >]
             </p>
@@ -47,8 +46,10 @@
               <input
                 type="number"
                 min="1"
-                v-model="item.count"
-                @change="changeOptionCount(index)"
+                step="1"
+                max="99"
+                v-model.number="item.count"
+                @input="changeOptionCount(index)"
               />
             </div>
           </div>
@@ -167,6 +168,16 @@ async function buyNow() {
 async function changeOptionCount(index) {
   try {
     const updatedItem = productDatas.value[index];
+
+    const count = Number(updatedItem.count);
+    if (!Number.isInteger(count) || count <= 0) {
+      console.warn("수량은 1 이상의 정수여야 합니다.");
+      updatedItem.count = 1; // 기본값으로 되돌림
+    }
+    if (count > 99) {
+      console.warn("수량은 99개 이하여야 합니다.");
+      updatedItem.count = 99; // 99 이하로 제한
+    }
 
     const cartItem = cartDatas.value.find(
       (c) =>

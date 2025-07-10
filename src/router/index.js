@@ -11,7 +11,7 @@ import AdminProductDeletedListView from "@/views/admin/product/AdminProductDelet
 import AdminProductCategoryView from "@/views/admin/product/AdminProductCategoryView.vue";
 import AdminProductCategoryDetailView from "@/views/admin/product/AdminProductCategoryDetailView .vue";
 import ConsumerHomeView from "@/views/template/consumer/ConsumerHomeView.vue";
-import ConsumerProductList from "@/views/consumer/ConsumerProductList.vue";
+import ConsumerProductList from "@/views/template/consumer/ConsumerProductList.vue";
 import AdminConsumerDashboardView from "@/views/admin/consumer/AdminConsumerDashboardView.vue";
 import AdminConsumerListView from "@/views/admin/consumer/AdminConsumerListView.vue";
 import ConsumerProductDetail from "@/views/consumer/ConsumerProductDetailView.vue";

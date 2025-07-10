@@ -171,13 +171,16 @@
 import { auth, db } from '@/lib/firebase';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
 
 const currentUser = ref(null);
-const route = useRoute();
 
 onMounted(async () => {
-  console.log(route);
+  const setVh = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+  setVh();
+  window.addEventListener('resize', setVh);
   auth.onAuthStateChanged(async (user) => {
     currentUser.value = user;
     if (user) {
@@ -193,7 +196,8 @@ onMounted(async () => {
 .consumer-layout {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+  padding-bottom: env(safe-area-inset-bottom);
   > header {
     display: flex;
     align-items: center;
@@ -219,6 +223,7 @@ onMounted(async () => {
   > .content {
     flex: 1;
     overflow: scroll;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 
   > footer {
@@ -226,6 +231,7 @@ onMounted(async () => {
     padding: 4px 16px;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+    padding-bottom: env(safe-area-inset-bottom);
 
     > a {
       display: flex;

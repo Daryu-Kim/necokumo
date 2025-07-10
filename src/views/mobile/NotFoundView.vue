@@ -2,7 +2,7 @@
   <div class="not-found">
     <div>
       <span class="material-icons-outlined"> error_outline </span>
-      <h1>앗! 길을 잃었네요 😿</h1>
+      <h2>앗! 길을 잃었네요 😿</h2>
       <div class="text-group">
         <p>찾으시려던 페이지가 사라졌거나, 존재하지 않아요.</p>
         <p>링크가 잘못되었거나, 페이지가 이동되었을 수 있어요.</p>
@@ -21,21 +21,20 @@ import router from '@/router';
 
 <style lang="scss" scoped>
 .not-found {
-  padding: 36px 24px;
-  margin: auto;
-  max-width: 1200px;
-  min-height: 70vh;
+  padding: 0 24px;
+  text-align: center;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  height: 100%;
 
   span {
-    font-size: 96px;
+    font-size: 72px;
     color: #999;
   }
 
-  h1 {
+  h2 {
     margin-top: 24px;
     font-weight: 700;
     color: #333;
@@ -46,6 +45,7 @@ import router from '@/router';
     p {
       line-height: 24px;
       color: #666;
+      word-break: keep-all;
     }
   }
 
@@ -61,7 +61,7 @@ import router from '@/router';
       padding: 12px 24px;
       border: none;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 14px;
       cursor: pointer;
       background: none;
       font-weight: 700;

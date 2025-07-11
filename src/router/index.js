@@ -19,7 +19,7 @@ import ConsumerCheckoutView from "@/views/consumer/ConsumerCheckoutView.vue";
 import ConsumerOrderCompleteView from "@/views/consumer/ConsumerOrderCompleteView.vue";
 import ConsumerMypageProfileView from "@/views/consumer/mypage/ConsumerMypageProfileView.vue";
 import ConsumerMypageWishListView from "@/views/consumer/mypage/ConsumerMypageWishListView.vue";
-import ConsumerSearchResultView from "@/views/consumer/ConsumerSearchView.vue";
+import ConsumerSearchResultView from "@/views/template/consumer/ConsumerSearchView.vue";
 import ConsumerCartView from "@/views/consumer/ConsumerCartView.vue";
 import ConsumerMypageEditView from "@/views/consumer/mypage/ConsumerMypageEditView.vue";
 import ConsumerMypageOrderView from "@/views/consumer/mypage/ConsumerMypageOrderView.vue";

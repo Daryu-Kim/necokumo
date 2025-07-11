@@ -381,7 +381,7 @@ onMounted(async () => {
     }
 
     > .checkout-container {
-      width: 326x;
+      width: 326px;
       display: flex;
       flex-direction: column;
       gap: 16px;

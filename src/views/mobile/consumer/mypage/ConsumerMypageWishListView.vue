@@ -1,22 +1,7 @@
 <template>
-  <div class="consumer-search">
-    <div class="search-bar">
-      <input
-        type="text"
-        placeholder="검색어를 입력해주세요."
-        v-model="searchKeyword"
-        @keyup.enter="handleSearch"
-      />
-      <button @click="handleSearch">
-        <span class="material-icons-outlined"> search </span>
-      </button>
-    </div>
-    <h2>
-      "{{
-        route.query.keyword ? decodeURIComponent(route.query.keyword) : ""
-      }}"에 대한 검색 결과: {{ productDatas.length.toLocaleString() }}건
-    </h2>
+  <div class="consumer-mypage-wishlist">
     <div class="product-list-box">
+      <h2>나의 찜</h2>
       <div class="filter-container">
         <div class="view-filter-container">
           <div class="view-container">
@@ -108,9 +93,9 @@
           </div>
         </div>
       </div>
-      <div class="empty-container" v-else>
+      <div class="order-empty-container" v-else>
         <span class="material-icons-outlined"> error_outline </span>
-        <p>검색된 상품이 없습니다.</p>
+        <p>관심상품 내역이 없습니다.</p>
       </div>
     </div>
   </div>
@@ -118,18 +103,15 @@
 
 <script setup lang="js">
 import { onMounted, ref, watch } from 'vue';
-import { db } from "@/lib/firebase";
-import { getDocs, query, collection, where, orderBy } from "firebase/firestore";
-import { useRoute, useRouter } from 'vue-router';
+import { db, auth } from "@/lib/firebase";
+import { getDocs, query, collection, where, orderBy, getDoc, doc } from "firebase/firestore";
 import { fetchExchangeRate } from '@/lib/paypal';
 
 const usdPrice = ref(0);
 const productDatas = ref([]);
+const orderFilterData = ref("popular");
 const viewFilterData = ref("list");
-const searchKeyword = ref("");
-
-const router = useRouter();
-const route = useRoute();
+const userData = ref(null);
 
 function formatTimestampToYearMonth(timestamp) {
   const date = timestamp.toDate(); // Firestore Timestamp → JS Date
@@ -162,24 +144,14 @@ async function fetchFilteredData() {
 async function fetchProductData() {
   try {
     console.log("Fetching Product Data...");
-    const keywordQuery = route.query.keyword || "";
-    const keywordList = keywordQuery
-      .toLowerCase()
-      .replace(/[[]]/g, "")          // [ ] 제거
-      .split(" ")
-      .map((kw) => kw.trim())
-      .filter(Boolean)
-      .slice(0, 10);                 // Firestore array-contains-any는 최대 10개까지 지원
-
-    // 2. Firestore 쿼리 작성
-    const q = query(
-      collection(db, "product"),
-      where("isActive", "==", true),
-      where("productNameKeywords", "array-contains-any", keywordList),
-      orderBy("productLikeCount", "desc")
-    );
-    const product = await getDocs(q);
-    productDatas.value = product.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const userData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+    console.log("User Data: ", userData);
+    if (userData && userData.userProductWishList && userData.userProductWishList.length > 0) {
+      const product = await getDocs(query(collection(db, "product"), where("isActive", "==", true), where("productId", "in", userData.userProductWishList), orderBy("productLikeCount", "desc")));
+      productDatas.value = product.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } else {
+      productDatas.value = [];
+    }
     console.log("Product Data Fetched Successfully!: ", productDatas.value);
   } catch (error) {
     console.error('Failed to fetch data:', error);
@@ -196,29 +168,23 @@ async function fetchUSDPrice() {
   }
 }
 
-const handleSearch = () => {
-  if (searchKeyword.value.trim() === "") {
-    alert("검색어를 입력하세요.");
-    return;
-  } else {
-    const encodedKeyword = encodeURIComponent(searchKeyword.value);
-    router.push(`/search?keyword=${encodedKeyword}`);
-  }
-}
-
 onMounted(async () => {
     try {
         await fetchProductData();
         await fetchFilteredData();
         await fetchUSDPrice();
+
+        console.log("Fetch User Data...");
+        const data = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+        userData.value = data;
+        console.log("User Data Fetched Successfully!: ", userData.value);
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
 });
 
-watch(() => route.query.keyword, async (newVal, oldVal) => {
+watch(() => orderFilterData.value, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
-    await fetchProductData();
     await fetchFilteredData();
     await fetchUSDPrice();
   }
@@ -226,40 +192,11 @@ watch(() => route.query.keyword, async (newVal, oldVal) => {
 </script>
 
 <style lang="scss" scoped>
-.consumer-search {
+.consumer-mypage-wishlist {
   padding: 16px 24px;
 
-  > h2 {
-    margin-top: 24px;
-    margin-bottom: 16px;
-  }
-
-  > .search-bar {
-    padding: 8px 16px;
-    width: 100%;
-    border-radius: 100rem;
-    border: 1px solid black;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 44px;
-
-    > input {
-      flex: 1;
-      height: 100%;
-      font-size: 16px;
-      border: none;
-
-      &:focus {
-        outline: none;
-      }
-    }
-
-    > button {
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
+  h2 {
+    margin-bottom: 8px;
   }
 
   > .product-list-box {
@@ -271,10 +208,6 @@ watch(() => route.query.keyword, async (newVal, oldVal) => {
       gap: 24px;
       border-bottom: 1px solid #000;
       padding: 8px 0;
-
-      label {
-        cursor: pointer;
-      }
 
       > .view-filter-container {
         display: flex;
@@ -498,28 +431,6 @@ watch(() => route.query.keyword, async (newVal, oldVal) => {
             }
           }
         }
-      }
-    }
-
-    > .empty-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 16px;
-      border-bottom: 1px solid #efefef;
-      height: 100%;
-      padding: 24px 0;
-
-      > span {
-        font-size: 96px;
-        color: #999;
-      }
-
-      > p {
-        color: #999;
-        font-size: 18px;
-        font-weight: 700;
       }
     }
   }

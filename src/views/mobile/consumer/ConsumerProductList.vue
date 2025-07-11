@@ -78,18 +78,13 @@
             <div class="price-container">
               <div class="sell-price-container">
                 <router-link :to="`/product?id=${item.id}`" class="sell-price">
-                  <span>계좌이체가</span>
-                  {{ (item.productSellPrice * 0.95).toLocaleString() }}원
-                </router-link>
-                <router-link :to="`/product?id=${item.id}`" class="sell-price">
-                  <span>카드결제가</span>
-                  {{
+                  {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
                     (
                       Math.ceil(
                         ((item.productSellPrice * 0.97) / usdPrice) * 100
                       ) / 100
                     ).toLocaleString()
-                  }}$
+                  }}$)
                 </router-link>
               </div>
             </div>
@@ -100,11 +95,8 @@
               </p>
               <hr v-if="viewFilterData == 'list'" />
               <p>
-                상품리뷰 <span>{{ item.productReviews.length }}</span>
+                관심 <span>{{ item.productLikeCount.toLocaleString() }}</span>
               </p>
-              <hr v-if="viewFilterData == 'list'" />
-              <hr v-if="viewFilterData == 'grid'" />
-              <p>관심</p>
             </div>
           </div>
         </div>
@@ -338,6 +330,7 @@ watch(() => route.query.category, async (newVal, oldVal) => {
 
           &:not(:last-child) {
             border-bottom: 1px solid #efefef;
+            margin-top: 4px;
           }
 
           > a {
@@ -356,21 +349,21 @@ watch(() => route.query.category, async (newVal, oldVal) => {
             align-self: center;
             > .name-container {
               display: flex;
-              align-items: center;
               gap: 8px;
               > p {
                 color: white;
-                font-size: 14px;
-                width: 28px;
-                height: 28px;
+                font-size: 12px;
+                min-width: 24px;
+                max-width: 24px;
+                height: 24px;
                 text-align: center;
-                line-height: 28px;
+                line-height: 24px;
                 font-weight: 700;
               }
 
               > a {
-                font-weight: 700;
-                font-size: 18px;
+                font-weight: 500;
+                font-size: 14px;
               }
             }
 
@@ -387,9 +380,10 @@ watch(() => route.query.category, async (newVal, oldVal) => {
               > .sell-price-container {
                 display: flex;
                 flex-direction: column;
-                text-align: end;
+                text-align: start;
+                margin-top: 8px;
                 > .sell-price {
-                  font-size: 18px;
+                  font-size: 16px;
                   font-weight: 700;
                   margin-top: 2px;
 
@@ -470,8 +464,8 @@ watch(() => route.query.category, async (newVal, oldVal) => {
               }
 
               > a {
-                font-weight: 700;
-                font-size: 16px;
+                font-weight: 500;
+                font-size: 14px;
               }
             }
 
@@ -504,30 +498,24 @@ watch(() => route.query.category, async (newVal, oldVal) => {
                 height: 12px;
               }
             }
-          }
 
-          > .price-container {
-            margin-top: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            > .origin-price {
-              display: none;
-            }
-
-            > .sell-price-container {
+            > .price-container {
+              margin-top: 8px;
               display: flex;
-              flex-direction: column;
-              > .sell-price {
-                font-size: 18px;
-                font-weight: 700;
-                margin-top: 2px;
+              justify-content: space-between;
+              align-items: center;
 
-                > span {
-                  font-size: 14px;
-                  color: #007bff;
-                  margin-right: 2px;
+              > .origin-price {
+                display: none;
+              }
+
+              > .sell-price-container {
+                display: flex;
+                flex-direction: column;
+                > .sell-price {
+                  font-size: 16px;
+                  font-weight: 700;
+                  margin-top: 2px;
                 }
               }
             }

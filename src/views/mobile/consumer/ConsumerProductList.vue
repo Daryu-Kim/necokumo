@@ -2,7 +2,10 @@
   <div class="consumer-product-list">
     <div class="main-content-box">
       <div>
-        <table>
+        <h3 v-if="currentCategoryData">
+          {{ currentCategoryData.categoryName }}
+        </h3>
+        <table v-if="categoryRows.length > 0">
           <tr v-for="(row, rowIndex) in categoryRows" :key="rowIndex">
             <td v-for="(item, colIndex) in row" :key="colIndex">
               <router-link v-if="item" :to="`/list?category=${item.id}`">{{
@@ -263,6 +266,10 @@ watch(() => route.query.category, async (newVal, oldVal) => {
         > img {
           border-radius: 8px;
         }
+      }
+
+      > h3 {
+        text-align: center;
       }
 
       > table {

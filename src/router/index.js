@@ -26,6 +26,7 @@ import ConsumerMypageOrderView from "@/views/template/consumer/mypage/ConsumerMy
 import ConsumerMypageOrderDetailView from "@/views/template/consumer/mypage/ConsumerMypageOrderDetailView.vue";
 import ConsumerLayout from "@/layouts/template/ConsumerLayout.vue";
 import NotFoundView from "@/views/template/NotFoundView.vue";
+import ConsumerCategoryView from "@/views/template/consumer/ConsumerCategoryView.vue";
 const routes = [
   {
     path: "/",
@@ -47,6 +48,11 @@ const routes = [
         path: "list",
         name: "consumer-product-list",
         component: ConsumerProductList,
+      },
+      {
+        path: "category",
+        name: "consumer-category",
+        component: ConsumerCategoryView,
       },
       {
         path: "search",

@@ -17,13 +17,13 @@ import AdminConsumerListView from "@/views/admin/consumer/AdminConsumerListView.
 import ConsumerProductDetail from "@/views/template/consumer/ConsumerProductDetailView.vue";
 import ConsumerCheckoutView from "@/views/template/consumer/ConsumerCheckoutView.vue";
 import ConsumerOrderCompleteView from "@/views/template/consumer/ConsumerOrderCompleteView.vue";
-import ConsumerMypageProfileView from "@/views/consumer/mypage/ConsumerMypageProfileView.vue";
+import ConsumerMypageProfileView from "@/views/template/consumer/mypage/ConsumerMypageProfileView.vue";
 import ConsumerMypageWishListView from "@/views/template/consumer/mypage/ConsumerMypageWishListView.vue";
 import ConsumerSearchResultView from "@/views/template/consumer/ConsumerSearchView.vue";
 import ConsumerCartView from "@/views/template/consumer/ConsumerCartView.vue";
-import ConsumerMypageEditView from "@/views/consumer/mypage/ConsumerMypageEditView.vue";
-import ConsumerMypageOrderView from "@/views/consumer/mypage/ConsumerMypageOrderView.vue";
-import ConsumerMypageOrderDetailView from "@/views/consumer/mypage/ConsumerMypageOrderDetailView.vue";
+import ConsumerMypageEditView from "@/views/template/consumer/mypage/ConsumerMypageEditView.vue";
+import ConsumerMypageOrderView from "@/views/template/consumer/mypage/ConsumerMypageOrderView.vue";
+import ConsumerMypageOrderDetailView from "@/views/template/consumer/mypage/ConsumerMypageOrderDetailView.vue";
 import ConsumerLayout from "@/layouts/template/ConsumerLayout.vue";
 import NotFoundView from "@/views/template/NotFoundView.vue";
 const routes = [

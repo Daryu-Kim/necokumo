@@ -8,14 +8,6 @@
           <input id="cafe24" type="checkbox" checked v-model="isSellCafe24" />
           <label for="cafe24">카페24</label>
         </div>
-        <div>
-          <input id="youtube" type="checkbox" checked v-model="isSellYoutube" />
-          <label for="youtube">유튜브</label>
-        </div>
-        <div>
-          <input id="vue" type="checkbox" checked v-model="isSellVue" />
-          <label for="vue">Vue.js</label>
-        </div>
       </div>
     </div>
     <div class="category-box">
@@ -107,7 +99,7 @@
             rows="10"
             placeholder="예시) <img src='https://picsum.photos/600' style='width: 100%;' />"
           ></textarea>
-          <div>
+          <div style="display: grid; grid-template-columns: repeat(6, 1fr)">
             <button @click="crawlProduct('medusa')" :disabled="isBusy">
               메두사
             </button>
@@ -137,6 +129,12 @@
             </button>
             <button @click="crawlProduct('cigarman')" :disabled="isBusy">
               시가맨
+            </button>
+            <button @click="crawlProduct('bluemong')" :disabled="isBusy">
+              블루몽
+            </button>
+            <button @click="crawlProduct('airvaper')" :disabled="isBusy">
+              에어베이퍼
             </button>
             <button
               @click="openDialog"
@@ -297,8 +295,6 @@ import router from "@/router";
 const isBusy = ref(false);
 
 const isSellCafe24 = ref(true);
-const isSellYoutube = ref(true);
-const isSellVue = ref(true);
 
 const excelContent = ref("");
 const productName = ref("");
@@ -475,6 +471,12 @@ const crawlProduct = async (buyer) => {
         break;
       case "purecloud":
         replaceUrl = "";
+        thumbnailImage = doc.querySelector("#sit_pvi_big > a > img");
+        detailImages = doc.querySelectorAll("#sit_inf_explan img");
+        options = doc.querySelectorAll("#it_option_1 option");
+        if (options.length == 0) {
+          options = doc.querySelectorAll("#it_option_1 > option");
+        }
         break;
       case "vapecompany":
         replaceUrl = "https://vapecompany.co.kr";
@@ -564,6 +566,28 @@ const crawlProduct = async (buyer) => {
           options = doc.querySelectorAll(
             "table.xans-element-.xans-product.xans-product-option.xans-record- option"
           );
+        }
+        break;
+      case "bluemong":
+        replaceUrl = "https://blumongvape.com";
+        thumbnailImage = doc.querySelector("#prdDetailImg > img");
+        detailImages = doc.querySelectorAll("#prdDetail img");
+        options = doc.querySelectorAll(
+          "#product_option_id1 > optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll("#product_option_id1 > option");
+        }
+        break;
+      case "airvaper":
+        replaceUrl = "https://airvaper.com";
+        thumbnailImage = doc.querySelector("#contents .thumbnail img");
+        detailImages = doc.querySelectorAll("#prdDetail > div.cont img");
+        options = doc.querySelectorAll(
+          "#product_option_id1 > optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll("#product_option_id1 > option");
         }
         break;
       default:
@@ -748,8 +772,8 @@ const addProduct = async () => {
       createdAt: Timestamp.fromDate(new Date()),
       updatedAt: Timestamp.fromDate(new Date()),
       isSellCafe24: isSellCafe24.value,
-      isSellYoutube: isSellYoutube.value,
-      isSellVue: isSellVue.value,
+      isSellYoutube: isSellCafe24.value,
+      isSellVue: true,
       isActive: true,
       updatedAtCafe24: Timestamp.fromDate(new Date(1970, 1, 1)),
     };

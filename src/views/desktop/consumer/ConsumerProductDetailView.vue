@@ -141,6 +141,14 @@
         </div>
       </div>
     </div>
+    <hr v-if="!productData.isSellCafe24" />
+    <h2
+      v-if="!productData.isSellCafe24"
+      style="text-align: center; word-break: keep-all"
+    >
+      본 상품은 [온라인 판매금지] 상품으로 공식몰에서는 구매가 불가하며, 이
+      쇼핑몰에서만 구매 가능한 상품입니다!
+    </h2>
     <hr />
     <div class="product-detail-container">
       <img

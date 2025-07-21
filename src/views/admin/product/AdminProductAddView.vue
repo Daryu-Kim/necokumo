@@ -136,6 +136,12 @@
             <button @click="crawlProduct('airvaper')" :disabled="isBusy">
               에어베이퍼
             </button>
+            <button @click="crawlProduct('beba')" :disabled="isBusy">
+              베이프바스켓
+            </button>
+            <button @click="crawlProduct('boomboom')" :disabled="isBusy">
+              붐붐리퀴드
+            </button>
             <button
               @click="openDialog"
               :disabled="productDetailImages.length === 0"
@@ -590,6 +596,34 @@ const crawlProduct = async (buyer) => {
           options = doc.querySelectorAll("#product_option_id1 > option");
         }
         break;
+      case "beba":
+        replaceUrl = "";
+        thumbnailImage = doc.querySelector("#mainImage > img");
+        detailImages = doc.querySelectorAll(
+          "#detail > div.detail_cont > div img"
+        );
+        options = doc.querySelectorAll(
+          "#frmView > div > div > div.item_detail_list > div > dl > dd > select > optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "#frmView > div > div > div.item_detail_list > div > dl > dd > select > option"
+          );
+        }
+        break;
+      case "boomboom":
+        replaceUrl = "https://boomboomliquid.com";
+        thumbnailImage = doc.querySelector(
+          "#contents > div.xans-element-.xans-product.xans-product-detail > div.detailArea > div.xans-element-.xans-product.xans-product-image.imgArea > div.keyImg > div > a > img"
+        );
+        detailImages = doc.querySelectorAll("#prdDetail > div > div img");
+        options = doc.querySelectorAll(
+          "#product_option_id1 > optgroup > option"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll("#product_option_id1 > option");
+        }
+        break;
       default:
         replaceUrl = "";
         break;
@@ -744,7 +778,8 @@ const addProduct = async () => {
     ].filter((id) => id != null);
 
     const cleanProductName = productName.value
-      .replace(/[[]]/g, "")
+      .replace(/\[/g, "")
+      .replace(/\]/g, "")
       .toLowerCase();
 
     const productNameKeywords = cleanProductName

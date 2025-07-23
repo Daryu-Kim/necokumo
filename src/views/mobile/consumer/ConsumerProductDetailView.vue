@@ -76,9 +76,9 @@
                     step="1"
                     max="99"
                     v-model.number="item.count"
-                    @input="updateCount(index)"
+                    @blur="updateCount(index)"
                   />
-                  <button @click="removeOption(index)">
+                  <button type="button" @click="removeOption(index)">
                     <span class="material-icons-outlined">clear</span>
                   </button>
                 </div>
@@ -115,7 +115,7 @@
             </p>
           </div>
           <div>
-            <button class="black" style="flex: 2" @click="buyNow">
+            <button type="button" class="black" style="flex: 2" @click="buyNow">
               BUY IT NOW
             </button>
             <button class="white" style="flex: 1" @click="addCart">CART</button>
@@ -124,6 +124,7 @@
               style="flex: 1"
               @click="addWishList"
               v-if="!isWishList"
+              type="button"
             >
               <span class="material-icons-outlined">favorite_border</span>
             </button>
@@ -132,6 +133,7 @@
               style="flex: 1"
               @click="removeWishList"
               v-else
+              type="button"
             >
               <span class="material-icons-outlined">favorite</span>
             </button>
@@ -411,7 +413,7 @@ watch(() => option.value, async (newVal, oldVal) => {
     );
 
     if (existingOption) {
-      existingOption.count += 1;
+      alert("이미 선택된 옵션이 있습니다!");
     } else {
       selectedOptions.value.push({
         optionName: newVal,

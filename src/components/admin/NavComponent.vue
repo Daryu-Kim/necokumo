@@ -87,7 +87,7 @@
       </button>
       <div v-if="isOpenedOrderList" class="admin-menu-sub">
         <h3>고객 주문 관련 메뉴</h3>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link to="/admin/order/dashboard" class="admin-menu-item">
           <div>
             <p>주문 대시보드</p>
           </div>

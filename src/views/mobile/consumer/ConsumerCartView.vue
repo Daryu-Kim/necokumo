@@ -24,7 +24,7 @@
                 }}$
               </p>
             </div>
-            <button @click="removeCart(index)">
+            <button type="button" @click="removeCart(index)">
               <span class="material-icons-outlined"> close </span>
             </button>
           </div>
@@ -49,7 +49,7 @@
                 step="1"
                 max="99"
                 v-model.number="item.count"
-                @input="changeOptionCount(index)"
+                @blur="changeOptionCount(index)"
               />
             </div>
           </div>
@@ -94,7 +94,7 @@
             </strong>
           </div>
         </div>
-        <button @click="buyNow">상품 주문하기</button>
+        <button type="button" @click="buyNow">상품 주문하기</button>
         <p>배송비는 배송 방법에 따라 상이하여 주문서에서 확인 가능합니다.</p>
       </div>
     </div>

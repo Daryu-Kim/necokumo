@@ -506,6 +506,13 @@ const crawlProduct = async (buyer) => {
         break;
       case "0vape":
         replaceUrl = "";
+        thumbnailImage = doc.querySelector(
+          "#shopProductImgsMainDiv > div.shopProductImgMainWrapper.type_thumbnails.sequence_0.on > div"
+        );
+        detailImages = doc.querySelectorAll("div.productDetailSection img");
+        options = doc.querySelectorAll(
+          "#shopProductContentInfo > div.shopProductOptionListDiv.row.selectOptions.designSettingElement.text-body > div.productOption.custom-select-wrapper > div > div > div.custom-select-box-list-inner > div > div"
+        );
         break;
       case "emvape":
         replaceUrl = "";
@@ -631,6 +638,14 @@ const crawlProduct = async (buyer) => {
 
     switch (buyer) {
       case "versayou": {
+        console.log(thumbnailImage);
+        const backgroundImage = thumbnailImage.style.backgroundImage;
+        productThumbnail.value = backgroundImage.match(
+          /url\(["']?(.*?)["']?\)/
+        )[1];
+        break;
+      }
+      case "0vape": {
         console.log(thumbnailImage);
         const backgroundImage = thumbnailImage.style.backgroundImage;
         productThumbnail.value = backgroundImage.match(

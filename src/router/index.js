@@ -28,6 +28,7 @@ import ConsumerLayout from "@/layouts/template/ConsumerLayout.vue";
 import NotFoundView from "@/views/template/NotFoundView.vue";
 import ConsumerCategoryView from "@/views/template/consumer/ConsumerCategoryView.vue";
 import AdminOrderDashboardView from "@/views/admin/order/AdminOrderDashboardView.vue";
+import AdminOrderListView from "@/views/admin/order/AdminOrderListView.vue";
 const routes = [
   {
     path: "/",
@@ -150,6 +151,11 @@ const routes = [
             path: "dashboard",
             name: "admin-order-dashboard",
             component: AdminOrderDashboardView,
+          },
+          {
+            path: "list",
+            name: "admin-order-list",
+            component: AdminOrderListView,
           },
         ],
       },

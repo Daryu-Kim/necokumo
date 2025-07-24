@@ -92,7 +92,7 @@
             <p>주문 대시보드</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/product" class="admin-menu-item">
+        <router-link to="/admin/order/list" class="admin-menu-item">
           <div>
             <p>전체 주문 조회하기</p>
           </div>

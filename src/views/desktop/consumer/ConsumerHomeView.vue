@@ -217,10 +217,11 @@ onMounted(async () => {
         console.log("Fetching Event Product Data...");
         const eventProductSnap = await getDocs(query(
           collection(db, "product"),
+          where("isActive", "==", true),
           where("productCategory", "array-contains", "43"),
           orderBy("productLikeCount", "desc"),
           orderBy("createdAt", "desc"),
-          limit(10)
+          limit(6)
         ));
         eventProductDatas.value = eventProductSnap.docs.map(doc => ({
           id: doc.id,
@@ -234,6 +235,7 @@ onMounted(async () => {
           const categoryId = categoryDocs.docs[0].data().categoryId;
           const saleSnap = await getDocs(query(
             collection(db, "product"),
+            where("isActive", "==", true),
             where("productCategory", "array-contains", categoryId),
             orderBy("productLikeCount", "desc"),
             orderBy("createdAt", "desc"),

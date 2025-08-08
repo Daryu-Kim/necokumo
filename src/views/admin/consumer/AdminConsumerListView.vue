@@ -5,6 +5,9 @@
       <button @click="triggerConsumerMatch" class="blue" :disabled="isBusy">
         회원 정보 가져오기
       </button>
+      <button @click="router.push('/admin/consumer/add')" :disabled="isBusy">
+        회원 정보 등록하기
+      </button>
       <input
         type="file"
         ref="consumerMatchRef"
@@ -28,6 +31,7 @@ import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { matchConsumerByEmail } from "@/lib/cafe24";
 import { formatDate } from "@/lib/utils";
+import router from "@/router";
 
 const tableRef = ref(null);
 const dataTable = ref(null);

@@ -1,31 +1,7 @@
 <template>
   <div class="admin-product-list">
-    <h2>전체 주문 조회하기</h2>
+    <h2>배송준비중 관리하기</h2>
     <div class="button-box">
-      <button @click="deleteOrder" :disabled="isBusy">
-        ※주의※ 주문삭제 처리
-      </button>
-      <button
-        class="blue"
-        @click="convertToStatus('BEFORE_DEPOSIT', 'PAYMENT_COMPLETED')"
-        :disabled="isBusy"
-      >
-        결제완료 처리
-      </button>
-      <button
-        class="blue"
-        @click="convertToStatus('PAYMENT_COMPLETED', 'PREPARING_PRODUCT')"
-        :disabled="isBusy"
-      >
-        상품준비중 처리
-      </button>
-      <button
-        class="blue"
-        @click="convertToStatus('PREPARING_PRODUCT', 'PREPARING_DELIVERY')"
-        :disabled="isBusy"
-      >
-        배송준비중 처리
-      </button>
       <button
         class="blue"
         @click="convertToStatus('PREPARING_DELIVERY', 'SHIPPING_PROGRESS')"
@@ -34,32 +10,10 @@
         배송중 처리
       </button>
       <button
-        class="blue"
-        @click="convertToStatus('SHIPPING_PROGRESS', 'DELIVERY_COMPLETED')"
+        @click="router.push('/admin/order/list/shipping-progress')"
         :disabled="isBusy"
       >
-        배송완료 처리
-      </button>
-      <button
-        class="red"
-        @click="adminConvertToStatus('CANCELLED')"
-        :disabled="isBusy"
-      >
-        관리자 취소 처리
-      </button>
-      <button
-        class="red"
-        @click="adminConvertToStatus('EXCHANGE')"
-        :disabled="isBusy"
-      >
-        관리자 교환 처리
-      </button>
-      <button
-        class="red"
-        @click="adminConvertToStatus('RETURNED')"
-        :disabled="isBusy"
-      >
-        관리자 반품 처리
+        배송중 페이지 이동
       </button>
     </div>
     <div class="table-box">
@@ -81,9 +35,7 @@ import {
   getDoc,
   doc,
   updateDoc,
-  arrayRemove,
-  writeBatch,
-  Timestamp,
+  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -91,148 +43,12 @@ import {
   generateDeliveryTrackingLinkOrigin,
   generateOrderStatusLabel,
 } from "@/lib/utils";
+import router from "@/router";
 
 const tableRef = ref(null);
 const dataTable = ref(null);
 const isBusy = ref(false);
 const originData = ref([]);
-
-const adminConvertToStatus = async (status) => {
-  try {
-    isBusy.value = true;
-    const checkedItems = await getCheckedItems();
-
-    if (!checkedItems.length) {
-      alert("주문 건이 선택되지 않았습니다!");
-      isBusy.value = false;
-      return;
-    }
-
-    const validItems = checkedItems.filter((item) => {
-      return (
-        item.status === !item.claimStatus &&
-        (item.status !== "CANCELLED" ||
-          item.status !== "EXCHANGE" ||
-          item.status !== "RETURNED")
-      );
-    });
-
-    if (!validItems.length) {
-      alert("선택된 주문 중 유효한 항목이 없습니다.");
-      isBusy.value = false;
-      return;
-    }
-
-    if (
-      !confirm(`${validItems.length}건의 주문을 '${status}' 처리하시겠습니까?`)
-    ) {
-      isBusy.value = false;
-      return;
-    }
-
-    // ✅ 병렬 업데이트 실행
-    const promises = validItems
-      .map((item) => {
-        const docId = item.productOrderId || item.id;
-        if (!docId) {
-          console.warn("문서 ID 없음:", item);
-          return null;
-        }
-        const timestamp = Timestamp.fromDate(new Date());
-        let claimReason = "";
-        let claimStatus = "";
-        switch (status) {
-          case "CANCELLED":
-            claimReason = "관리자 취소 처리";
-            claimStatus = "PROCESSING_CANCEL";
-            break;
-          case "EXCHANGE":
-            claimReason = "관리자 교환 처리";
-            claimStatus = "PROCESSING_EXCHANGE";
-            break;
-          case "RETURNED":
-            claimReason = "관리자 반품 처리";
-            claimStatus = "PROCESSING_RETURN";
-            break;
-          default:
-            break;
-        }
-        return updateDoc(doc(db, "productOrder", docId), {
-          status: status,
-          claimReason: claimReason,
-          claimStatus: claimStatus,
-          claimProcessedAt: timestamp,
-          claimRequestedAt: timestamp,
-          claimType: "ADMIN",
-        });
-      })
-      .filter(Boolean); // null 제거
-
-    await Promise.all(promises); // 병렬로 처리 기다림
-
-    alert(`${validItems.length}건의 주문을 '${status}' 처리하였습니다.`);
-    window.location.reload();
-  } catch (error) {
-    console.error("주문 상태 병렬 처리 중 오류:", error);
-    alert("상태 변경 중 오류가 발생했습니다.");
-  } finally {
-    isBusy.value = false;
-  }
-};
-
-const deleteOrder = async () => {
-  try {
-    isBusy.value = true;
-
-    const checkedItems = await getCheckedItems();
-    if (!checkedItems.length) {
-      alert("주문 건이 선택되지 않았습니다!");
-      return;
-    }
-
-    const ok = confirm(
-      `정말로 ${checkedItems.length}건의 주문 건을 삭제하시겠습니까?\n이 작업은 취소할 수 없습니다.`
-    );
-    if (!ok) return;
-
-    // 🔴 1) writeBatch로 한 번에 처리 (권장)
-    const batch = writeBatch(db);
-
-    for (const item of checkedItems) {
-      const orderRef = doc(db, "order", item.orderId);
-      const productOrderRef = doc(db, "productOrder", item.productOrderId);
-
-      const orderSnap = await getDoc(orderRef);
-      if (!orderSnap.exists()) continue;
-
-      const { productOrders = [] } = orderSnap.data() || {};
-
-      if (productOrders.length > 1) {
-        // 🔸 2) 'order' 문서는 남기고 배열에서만 제거
-        //      → 배열 요소가 **문자열 ID**가 맞는지 확인하세요!
-        batch.update(orderRef, {
-          productOrders: arrayRemove(item.productOrderId),
-        });
-      } else {
-        // 🔸 3) productOrders가 1개뿐이면 order 문서 자체 삭제
-        batch.delete(orderRef);
-      }
-
-      // 🔸 4) 항상 productOrder 문서는 삭제
-      batch.delete(productOrderRef);
-    }
-
-    await batch.commit(); // 모든 작업 한꺼번에 전송
-
-    alert(`${checkedItems.length}건의 주문 건을 삭제처리했습니다!`);
-    window.location.reload();
-  } catch (error) {
-    console.error("주문 삭제처리 실패:", error);
-    alert("삭제 중 오류가 발생했습니다. 콘솔 로그를 확인해 주세요.");
-  } finally {
-    isBusy.value = false;
-  }
-};
 
 const convertToStatus = async (before, after) => {
   try {
@@ -338,21 +154,6 @@ const handleInputChange = async (e) => {
   }
 };
 
-const handleReceiptInputChange = async (e) => {
-  const orderId = e.target.getAttribute("data-id");
-  const value = e.target.value;
-
-  try {
-    await updateDoc(doc(db, "productOrder", orderId), {
-      cashReceiptNumber: value,
-    });
-    console.log(`📦 현금영수증 발급번호 저장됨: ${value}`);
-  } catch (err) {
-    alert("저장 실패");
-    console.error(err);
-  }
-};
-
 const setupDeliveryTrackingLink = async (orderId) => {
   try {
     const data = (await getDoc(doc(db, "productOrder", orderId))).data();
@@ -387,17 +188,13 @@ function bindDTNInputs() {
   });
 }
 
-function bindCRNInputs() {
-  // 이전 바인딩 제거
-  document.querySelectorAll(".cash-receipt-number").forEach((select) => {
-    select.removeEventListener("blur", handleReceiptInputChange);
-    select.addEventListener("blur", handleReceiptInputChange);
-  });
-}
-
 onMounted(async () => {
   // 1. Firebase에서 데이터 가져오기
-  const q = query(collection(db, "productOrder"), orderBy("createdAt", "desc"));
+  const q = query(
+    collection(db, "productOrder"),
+    where("status", "==", "PREPARING_DELIVERY"),
+    orderBy("createdAt", "desc")
+  );
   const querySnapshot = await getDocs(q);
 
   // 2. 문서들을 배열로 변환
@@ -462,14 +259,6 @@ onMounted(async () => {
       },
       {
         content: item.deliveryTrackingNumber,
-        editable: false,
-      },
-      {
-        content: item.deliveryTrackingLink,
-        editable: false,
-      },
-      {
-        content: item,
         editable: false,
       },
       {
@@ -602,35 +391,6 @@ onMounted(async () => {
         },
       },
       {
-        name: "배송조회",
-        editable: false,
-        resizable: false,
-        width: 96,
-        align: "center",
-        format: (value) => {
-          if (/\d/.test(value)) {
-            return `<a href="${value}" target="_blank" style="font-weight: 700; color: #007bff">배송조회</a>`;
-          } else {
-            return "배송정보 없음";
-          }
-        },
-      },
-      {
-        name: "현금영수증 발급번호",
-        editable: false,
-        resizable: false,
-        width: 180,
-        align: "center",
-        format: (value, row) => {
-          if (value.currency === "KRW") {
-            const id = row[3].content;
-            return `<input type="text" class="cash-receipt-number" data-id="${id}" value="${value.cashReceiptNumber}" />`;
-          } else {
-            return "현금영수증 미발급";
-          }
-        },
-      },
-      {
         name: "주문일",
         editable: false,
         resizable: false,
@@ -654,7 +414,6 @@ watch(
       console.log("✅ dataTable 변경 감지됨. 이벤트 재바인딩");
       bindDeliverySelects();
       bindDTNInputs();
-      bindCRNInputs();
     });
   },
   { immediate: true }

@@ -68,9 +68,9 @@
         </div>
         <div class="description-container">
           <div v-if="deliveryWay === 'domestic'">
-            <p>한진택배를 통해 발송되는 배송방법입니다.</p>
+            <p>로젠택배를 통해 발송되는 배송방법입니다.</p>
             <p>
-              기본 배송료는 3,500원이며 원화 기준 5만원 이상 주문 시
+              기본 배송료는 4,000원이며 원화 기준 7만원 이상 주문 시
               무료배송됩니다.
             </p>
             <p>제주 / 도서산간 지역은 구매 금액 상관없이 5,000원 추가됩니다.</p>
@@ -106,7 +106,7 @@
             <p>편의점 반값택배를 통해 발송되는 배송방법입니다.</p>
             <p>받으실 편의점 지점명을 정확하게 적어주세요.</p>
             <p>
-              기본 배송료는 3,000원이며 원화 기준 5만원 이상 주문 시
+              기본 배송료는 3,500원이며 원화 기준 7만원 이상 주문 시
               무료배송됩니다.
             </p>
             <p>제주 / 도서산간 지역은 구매 금액 상관없이 5,000원 추가됩니다.</p>
@@ -324,12 +324,12 @@ const paypalButtonContainer = ref(null);
 const deliveryFee = computed(() => {
   switch (deliveryWay.value) {
     case 'domestic':
-      if (totalBankPrice.value < 50000) {
+      if (totalBankPrice.value < 70000) {
         let fee = 0;
         if (paymentMethod.value === 'bank') {
-          fee = 3500;
+          fee = 4000;
         } else {
-          fee = Math.ceil((3500 / usdPrice.value) * 100) / 100;
+          fee = Math.ceil((4000 / usdPrice.value) * 100) / 100;
         }
         return fee;
       } else {
@@ -340,12 +340,12 @@ const deliveryFee = computed(() => {
     case 'subway':
       return "마이페이지에서 결제 필요";
     case 'convenience':
-      if (totalBankPrice.value < 50000) {
+      if (totalBankPrice.value < 70000) {
         let fee = 0;
         if (paymentMethod.value === 'bank') {
-          fee = 3000;
+          fee = 3500;
         } else {
-          fee = Math.ceil((3000 / usdPrice.value) * 100) / 100;
+          fee = Math.ceil((3500 / usdPrice.value) * 100) / 100;
         }
         return fee;
       } else {
@@ -440,6 +440,7 @@ async function checkout() {
         orderId: orderId,
         productOrderId: padOrderId,
         productId: item.id,
+        cashReceiptNumber: "",
         productName: item.productName,
         optionName: item.optionName,
         count: item.count,
@@ -502,7 +503,7 @@ async function checkout() {
     });
     await sendAligoMessage({
       receiver: consumerPhone.value,
-      msg: `[네코쿠모] 주문이 완료되었습니다.\n아래 계좌로 입금해 주세요.\n\n주문번호: ${orderId}\n입금은행: 케이뱅크\n계좌번호: 100-151-009519\n예금주: 김원재\n\n입금 확인 후 발송됩니다. 감사합니다!`,
+      msg: `[네코쿠모] 주문이 완료되었습니다.\n아래 계좌로 입금해 주세요.\n\n주문번호: ${orderId}\n입금은행: 케이뱅크\n계좌번호: 100-151-009519\n예금주: 김원재\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원\n\n입금 확인 후 발송됩니다. 감사합니다!`,
       msg_type: "LMS",
       title: "[네코쿠모 무통장입금 계좌 안내]",
     });

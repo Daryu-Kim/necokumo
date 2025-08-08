@@ -121,9 +121,6 @@
             <button @click="crawlProduct('siasiu')" :disabled="isBusy">
               샤슈베이프
             </button>
-            <button @click="crawlProduct('versayou')" :disabled="isBusy">
-              베르사유
-            </button>
             <button @click="crawlProduct('vanom')" :disabled="isBusy">
               베놈
             </button>
@@ -141,6 +138,12 @@
             </button>
             <button @click="crawlProduct('boomboom')" :disabled="isBusy">
               붐붐리퀴드
+            </button>
+            <button @click="crawlProduct('uwell')" :disabled="isBusy">
+              용트림
+            </button>
+            <button @click="crawlProduct('cigapong')" :disabled="isBusy">
+              시가퐁
             </button>
             <button
               @click="openDialog"
@@ -544,19 +547,6 @@ const crawlProduct = async (buyer) => {
           );
         }
         break;
-      case "versayou":
-        replaceUrl = "";
-        thumbnailImage = doc.querySelector("div.zoomContainer > div.zoomLens");
-        detailImages = doc.querySelectorAll("#sit_tail_explan img");
-        options = doc.querySelectorAll(
-          "#realopt > div > div.toggle-wrap > section optgroup > option"
-        );
-        if (options.length == 0) {
-          options = doc.querySelectorAll(
-            "#realopt > div > div.toggle-wrap > section option"
-          );
-        }
-        break;
       case "vanom":
         replaceUrl = "";
         thumbnailImage = doc.querySelector("img.ThumbImage");
@@ -631,20 +621,46 @@ const crawlProduct = async (buyer) => {
           options = doc.querySelectorAll("#product_option_id1 > option");
         }
         break;
+      case "uwell":
+        replaceUrl = "https://boomboomliquid.com";
+        thumbnailImage = doc.querySelector(
+          "#content > div > div._2-I30XS1lA > div._3rXou9cfw2 > div.bd_23RhM.bd_2Yw8f > div.bd_1uFKu.bd_2PG3r > img"
+        );
+        detailImages = doc.querySelectorAll(
+          "#INTRODUCE div.se-main-container img"
+        );
+        options = doc.querySelectorAll(
+          "#content > div > div._2-I30XS1lA > div._2QCa6wHHPy > fieldset > div.bd_2dy3Y > div > ul > li > a"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "#content > div > div._2-I30XS1lA > div._2QCa6wHHPy > fieldset > div.bd_2dy3Y > div > ul > li > a"
+          );
+        }
+        break;
+      case "cigapong":
+        replaceUrl = "https://boomboomliquid.com";
+        thumbnailImage = doc.querySelector(
+          "#content > div > div._2-I30XS1lA > div._3rXou9cfw2._3SDVmcn7nN > div.bd_23RhM.bd_2Yw8f > div.bd_1uFKu > img"
+        );
+        detailImages = doc.querySelectorAll(
+          "#INTRODUCE div.se-main-container img"
+        );
+        options = doc.querySelectorAll(
+          "#content > div > div._2-I30XS1lA > div._2QCa6wHHPy > fieldset > div.bd_2dy3Y > div > ul > li > a"
+        );
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "#content > div > div._2-I30XS1lA > div._2QCa6wHHPy > fieldset > div.bd_2dy3Y > div > ul > li > a"
+          );
+        }
+        break;
       default:
         replaceUrl = "";
         break;
     }
 
     switch (buyer) {
-      case "versayou": {
-        console.log(thumbnailImage);
-        const backgroundImage = thumbnailImage.style.backgroundImage;
-        productThumbnail.value = backgroundImage.match(
-          /url\(["']?(.*?)["']?\)/
-        )[1];
-        break;
-      }
       case "0vape": {
         console.log(thumbnailImage);
         const backgroundImage = thumbnailImage.style.backgroundImage;

@@ -34,8 +34,8 @@
             <p class="info-title">배송비</p>
             <p class="info-content">
               <span class="blue bold">
-                50,000원 ({{
-                  (Math.ceil((50000 / usdPrice) * 100) / 100).toLocaleString()
+                70,000원 ({{
+                  (Math.ceil((70000 / usdPrice) * 100) / 100).toLocaleString()
                 }}$)
               </span>
               이상 결제 시 배송비 무료

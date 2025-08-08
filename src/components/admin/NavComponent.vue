@@ -97,32 +97,50 @@
             <p>전체 주문 조회하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link
+          to="/admin/order/list/before-deposit"
+          class="admin-menu-item"
+        >
           <div>
             <p>입금전 관리하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link
+          to="/admin/order/list/payment-completed"
+          class="admin-menu-item"
+        >
+          <div>
+            <p>결제완료 관리하기</p>
+          </div>
+        </router-link>
+        <router-link
+          to="/admin/order/list/preparing-product"
+          class="admin-menu-item"
+        >
           <div>
             <p>상품 준비중 관리하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link
+          to="/admin/order/list/preparing-delivery"
+          class="admin-menu-item"
+        >
           <div>
             <p>배송 준비중 관리하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
-          <div>
-            <p>배송 대기 관리하기</p>
-          </div>
-        </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link
+          to="/admin/order/list/shipping-progress"
+          class="admin-menu-item"
+        >
           <div>
             <p>배송 중 관리하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link
+          to="/admin/order/list/delivery-completed"
+          class="admin-menu-item"
+        >
           <div>
             <p>배송 완료 조회하기</p>
           </div>
@@ -145,29 +163,24 @@
       </button>
       <div v-if="isOpenedClaimList" class="admin-menu-sub">
         <h3>고객 클레임 관련 메뉴</h3>
-        <router-link to="/admin/list/product" class="admin-menu-item">
+        <router-link to="/admin/claim/before-deposit" class="admin-menu-item">
           <div>
             <p>입금전 취소 관리하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link to="/admin/claim/cancelled" class="admin-menu-item">
           <div>
             <p>취소 관리하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link to="/admin/claim/exchange" class="admin-menu-item">
           <div>
             <p>교환 관리하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
+        <router-link to="/admin/claim/returned" class="admin-menu-item">
           <div>
             <p>반품 관리하기</p>
-          </div>
-        </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
-          <div>
-            <p>환불 관리하기</p>
           </div>
         </router-link>
       </div>
@@ -251,9 +264,9 @@
             <p>회원 정보 조회하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/consumer/grade" class="admin-menu-item">
+        <router-link to="/admin/consumer/add" class="admin-menu-item">
           <div>
-            <p>회원 등급별 관리하기</p>
+            <p>회원 정보 등록하기</p>
           </div>
         </router-link>
         <router-link to="/admin/consumer/point" class="admin-menu-item">

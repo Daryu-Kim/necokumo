@@ -236,6 +236,7 @@
 
 <script setup>
 import { auth, db } from "@/lib/firebase";
+import { sendPpurioMessage } from "@/lib/ppurio";
 import router from "@/router";
 import {
   createUserWithEmailAndPassword,
@@ -425,10 +426,35 @@ async function confirmUserData() {
             )
           )
         ).docs[0];
+        const referralUserData = await referralUserDoc.data();
         await updateDoc(doc(db, "users", referralUserDoc.id), {
           userReferralList: arrayUnion(userData.value.userId),
         });
+
+        await sendPpurioMessage({
+          targets: [
+            {
+              to: referralUserData.userPhone,
+            },
+          ],
+          targetCount: 1,
+          content: `[네코쿠모] 신규 고객님께서 고객님을 추천인으로 등록했습니다!\n\n추천인 성함: ${userData.value.userName}\n추천인 아이디: ${userData.value.userId}\n\n추천해주신 고객님께서 상품을 구매하면 구매 포인트의 10%를 적립받게 됩니다!\n오늘도 즐거운 쇼핑 되시길 바랍니다 :)`,
+          refKey: `REFERRAL_${Timestamp.now().seconds}_${
+            userData.value.userId
+          }_${referralUserData.userId}`,
+        });
       }
+
+      await sendPpurioMessage({
+        targets: [
+          {
+            to: userData.value.userPhone,
+          },
+        ],
+        targetCount: 1,
+        content: `[네코쿠모] 계정 생성이 완료되었습니다!\n\n아이디: ${userData.value.userId}\n이메일: ${userData.value.userEmail}\n비밀번호: 가입자 전화번호 ("-" 제외)\n\n아래 링크에 접속하여 로그인해주세요!\nhttps://www.xn--o39akkkwy1i9is75bsxx.shop/login`,
+        refKey: `JOIN_${Timestamp.now().seconds}_${userData.value.userId}`,
+      });
 
       await signOut(auth);
 

@@ -304,7 +304,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { auth, db } from "@/lib/firebase";
 import { getDoc, doc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { fetchExchangeRate } from '@/lib/paypal';
-import { sendAligoMessage } from "@/lib/aligo";
+import { sendPpurioMessage } from "@/lib/ppurio";
 import router from '@/router';
 
 const usdPrice = ref(0);
@@ -501,11 +501,15 @@ async function checkout() {
       cardAcceptNumber: "",
       memoContent: "",
     });
-    await sendAligoMessage({
-      receiver: consumerPhone.value,
-      msg: `[네코쿠모] 주문이 완료되었습니다.\n아래 계좌로 입금해 주세요.\n\n주문번호: ${orderId}\n입금은행: 케이뱅크\n계좌번호: 100-151-009519\n예금주: 김원재\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원\n\n입금 확인 후 발송됩니다. 감사합니다!`,
-      msg_type: "LMS",
-      title: "[네코쿠모 무통장입금 계좌 안내]",
+    await sendPpurioMessage({
+      targets: [
+        {
+          to: consumerPhone.value
+        }
+      ],
+      targetCount: 1,
+      content: `[네코쿠모] 주문이 완료되었습니다.\n아래 계좌로 입금해 주세요.\n\n주문번호: ${orderId}\n입금은행: 케이뱅크\n계좌번호: 100-151-009519\n예금주: 김원재\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원\n\n입금 확인 후 발송됩니다. 감사합니다!`,
+      refKey: `ORDER_${orderId}`,
     });
     if (history.state?.query === "cart") {
       await updateDoc(doc(db, "users", auth.currentUser.uid), {
@@ -704,11 +708,15 @@ watch(paymentMethod, async (newVal) => {
                 memoContent: "",
               });
               console.log("결제 성공:", details);
-              await sendAligoMessage({
-                receiver: consumerPhone.value,
-                msg: `[네코쿠모] 주문 및 결제가 완료되었습니다.\n\n주문번호: ${orderId}\n결제수단: PayPal\n\n상품은 곧 배송 준비에 들어갑니다. 감사합니다!`,
-                msg_type: "LMS",
-                title: "[네코쿠모 주문 및 결제 내역 안내]",
+              await sendPpurioMessage({
+                targets: [
+                  {
+                    to: consumerPhone.value
+                  }
+                ],
+                targetCount: 1,
+                content: `[네코쿠모] 주문 및 결제가 완료되었습니다.\n\n주문번호: ${orderId}\n결제수단: PayPal\n\n상품은 곧 배송 준비에 들어갑니다. 감사합니다!`,
+                refKey: `ORDER_${orderId}`,
               });
               if (history.state?.query === "cart") {
                 await updateDoc(doc(db, "users", auth.currentUser.uid), {

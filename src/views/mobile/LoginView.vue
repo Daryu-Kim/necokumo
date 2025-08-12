@@ -56,6 +56,8 @@
         <button @click="openSearchIdDialog">아이디 / 이메일 찾기</button>
         <hr />
         <button @click="openSearchPwDialog">비밀번호 초기화</button>
+        <hr />
+        <button @click="openRequestDialog">계정 등록 요청</button>
       </div>
       <p>기존 네코쿠모 사이트 계정 이메일로 로그인 가능합니다!</p>
     </div>
@@ -73,6 +75,7 @@
         <input
           type="text"
           v-model="searchIdPhone"
+          @input="computedSearchIdPhone"
           placeholder="전화번호 (- 없이 입력)"
         />
         <button @click="searchId">아이디 / 이메일 찾기</button>
@@ -90,6 +93,33 @@
         <button @click="searchPw">비밀번호 초기화</button>
       </main>
     </dialog>
+    <dialog ref="requestDialogRef">
+      <header>
+        <h2>계정 등록 요청</h2>
+        <button @click="closeRequestDialog">
+          <span class="material-icons-round">close</span>
+        </button>
+      </header>
+      <main>
+        <input
+          type="text"
+          v-model="requestCafe24Id"
+          placeholder="공식몰 아이디"
+        />
+        <input
+          type="text"
+          v-model="requestCafe24Name"
+          placeholder="공식몰 회원명"
+        />
+        <input
+          type="text"
+          v-model="requestCafe24Phone"
+          @input="computedRequestCafe24Phone"
+          placeholder="공식몰 가입 전화번호 (- 없이 입력)"
+        />
+        <button @click="requestJoin">계정 생성 요청하기</button>
+      </main>
+    </dialog>
   </div>
 </template>
 
@@ -101,7 +131,14 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { useRouter } from "vue-router";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  Timestamp,
+  where,
+} from "firebase/firestore";
+import { sendPpurioMessage } from "@/lib/ppurio";
 
 const email = ref("");
 const password = ref("");
@@ -109,10 +146,14 @@ const errorMessage = ref("");
 const role = ref("consumer");
 const searchIdDialogRef = ref(null);
 const searchPwDialogRef = ref(null);
+const requestDialogRef = ref(null);
 const searchIdName = ref("");
 const searchIdBirthday = ref("");
 const searchIdPhone = ref("");
 const searchPwEmail = ref("");
+const requestCafe24Id = ref("");
+const requestCafe24Name = ref("");
+const requestCafe24Phone = ref("");
 
 const router = useRouter();
 
@@ -133,6 +174,25 @@ const openSearchPwDialog = () => {
 
 const closeSearchPwDialog = () => {
   searchPwDialogRef.value.close();
+};
+
+const openRequestDialog = () => {
+  requestCafe24Id.value = "";
+  requestCafe24Name.value = "";
+  requestCafe24Phone.value = "";
+  requestDialogRef.value.showModal();
+};
+
+const closeRequestDialog = () => {
+  requestDialogRef.value.close();
+};
+
+const computedSearchIdPhone = () => {
+  searchIdPhone.value = searchIdPhone.value.replace(/\D/g, "");
+};
+
+const computedRequestCafe24Phone = () => {
+  requestCafe24Phone.value = requestCafe24Phone.value.replace(/\D/g, "");
 };
 
 const searchId = async () => {
@@ -169,6 +229,29 @@ const searchPw = async () => {
     searchPwDialogRef.value.close();
   } catch (error) {
     alert("일치하는 정보가 없습니다.");
+  }
+};
+
+const requestJoin = async () => {
+  try {
+    await sendPpurioMessage({
+      targets: [
+        {
+          to: "01055779069",
+        },
+      ],
+      targetCount: 1,
+      content: `[네코쿠모] 계정 생성 요청이 접수되었습니다\n\n공식몰 아이디: ${requestCafe24Id.value}\n공식몰 가입자 성함: ${requestCafe24Name.value}\n공식몰 가입자 전화번호: ${requestCafe24Phone.value}\n\n관리자 페이지에서 계정을 생성해주세요!`,
+      refKey: `JOIN_REQUEST_${Timestamp.now().seconds}_${
+        requestCafe24Id.value
+      }`,
+    });
+    alert(
+      "계정 생성 요청이 완료되었습니다!\n생성 후 문자로 안내해드리겠습니다!"
+    );
+    requestDialogRef.value.close();
+  } catch (error) {
+    alert("계정 생성 요청에 오류가 발생했습니다!");
   }
 };
 

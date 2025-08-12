@@ -216,24 +216,14 @@
             <p>상품 등록하기</p>
           </div>
         </router-link>
-        <router-link to="/admin/product/category" class="admin-menu-item">
-          <div>
-            <p>카테고리 관리하기</p>
-          </div>
-        </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
-          <div>
-            <p>진열 방식 관리하기</p>
-          </div>
-        </router-link>
-        <router-link to="/admin/list/category" class="admin-menu-item">
-          <div>
-            <p>진열 방식 설정하기</p>
-          </div>
-        </router-link>
         <router-link to="/admin/product/deleted-list" class="admin-menu-item">
           <div>
             <p>삭제 상품 목록보기</p>
+          </div>
+        </router-link>
+        <router-link to="/admin/product/category" class="admin-menu-item">
+          <div>
+            <p>카테고리 관리하기</p>
           </div>
         </router-link>
       </div>

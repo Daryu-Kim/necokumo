@@ -1,6 +1,5 @@
-export async function sendAligoMessage(payload) {
+export async function sendPpurioMessage(payload) {
   try {
-    payload.sender = "01055779069";
     const response = await fetch(
       "https://sendmessage-dikpysyoqq-uc.a.run.app",
       {

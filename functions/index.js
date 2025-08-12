@@ -2,11 +2,11 @@ const { onRequest } = require("firebase-functions/v2/https");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const cors = require("cors")({ origin: true });
-const aligoapi = require("aligoapi");
 
-const aligoAuthData = {
-  key: "o03r6el0zag5nvxdhyk230tyrluj4aja",
-  user_id: "innovape",
+const ppurioAuthData = {
+  API_URL: "https://message.ppurio.com",
+  USER_NAME: "necokumo",
+  TOKEN: "5f410db7a5427c87a9f98d0a41ad3bc115abc78d36c79b3f12724499cb546dcf",
 };
 
 exports.getImageBlobFromUrl = onRequest(async (req, res) => {
@@ -73,11 +73,63 @@ exports.sendMessage = onRequest(
       }
 
       try {
-        // 메시지 발송
-        const response = await aligoapi.send(req, aligoAuthData);
-        return res.status(200).json(response);
+        const { targets, targetCount, content, refKey } = req.body;
+        if (!Array.isArray(targets) || targets.length === 0) {
+          return res.status(400).json({ error: "targets 배열이 비어있음" });
+        }
+
+        // 1. 엑세스 토큰 발급
+        const authString = Buffer.from(
+          `${ppurioAuthData.USER_NAME}:${ppurioAuthData.TOKEN}`
+        ).toString("base64");
+        const tokenRes = await fetch(`${ppurioAuthData.API_URL}/v1/token`, {
+          method: "POST",
+          headers: { Authorization: `Basic ${authString}` },
+        });
+
+        if (!tokenRes.ok) {
+          return res.status(tokenRes.status).json({ error: "토큰 발급 실패" });
+        }
+        const tokenData = await tokenRes.json();
+        const accessToken = tokenData?.token;
+        if (!accessToken) {
+          return res.status(500).json({ error: "토큰 값이 없습니다" });
+        }
+
+        // 2. 문자 발송
+        const payload = {
+          account: ppurioAuthData.USER_NAME,
+          messageType: "LMS",
+          content: content,
+          from: "01055779069",
+          duplicateFlag: "N",
+          refKey: refKey,
+          targetCount: targetCount,
+          targets: targets.map((t) => ({
+            to: t.to,
+          })),
+        };
+
+        const msgRes = await fetch(`${ppurioAuthData.API_URL}/v1/message`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!msgRes.ok) {
+          const errText = await msgRes.text();
+          return res
+            .status(msgRes.status)
+            .json({ error: "문자 발송 실패", detail: errText });
+        }
+
+        const msgData = await msgRes.json();
+        return res.status(200).json(msgData);
       } catch (error) {
-        console.error("Aligo 문자 발송 오류:", error);
+        console.error("문자 발송 오류:", error);
         return res
           .status(500)
           .json({ error: "문자 발송 실패", detail: error.message || error });

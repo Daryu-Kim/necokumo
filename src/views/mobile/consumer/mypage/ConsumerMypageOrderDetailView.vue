@@ -173,7 +173,7 @@
 </template>
 
 <script setup lang="js">
-import { sendAligoMessage } from '@/lib/aligo';
+import { sendPpurioMessage } from '@/lib/ppurio';
 import { db, auth } from '@/lib/firebase';
 import { fetchExchangeRate } from '@/lib/paypal';
 import { generateOrderStatusLabel } from '@/lib/utils';
@@ -274,7 +274,7 @@ watch(
                   deliveryFeeCardAcceptNumber:
                     details.purchase_units[0].payments.captures[0].id,
                 });
-                await sendAligoMessage({
+                await sendPpurioMessage({
                   receiver: orderData.value.userPhone,
                   msg: `[네코쿠모] 배송비 결제가 완료되었습니다.\n\n주문번호: ${orderId}\n결제수단: PayPal\n\n상품은 곧 배송 준비에 들어갑니다. 감사합니다!`,
                   msg_type: "LMS",

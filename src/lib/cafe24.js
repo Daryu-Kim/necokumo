@@ -507,7 +507,7 @@ export async function uploadProduct() {
             `${product.productName} - 네코쿠모`,
             "네코쿠모",
             `${product.productSummary}`,
-            `${product.productSearchKeyword}`,
+            `${product.productNameKeywords}`,
             "",
             "",
             "C",

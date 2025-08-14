@@ -1,6 +1,6 @@
 <template>
   <div class="admin-product-add">
-    <h2>상품 등록하기</h2>
+    <h2>{{ route.query.id ? "상품 수정하기" : "상품 등록하기" }}</h2>
     <div class="channel-box">
       <h3>판매 채널</h3>
       <div>
@@ -252,11 +252,11 @@
         <div>
           <input
             type="text"
-            v-model="productSearchKeyword"
+            v-model="productNameKeywords"
             placeholder="검색어는 콤마로 구분, 검색어 당 최대 125자까지 입력 가능"
           />
           <div>
-            <button @click="generateProductSearchKeyword" :disabled="isBusy">
+            <button @click="generateProductNameKeywords" :disabled="isBusy">
               자동 완성
             </button>
           </div>
@@ -264,7 +264,9 @@
       </div>
     </div>
     <div class="button-box">
-      <button @click="addProduct" :disabled="isBusy">상품 등록하기</button>
+      <button @click="addProduct" :disabled="isBusy">
+        {{ route.query.id ? "상품 수정하기" : "상품 등록하기" }}
+      </button>
     </div>
     <dialog ref="dialogRef">
       <header>
@@ -294,6 +296,7 @@ import {
   setDoc,
   Timestamp,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { onMounted, ref, computed } from "vue";
 import { db, auth } from "@/lib/firebase";
@@ -312,7 +315,7 @@ const isSellCafe24 = ref(true);
 
 const excelContent = ref("");
 const productName = ref("");
-const productSearchKeyword = ref("");
+const productNameKeywords = ref("");
 const productDetail = ref("");
 const productSellPrice = ref(0);
 const productBuyPrice = ref(0);
@@ -755,7 +758,7 @@ const closeDialog = () => {
   dialogRef.value.close();
 };
 
-const generateProductSearchKeyword = async () => {
+const generateProductNameKeywords = async () => {
   try {
     if (!category1Select.value) {
       alert("카테고리를 선택하세요.");
@@ -768,7 +771,7 @@ const generateProductSearchKeyword = async () => {
       category1Select.value ? " " + category1Select.value.categoryName : ""
     }}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 불필요한 상품 요약설명, 정리, 대답 필요없으니까 전부 제외하고 소비자가 알기 쉽고 구매욕구가 들게 SEO에 노출 잘되게 50개의 키워드를 콤마로 연결하고 띄어쓰기를 모두 없애서 딱 말해줘. 무조건 키워드의 총합은 50을 넘어가면 안되고, 50개의 키워드 중에서 무조건 "네코쿠모", "네코쿠모전자담배", "네코쿠모전담", "냥이네구름가게", "냥이네구름가게전자담배", "냥이네구름가게전담" 키워드들은 무조건 들어가야해.`;
     const data = await useDeepseek(prompt);
-    productSearchKeyword.value = data.choices[0].message.content.replaceAll(
+    productNameKeywords.value = data.choices[0].message.content.replaceAll(
       /"/g,
       ""
     );
@@ -779,6 +782,12 @@ const generateProductSearchKeyword = async () => {
   }
 };
 
+function isDifferentArrays(arr1, arr2) {
+  return (
+    arr1.length !== arr2.length || arr1.some((url, idx) => url !== arr2[idx])
+  );
+}
+
 const addProduct = async () => {
   try {
     isBusy.value = true;
@@ -788,67 +797,163 @@ const addProduct = async () => {
       return;
     }
 
-    const uuid = await generateUUIDFromSeed(productName.value);
-    console.log(uuid);
+    if (route.query.id) {
+      // 상품 수정 로직
+      const uuid = route.query.id;
+      let updateData = {};
 
-    const thumbnailURL = await uploadImageByUrl(
-      "thumbnail",
-      productThumbnail.value,
-      uuid,
-      0
-    );
+      if (isSellCafe24.value !== productOriginData.value.isSellCafe24) {
+        updateData.isSellCafe24 = isSellCafe24.value;
+      }
 
-    const detailImageURL = await Promise.all(
-      Array.from(productDetailImages.value).map(async (item, index) => {
-        const data = await uploadImageByUrl("detail", item, uuid, index);
-        return {
-          imageOriginUrl: data?.imageOriginUrl,
-        };
-      })
-    );
+      if (
+        category0Select.value?.categoryId !==
+          productOriginData.value.productCategory[0] ||
+        category1Select.value?.categoryId !==
+          productOriginData.value.productCategory[1] ||
+        category2Select.value?.categoryId !==
+          productOriginData.value.productCategory[2]
+      ) {
+        updateData.productCategory = [
+          category0Select.value?.categoryId,
+          category1Select.value?.categoryId,
+          category2Select.value?.categoryId,
+        ].filter((id) => id != null);
+      }
 
-    const category = [
-      category0Select.value?.categoryId,
-      category1Select.value?.categoryId,
-      category2Select.value?.categoryId,
-    ].filter((id) => id != null);
+      if (productName.value !== productOriginData.value.productName) {
+        updateData.productName = productName.value;
+      }
 
-    const cleanProductName = productName.value
-      .replace(/\[/g, "")
-      .replace(/\]/g, "")
-      .toLowerCase();
+      const originDetailUrls = (productOriginData.value.productDetailUrl || [])
+        .map((detail) => detail.imageOriginUrl)
+        .filter(Boolean);
+      if (isDifferentArrays(productDetailImages.value, originDetailUrls)) {
+        const detailImageURL = await Promise.all(
+          Array.from(productDetailImages.value).map(async (item, index) => {
+            const data = await uploadImageByUrl("detail", item, uuid, index);
+            return {
+              imageOriginUrl: data?.imageOriginUrl,
+            };
+          })
+        );
+        updateData.productDetailUrl = detailImageURL;
+        console.log(detailImageURL);
+      }
 
-    const productNameKeywords = cleanProductName
-      .split(" ")
-      .map((kw) => kw.trim())
-      .filter(Boolean);
+      if (
+        isDifferentArrays(
+          productOriginData.value.option1List,
+          option1List.value
+        ) ||
+        isDifferentArrays(
+          productOriginData.value.option2List,
+          option2List.value
+        )
+      ) {
+        updateData.option1List = option1List.value;
+        updateData.option2List = option2List.value;
+        updateData.optionList = optionList.value;
+      }
 
-    const productData = {
-      productId: uuid,
-      productName: productName.value,
-      productNameKeywords: [...new Set(productNameKeywords)],
-      productSearchKeyword: productSearchKeyword.value,
-      productSellPrice: productSellPrice.value,
-      productBuyPrice: productBuyPrice.value,
-      productBuyDeliveryPrice: productBuyDeliveryPrice.value,
-      productCategory: category,
-      option1List: option1List.value,
-      option2List: option2List.value,
-      optionList: optionList.value,
-      productThumbnailUrl: thumbnailURL,
-      productDetailUrl: detailImageURL,
-      productLikeCount: 0,
-      productReviews: [],
-      createdBy: auth.currentUser.uid,
-      createdAt: Timestamp.fromDate(new Date()),
-      updatedAt: Timestamp.fromDate(new Date()),
-      isSellCafe24: isSellCafe24.value,
-      isActive: true,
-      updatedAtCafe24: Timestamp.fromDate(new Date(1970, 1, 1)),
-    };
+      const thumbnailURL = await uploadImageByUrl(
+        "thumbnail",
+        productThumbnail.value,
+        uuid,
+        0
+      );
+      if (
+        productOriginData.value.productThumbnailUrl.originalUrl !==
+        thumbnailURL.originalUrl
+      ) {
+        updateData.productThumbnailUrl = thumbnailURL;
+      }
 
-    await setDoc(doc(db, "product", uuid), productData);
-    alert("상품이 성공적으로 등록되었습니다.");
+      const cleanProductName = productName.value
+        .replace(/\[/g, "")
+        .replace(/\]/g, "")
+        .toLowerCase();
+
+      const productNameKeywords = cleanProductName
+        .split(" ")
+        .map((kw) => kw.trim())
+        .filter(Boolean);
+
+      if (
+        isDifferentArrays(
+          productOriginData.value.productNameKeywords,
+          productNameKeywords
+        )
+      ) {
+        updateData.productNameKeywords = [...new Set(productNameKeywords)];
+      }
+
+      updateData.updatedAt = Timestamp.fromDate(new Date());
+
+      await updateDoc(doc(db, "product", uuid), updateData);
+      alert("상품이 성공적으로 수정되었습니다.");
+    } else {
+      // 상품 신규 등록 로직
+      const uuid = await generateUUIDFromSeed(productName.value);
+
+      const thumbnailURL = await uploadImageByUrl(
+        "thumbnail",
+        productThumbnail.value,
+        uuid,
+        0
+      );
+
+      const detailImageURL = await Promise.all(
+        Array.from(productDetailImages.value).map(async (item, index) => {
+          const data = await uploadImageByUrl("detail", item, uuid, index);
+          return {
+            imageOriginUrl: data?.imageOriginUrl,
+          };
+        })
+      );
+
+      const category = [
+        category0Select.value?.categoryId,
+        category1Select.value?.categoryId,
+        category2Select.value?.categoryId,
+      ].filter((id) => id != null);
+
+      const cleanProductName = productName.value
+        .replace(/\[/g, "")
+        .replace(/\]/g, "")
+        .toLowerCase();
+
+      const productNameKeywords = cleanProductName
+        .split(" ")
+        .map((kw) => kw.trim())
+        .filter(Boolean);
+
+      const productData = {
+        productId: uuid,
+        productName: productName.value,
+        productNameKeywords: [...new Set(productNameKeywords)],
+        productSellPrice: productSellPrice.value,
+        productBuyPrice: productBuyPrice.value,
+        productBuyDeliveryPrice: productBuyDeliveryPrice.value,
+        productCategory: category,
+        option1List: option1List.value,
+        option2List: option2List.value,
+        optionList: optionList.value,
+        productThumbnailUrl: thumbnailURL,
+        productDetailUrl: detailImageURL,
+        productLikeCount: 0,
+        productReviews: [],
+        createdBy: auth.currentUser.uid,
+        createdAt: Timestamp.fromDate(new Date()),
+        updatedAt: Timestamp.fromDate(new Date()),
+        isSellCafe24: isSellCafe24.value,
+        isActive: true,
+        updatedAtCafe24: Timestamp.fromDate(new Date(1970, 1, 1)),
+      };
+
+      await setDoc(doc(db, "product", uuid), productData);
+      alert("상품이 성공적으로 등록되었습니다.");
+    }
     isBusy.value = false;
     router.push("/admin/product/list");
   } catch (error) {
@@ -872,14 +977,35 @@ onMounted(async () => {
 
       // 데이터 가공
       const detailUrls = (originData.productDetailUrl || [])
-        .map((detail) => detail.originUrl)
+        .map((detail) => detail.imageOriginUrl)
         .filter(Boolean); // originUrl이 없는 경우 제외
+
       // 기존 Product Data 매치
       isSellCafe24.value = originData.isSellCafe24;
 
-      category0Select.value = originData.productCategory[0];
-      category1Select.value = originData.productCategory[1];
-      category2Select.value = originData.productCategory[2];
+      if (originData.productCategory[0]) {
+        const category0Data = (
+          await getDoc(doc(db, "category", originData.productCategory[0]))
+        ).data();
+        category0Select.value = category0Data;
+      }
+
+      if (originData.productCategory[1]) {
+        const category1Data = (
+          await getDoc(doc(db, "category", originData.productCategory[1]))
+        ).data();
+        category1Select.value = category1Data;
+      }
+
+      if (originData.productCategory[2]) {
+        const category2Data = (
+          await getDoc(doc(db, "category", originData.productCategory[2]))
+        ).data();
+        category2Select.value = category2Data;
+      }
+
+      await changeCategory0();
+      await changeCategory1();
 
       productName.value = originData.productName;
 
@@ -891,10 +1017,11 @@ onMounted(async () => {
 
       option1Text.value = originData.option1List.join(",");
       option2Text.value = originData.option2List.join(",");
+      addOptionList();
 
       productThumbnail.value = originData.productThumbnailUrl.originalUrl;
 
-      productSearchKeyword.value = originData.productNameKeywords.join(",");
+      productNameKeywords.value = originData.productNameKeywords.join(",");
     }
     isBusy.value = false;
   } catch (error) {

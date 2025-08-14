@@ -11,7 +11,7 @@ function getExtensionFromMimeType(mimeType) {
   return mimeToExt[mimeType] || "";
 }
 
-async function fetchBlobFromFunctions(imageUrl) {
+export async function fetchBlobFromFunctions(imageUrl) {
   const res = await fetch(
     "https://getimageblobfromurl-dikpysyoqq-uc.a.run.app",
     {

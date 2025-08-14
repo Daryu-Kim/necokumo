@@ -20,6 +20,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { sleep } from "./utils";
+import { fetchBlobFromFunctions } from "./imgbb";
 
 async function parseCSVFromUrl(url) {
   const response = await axios.get(url);
@@ -33,31 +34,31 @@ async function parseCSVFromUrl(url) {
   });
 }
 
-async function downloadImage(url) {
-  const response = await axios.get(url, { responseType: "blob" });
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(response.data);
-  });
-}
-
-function resizeImage(base64, width, height) {
+function resizeImage(blob, width, height) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "Anonymous"; // CORS 문제 방지
+
     img.onload = () => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
+
       canvas.width = width;
       canvas.height = height;
+
       ctx.drawImage(img, 0, 0, width, height);
-      const resizedBase64 = canvas.toDataURL("image/png");
-      resolve(resizedBase64);
+
+      canvas.toBlob((resizedBlob) => {
+        if (!resizedBlob) {
+          reject(new Error("리사이즈 결과 Blob 생성 실패"));
+          return;
+        }
+        resolve(resizedBlob);
+      }, "image/png");
     };
+
     img.onerror = reject;
-    img.src = base64;
+
+    img.src = URL.createObjectURL(blob);
   });
 }
 
@@ -362,13 +363,23 @@ export async function uploadProduct() {
             small: { width: 220, height: 220 },
           };
 
-          const img = await downloadImage(
+          const imgBlob = await fetchBlobFromFunctions(
             product.productThumbnailUrl.originalUrl
           );
 
+          const blobToDataURL = (blob) =>
+            new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+
+          const imgDataURL = await blobToDataURL(imgBlob);
+
           for (const [key, size] of Object.entries(imageSizes)) {
             const resizedImage = await resizeImage(
-              img,
+              imgDataURL,
               size.width,
               size.height
             ); // 구현 필요

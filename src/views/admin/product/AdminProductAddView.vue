@@ -838,8 +838,6 @@ const addProduct = async () => {
       createdAt: Timestamp.fromDate(new Date()),
       updatedAt: Timestamp.fromDate(new Date()),
       isSellCafe24: isSellCafe24.value,
-      isSellYoutube: isSellCafe24.value,
-      isSellVue: true,
       isActive: true,
       updatedAtCafe24: Timestamp.fromDate(new Date(1970, 1, 1)),
     };

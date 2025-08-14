@@ -293,6 +293,7 @@ import {
   doc,
   setDoc,
   Timestamp,
+  getDoc,
 } from "firebase/firestore";
 import { onMounted, ref, computed } from "vue";
 import { db, auth } from "@/lib/firebase";
@@ -300,8 +301,12 @@ import { generateUUIDFromSeed } from "@/lib/utils";
 import { uploadImageByUrl } from "@/lib/imgbb";
 import { useDeepseek } from "@/lib/openrouter";
 import router from "@/router";
+import { useRoute } from "vue-router";
 
 const isBusy = ref(false);
+
+const productOriginData = ref({});
+const route = useRoute();
 
 const isSellCafe24 = ref(true);
 
@@ -859,6 +864,38 @@ onMounted(async () => {
       query(collection(db, "category"), where("categoryGrade", "==", 0))
     );
     category0List.value = categoryDatas.docs.map((doc) => doc.data());
+    if (route.query.id) {
+      const originData = await (
+        await getDoc(doc(db, "product", route.query.id))
+      ).data();
+      productOriginData.value = originData;
+
+      // 데이터 가공
+      const detailUrls = (originData.productDetailUrl || [])
+        .map((detail) => detail.originUrl)
+        .filter(Boolean); // originUrl이 없는 경우 제외
+      // 기존 Product Data 매치
+      isSellCafe24.value = originData.isSellCafe24;
+
+      category0Select.value = originData.productCategory[0];
+      category1Select.value = originData.productCategory[1];
+      category2Select.value = originData.productCategory[2];
+
+      productName.value = originData.productName;
+
+      productDetailImages.value = detailUrls;
+
+      productSellPrice.value = originData.productSellPrice;
+      productBuyPrice.value = originData.productBuyPrice;
+      productBuyDeliveryPrice.value = originData.productBuyDeliveryPrice;
+
+      option1Text.value = originData.option1List.join(",");
+      option2Text.value = originData.option2List.join(",");
+
+      productThumbnail.value = originData.productThumbnailUrl.originalUrl;
+
+      productSearchKeyword.value = originData.productNameKeywords.join(",");
+    }
     isBusy.value = false;
   } catch (error) {
     console.error(error);

@@ -368,7 +368,7 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: `<a href="${window.location.origin}/admin/product/edit?id=${doc.id}">${item.productName}</a>`,
+        content: `<a href="${window.location.origin}/admin/product/add?id=${doc.id}">${item.productName}</a>`,
         editable: false,
       },
       {

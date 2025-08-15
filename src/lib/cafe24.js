@@ -34,7 +34,7 @@ async function parseCSVFromUrl(url) {
   });
 }
 
-function resizeImage(blob, width, height) {
+function resizeImage(dataURL, width, height) {
   return new Promise((resolve, reject) => {
     const img = new Image();
 
@@ -52,13 +52,14 @@ function resizeImage(blob, width, height) {
           reject(new Error("리사이즈 결과 Blob 생성 실패"));
           return;
         }
-        resolve(resizedBlob);
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result); // Blob -> DataURL 변환
+        reader.readAsDataURL(resizedBlob);
       }, "image/png");
     };
 
     img.onerror = reject;
-
-    img.src = URL.createObjectURL(blob);
+    img.src = dataURL; // dataURL을 img 태그에 로드
   });
 }
 
@@ -363,19 +364,27 @@ export async function uploadProduct() {
             small: { width: 220, height: 220 },
           };
 
-          const imgBlob = await fetchBlobFromFunctions(
+          const imgResponse = await fetchBlobFromFunctions(
             product.productThumbnailUrl.originalUrl
           );
 
-          const blobToDataURL = (blob) =>
-            new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            });
+          const imgBuffer = await imgResponse.arrayBuffer(); // ArrayBuffer로 변환
 
-          const imgDataURL = await blobToDataURL(imgBlob);
+          // ArrayBuffer를 이미지로 바로 로드
+          const img = new Image();
+
+          const imgDataURL = await new Promise((resolve, reject) => {
+            const blob = new Blob([imgBuffer]); // ArrayBuffer를 Blob으로 변환
+            const objectURL = URL.createObjectURL(blob);
+
+            img.onload = () => {
+              resolve(objectURL); // 이미지 로드 완료 후 Object URL을 반환
+            };
+
+            img.onerror = reject;
+
+            img.src = objectURL;
+          });
 
           for (const [key, size] of Object.entries(imageSizes)) {
             const resizedImage = await resizeImage(

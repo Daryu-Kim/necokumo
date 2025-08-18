@@ -203,13 +203,7 @@
               </router-link>
               <router-link :to="`/product?id=${item.id}`" class="sell-price">
                 <span>카드결제가</span>
-                {{
-                  (
-                    Math.ceil(
-                      ((item.productSellPrice * 0.97) / usdPrice) * 100
-                    ) / 100
-                  ).toLocaleString()
-                }}$
+                {{ item.productSellPrice.toLocaleString() }}원
               </router-link>
             </div>
           </div>
@@ -228,9 +222,7 @@ import { onMounted, ref, watch } from 'vue';
 import { db } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy } from "firebase/firestore";
 import { useRoute } from 'vue-router';
-import { fetchExchangeRate } from '@/lib/paypal';
 
-const usdPrice = ref(0);
 const productDatas = ref([]);
 const orderFilterData = ref("popular");
 const viewFilterData = ref("list");
@@ -326,21 +318,10 @@ async function fetchProductData() {
   }
 }
 
-async function fetchUSDPrice() {
-  try {
-    console.log("Fetching USD Price...");
-    usdPrice.value = await fetchExchangeRate();
-    console.log("USD Price Fetched Successfully!: ", usdPrice.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
-}
-
 onMounted(async () => {
     try {
         await fetchProductData();
         await fetchFilteredData();
-        await fetchUSDPrice();
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
@@ -350,14 +331,12 @@ watch(() => route.query.keyword, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
     await fetchProductData();
     await fetchFilteredData();
-    await fetchUSDPrice();
   }
 });
 
 watch(() => orderFilterData.value, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
     await fetchFilteredData();
-    await fetchUSDPrice();
   }
 });
 </script>

@@ -12,21 +12,6 @@
       <div>
         <div class="top-banner-box">
           <swiper class="banner-container" :space-between="16">
-            <swiper-slide class="banner-slide usd-price">
-              <div>
-                <h2>실시간 카드결제 환율</h2>
-                <span>({{ formatDate(new Date()) }} 한국 표준시 기준)</span>
-              </div>
-              <h3>1.00 USD</h3>
-              <div>
-                <h4>KRW</h4>
-                <div>
-                  <h1>{{ parseInt(usdPrice[0]).toLocaleString() }}</h1>
-                  <span>.</span>
-                  <h1>{{ parseInt(usdPrice[1]) }}</h1>
-                </div>
-              </div>
-            </swiper-slide>
             <swiper-slide
               class="banner-slide"
               v-for="(item, index) in topBannerDatas"
@@ -105,14 +90,8 @@
           <p class="name">{{ item.productName }}</p>
           <p class="price">
             {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
-              (
-                Math.ceil(
-                  ((item.productSellPrice * 0.97) /
-                    (Number(usdPrice[0]) + Number(usdPrice[1]) / 100)) *
-                    100
-                ) / 100
-              ).toLocaleString()
-            }}$)
+              item.productSellPrice.toLocaleString()
+            }}원)
           </p>
         </router-link>
       </div>
@@ -137,14 +116,8 @@
             <p class="name">{{ item.productName }}</p>
             <p class="price">
               {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
-                (
-                  Math.ceil(
-                    ((item.productSellPrice * 0.97) /
-                      (Number(usdPrice[0]) + Number(usdPrice[1]) / 100)) *
-                      100
-                  ) / 100
-                ).toLocaleString()
-              }}$)
+                item.productSellPrice.toLocaleString()
+              }}원)
             </p>
           </router-link>
         </div>
@@ -163,14 +136,11 @@ import { db } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy, limit } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
-import { fetchExchangeRate } from '@/lib/paypal';
-import { formatDate } from '@/lib/utils';
 
 const categoryDatas = ref([]);
 const topBannerDatas = ref([]);
 const eventProductDatas = ref([]);
 const saleDatasByCategory = ref({});
-const usdPrice = ref([]);
 const mainNewsDatas = ref([]);
 
 const saleCategoryNames = [
@@ -186,14 +156,6 @@ const saleCategoryNames = [
   "팟 / 코일",
   "악세사리"
 ];
-
-const fetchUSDPrice = async () => {
-  console.log("Fetching USD Price...");
-  const usd = await fetchExchangeRate();
-  usdPrice.value = usd.toFixed(2).split(".");
-  console.log(typeof usdPrice.value[0])
-  console.log("USD Price Fetched Successfully!: ", usdPrice.value);
-}
 
 onMounted(async () => {
     try {
@@ -250,12 +212,6 @@ onMounted(async () => {
           }));
         }
         console.log("Sale Data Fetched Successfully!: ", saleDatasByCategory.value);
-
-        await fetchUSDPrice();
-
-        setInterval(async () => {
-          await fetchUSDPrice();
-        }, 60000); // 10 minutes
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }

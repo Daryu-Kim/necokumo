@@ -34,54 +34,28 @@
                 <p class="title">결제수단</p>
                 <p class="content">
                   {{
-                    orderData.paymentMethod === "bank" ? "무통장입금" : "PayPal"
+                    orderData.paymentMethod === "bank"
+                      ? "무통장입금"
+                      : "신용카드"
                   }}
                 </p>
               </div>
               <div>
                 <p class="title">총 상품금액</p>
                 <p class="content">
-                  {{ orderData.productsPrice.toLocaleString() }}
-                  {{ orderData.currency === "KRW" ? "원" : "$" }}
+                  {{ orderData.productsPrice.toLocaleString() }}원
                 </p>
               </div>
               <div>
                 <p class="title">배송비</p>
                 <p class="content">
-                  {{ orderData.deliveryFee.toLocaleString() }}
-                  {{ orderData.currency === "KRW" ? "원" : "$" }}
+                  {{ orderData.deliveryFee.toLocaleString() }}원
                 </p>
-              </div>
-              <div>
-                <p class="title">배송비 추가 결제 필요 여부</p>
-                <p
-                  class="content"
-                  :class="orderData.deliveryFeePaymentRequired ? 'primary' : ''"
-                >
-                  {{
-                    orderData.deliveryFeePaymentRequired
-                      ? "필요함"
-                      : "필요하지 않음"
-                  }}
-                </p>
-              </div>
-              <div v-if="orderData.deliveryFeePaymentRequired">
-                <p class="title">배송비 추가 결제</p>
-                <div class="content" v-if="!orderData.deliveryFeePaied">
-                  <div ref="paypalButtonContainer"></div>
-                  <p>또는, 새마을금고 9003-2983-9984-9 김원재</p>
-                  <p class="primary">
-                    ({{ orderData.deliveryFee.toLocaleString() }}
-                    {{ orderData.currency === "KRW" ? "원" : "$" }})
-                  </p>
-                </div>
-                <p class="content primary" v-else>결제완료</p>
               </div>
               <div>
                 <p class="title">총 결제금액</p>
                 <div class="content">
-                  {{ orderData.totalPrice.toLocaleString() }}
-                  {{ orderData.currency === "KRW" ? "원" : "$" }}
+                  {{ orderData.totalPrice.toLocaleString() }}원
                 </div>
               </div>
             </div>
@@ -90,8 +64,7 @@
             <h4>
               주문 상품 정보<span
                 >(총 {{ orderData.productOrders.length }}건 /
-                {{ orderData.productsPrice.toLocaleString()
-                }}{{ orderData.currency === "KRW" ? "원" : "$" }})</span
+                {{ orderData.productsPrice.toLocaleString() }}원)</span
               >
             </h4>
             <div
@@ -112,8 +85,7 @@
                     {{ productOrderItem.productData.productName }}
                   </p>
                   <p class="price">
-                    {{ productOrderItem.productPrice.toLocaleString()
-                    }}{{ productOrderItem.currency === "KRW" ? "원" : "$" }} ({{
+                    {{ productOrderItem.productPrice.toLocaleString() }}원 ({{
                       productOrderItem.count
                     }}개)
                   </p>
@@ -173,18 +145,15 @@
 </template>
 
 <script setup lang="js">
-import { sendPpurioMessage } from '@/lib/ppurio';
 import { db, auth } from '@/lib/firebase';
-import { fetchExchangeRate } from '@/lib/paypal';
 import { generateOrderStatusLabel } from '@/lib/utils';
-import { doc, getDoc, updateDoc  } from 'firebase/firestore';
-import { onMounted, ref, nextTick, watch } from 'vue';
+import { doc, getDoc  } from 'firebase/firestore';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 const userData = ref(null);
 const orderData = ref(null);
 const orderStatusFilter = ref("");
-const paypalButtonContainer = ref(null);
 const route = useRoute();
 
 const formatDate = (date) => {
@@ -199,19 +168,7 @@ const formatDate = (date) => {
   return new Date(date).toLocaleString('ko-KR', options);
 }
 
-function loadPayPalSDK() {
-  return new Promise((resolve, reject) => {
-    if (window.paypal) return resolve();
-    const script = document.createElement('script');
-    script.src = 'https://www.paypal.com/sdk/js?client-id=AdKgezyAzq_AQhtF4i1R1UT7CnSpGh_Vqck8lCBACg2aCe_TkPLsaTGeyzvHRgOmsB8H0GJ-tINVZ24u&currency=USD';
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-}
-
 onMounted(async () => {
-  await loadPayPalSDK();
   const userDataRef = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
   userData.value = userDataRef;
 
@@ -242,65 +199,6 @@ onMounted(async () => {
 
   console.log(orderData.value)
 });
-
-watch(
-  () => orderData.value?.deliveryFeePaymentRequired,
-  async (required) => {
-    if (required) {
-      await nextTick();
-      if (paypalButtonContainer.value && window.paypal) {
-        const usdPrice = await fetchExchangeRate();
-        const priceInUSD = Math.ceil((orderData.value.deliveryFee / usdPrice) * 100) / 100;
-        window.paypal.Buttons({
-          createOrder(data, actions) {
-            return actions.order.create({
-              purchase_units: [{
-                amount: {
-                  value: priceInUSD.toString(),
-                  currency_code: "USD"
-                }
-              }],
-              application_context: {
-                shipping_preference: "NO_SHIPPING"
-              }
-            });
-          },
-          onApprove(data, actions) {
-            return actions.order.capture().then(async (details) => {
-              if (details.status === "COMPLETED") {
-                const orderId = orderData.value.orderId;
-                await updateDoc(doc(db, "order", orderId), {
-                  deliveryFeePaied: true,
-                  deliveryFeeCardAcceptNumber:
-                    details.purchase_units[0].payments.captures[0].id,
-                });
-                await sendPpurioMessage({
-                  receiver: orderData.value.userPhone,
-                  msg: `[네코쿠모] 배송비 결제가 완료되었습니다.\n\n주문번호: ${orderId}\n결제수단: PayPal\n\n상품은 곧 배송 준비에 들어갑니다. 감사합니다!`,
-                  msg_type: "LMS",
-                  title: "[네코쿠모 주문 및 결제 내역 안내]",
-                });
-                window.location.reload();
-              } else {
-                alert("결제가 완료되지 않았습니다. 상태: " + details.status);
-              }
-            }).catch((err) => {
-              console.error("결제 처리 중 오류: ", err);
-              alert("결제 처리 중 문제가 발생했습니다.");
-            });
-          },
-          onError(err) {
-            console.error("결제 처리 중 오류: ", err);
-            alert("결제 처리 중 문제가 발생했습니다.");
-          }
-        }).render(paypalButtonContainer.value);
-      } else {
-        console.error('PayPal container is not ready (inside watch)');
-      }
-    }
-  },
-  { immediate: true }
-);
 </script>
 
 <style lang="scss" scoped>

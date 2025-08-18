@@ -94,17 +94,10 @@ onMounted(async () => {
   data.forEach((doc) => {
     const data = doc.data();
     if (
-      data.currency === "KRW" &&
       typeof data.productPrice === "number" &&
       ["APPROVED_CANCEL", "APPROVED_RETURN"].includes(data.claimStatus ?? "")
     ) {
       refundBankTotal += data.productPrice;
-    } else if (
-      data.currency === "USD" &&
-      typeof data.productPrice === "number" &&
-      ["APPROVED_CANCEL", "APPROVED_RETURN"].includes(data.claimStatus ?? "")
-    ) {
-      refundBankTotal += data.productPrice * data.usdPrice;
     }
   });
   orderRefundPrice.value = refundBankTotal;

@@ -146,10 +146,7 @@
                   <div class="order-total-container">
                     <p>
                       총 결제금액:
-                      <span>
-                        {{ order.productPrice.toLocaleString()
-                        }}{{ order.currency === "KRW" ? "원" : "$" }}
-                      </span>
+                      <span> {{ order.productPrice.toLocaleString() }}원 </span>
                     </p>
                     <p>
                       적립 냥코인:

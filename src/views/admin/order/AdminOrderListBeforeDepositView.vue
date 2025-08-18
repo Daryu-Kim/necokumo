@@ -110,27 +110,14 @@ const convertToStatus = async (before, after) => {
               const userData = userSnap.data();
 
               // 주문자 포인트 업데이트 (예: 100 포인트 지급)
-              if (item.currency === "KRW") {
-                updates.push(
-                  updateDoc(userRef, {
-                    userActualPaymentAmount: increment(item.productPrice),
-                    userAvailablePoint: increment(Math.floor(item.pointAmount)),
-                    userTotalPoint: increment(Math.floor(item.pointAmount)),
-                    userTotalActualOrderCount: increment(1),
-                  })
-                );
-              } else {
-                updates.push(
-                  updateDoc(userRef, {
-                    userActualPaymentAmount: increment(
-                      Math.floor(item.productPrice * item.usdPrice)
-                    ),
-                    userAvailablePoint: increment(Math.floor(item.pointAmount)),
-                    userTotalPoint: increment(Math.floor(item.pointAmount)),
-                    userTotalActualOrderCount: increment(1),
-                  })
-                );
-              }
+              updates.push(
+                updateDoc(userRef, {
+                  userActualPaymentAmount: increment(item.productPrice),
+                  userAvailablePoint: increment(Math.floor(item.pointAmount)),
+                  userTotalPoint: increment(Math.floor(item.pointAmount)),
+                  userTotalActualOrderCount: increment(1),
+                })
+              );
 
               // 추천인 포인트 지급
               if (userData.userReferralId) {

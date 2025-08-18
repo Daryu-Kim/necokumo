@@ -52,21 +52,17 @@
     <hr />
     <div class="order-price-container">
       <h2>결제금액</h2>
-      <h2>
-        {{ orderData.totalPrice.toLocaleString()
-        }}<span>{{ orderData.currency === "KRW" ? "원" : "$" }}</span>
-      </h2>
+      <h2>{{ orderData.totalPrice.toLocaleString() }}<span>원</span></h2>
     </div>
     <hr />
     <div class="payment-info-container">
       <h2>결제수단</h2>
       <div>
         <p>
-          {{ orderData.paymentMethod === "bank" ? "무통장입금" : "PayPal" }}
+          {{ orderData.paymentMethod === "bank" ? "무통장입금" : "신용카드" }}
         </p>
         <span>
-          {{ orderData.totalPrice.toLocaleString()
-          }}<span>{{ orderData.currency === "KRW" ? "원" : "$" }}</span>
+          {{ orderData.totalPrice.toLocaleString() }}<span>원</span>
         </span>
       </div>
     </div>

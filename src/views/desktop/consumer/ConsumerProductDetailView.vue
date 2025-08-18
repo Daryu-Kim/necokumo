@@ -21,23 +21,13 @@
           <div>
             <p class="info-title bold">카드결제가</p>
             <p class="info-content bold">
-              {{
-                (
-                  Math.ceil(
-                    ((productData.productSellPrice * 0.97) / usdPrice) * 100
-                  ) / 100
-                ).toLocaleString()
-              }}$
+              {{ productData.productSellPrice.toLocaleString() }}원
             </p>
           </div>
           <div>
             <p class="info-title">배송비</p>
             <p class="info-content">
-              <span class="blue bold">
-                70,000원 ({{
-                  (Math.ceil((70000 / usdPrice) * 100) / 100).toLocaleString()
-                }}$)
-              </span>
+              <span class="blue bold">70,000원</span>
               이상 결제 시 배송비 무료
             </p>
           </div>
@@ -90,14 +80,8 @@
                       0.95
                     ).toLocaleString()
                   }}원<br />({{
-                    (
-                      Math.ceil(
-                        ((productData.productSellPrice * item.count * 0.97) /
-                          usdPrice) *
-                          100
-                      ) / 100
-                    ).toLocaleString()
-                  }}$)
+                    productData.productSellPrice.toLocaleString()
+                  }}원)
                 </p>
               </div>
             </div>
@@ -110,7 +94,7 @@
             <p class="info-content" style="text-align: end; font-weight: 700">
               {{ totalBankPrice.toLocaleString() }}원 ({{
                 totalCardDollar.toLocaleString()
-              }}$)
+              }}원)
               <span style="color: #007bff">
                 [{{ totalCount.toLocaleString() }}개]
               </span>
@@ -165,10 +149,8 @@ import { nextTick, onMounted, ref, watch, computed } from 'vue';
 import { auth, db } from "@/lib/firebase";
 import { getDoc, doc, setDoc, arrayUnion, increment, arrayRemove } from "firebase/firestore";
 import { useRoute } from 'vue-router';
-import { fetchExchangeRate } from '@/lib/paypal';
 import router from '@/router';
 
-const usdPrice = ref(0);
 const productData = ref(null);
 const option = ref("");
 const selectedOptions = ref([]);
@@ -188,10 +170,10 @@ const totalBankPrice = computed(() =>
 
 const totalCardDollar = computed(() => {
   const total = selectedOptions.value.reduce(
-    (sum, item) => sum + productData.value.productSellPrice * item.count * 0.97,
+    (sum, item) => sum + productData.value.productSellPrice * item.count,
     0
   );
-  return Math.ceil((total / usdPrice.value) * 100) / 100;
+  return total;
 });
 
 const route = useRoute();
@@ -373,16 +355,6 @@ async function fetchProductData() {
   }
 }
 
-async function fetchUSDPrice() {
-  try {
-    console.log("Fetching USD Price...");
-    usdPrice.value = await fetchExchangeRate();
-    console.log("USD Price Fetched Successfully!: ", usdPrice.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
-}
-
 async function fetchUserData() {
   try {
     console.log("Fetching User Data...");
@@ -397,7 +369,6 @@ async function fetchUserData() {
 onMounted(async () => {
   try {
     await fetchProductData();
-    await fetchUSDPrice();
     await fetchUserData();
     await fetchWishListData();
   } catch (error) {

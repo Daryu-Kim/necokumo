@@ -232,13 +232,7 @@
               </router-link>
               <router-link :to="`/product?id=${item.id}`" class="sell-price">
                 <span>카드결제가</span>
-                {{
-                  (
-                    Math.ceil(
-                      ((item.productSellPrice * 0.97) / usdPrice) * 100
-                    ) / 100
-                  ).toLocaleString()
-                }}$
+                {{ item.productSellPrice.toLocaleString() }}원
               </router-link>
             </div>
           </div>
@@ -253,9 +247,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { db } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy, getDoc, doc } from "firebase/firestore";
 import { useRoute } from 'vue-router';
-import { fetchExchangeRate } from '@/lib/paypal';
-
-const usdPrice = ref(0);
 const categoryDatas = ref([]);
 const childCategoryDatas = ref([]);
 const productDatas = ref([]);
@@ -366,16 +357,6 @@ async function fetchProductData() {
   }
 }
 
-async function fetchUSDPrice() {
-  try {
-    console.log("Fetching USD Price...");
-    usdPrice.value = await fetchExchangeRate();
-    console.log("USD Price Fetched Successfully!: ", usdPrice.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
-}
-
 async function fetchCurrentCategoryData() {
   try {
     console.log("Fetching Current Category Data...");
@@ -403,7 +384,6 @@ onMounted(async () => {
         await fetchChildCategoryData();
         await fetchProductData();
         await fetchFilteredData();
-        await fetchUSDPrice();
         await fetchCurrentCategoryData();
 
         console.log("Fetching Top Banner Data...");
@@ -420,7 +400,6 @@ watch(() => route.query.category, async (newVal, oldVal) => {
     await fetchChildCategoryData();
     await fetchProductData();
     await fetchFilteredData();
-    await fetchUSDPrice();
     await fetchCurrentCategoryData();
   }
 });
@@ -428,7 +407,6 @@ watch(() => route.query.category, async (newVal, oldVal) => {
 watch(() => orderFilterData.value, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
     await fetchFilteredData();
-    await fetchUSDPrice();
   }
 });
 </script>

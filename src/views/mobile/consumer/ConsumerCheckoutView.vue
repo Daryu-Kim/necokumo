@@ -190,13 +190,7 @@
                       item.count *
                       0.95
                     ).toLocaleString()}원`
-                  : `${(
-                      Math.ceil(
-                        ((item.productSellPrice * item.count * 0.97) /
-                          usdPrice) *
-                          100
-                      ) / 100
-                    ).toLocaleString()}$`
+                  : `${(item.productSellPrice * item.count).toLocaleString()}원`
               }}
             </p>
           </div>
@@ -210,9 +204,7 @@
             deliveryWay === "domestic" ||
             deliveryWay === "convenience" ||
             deliveryWay === "manual"
-              ? paymentMethod === "bank"
-                ? "원"
-                : "$"
+              ? "원"
               : ""
           }}
         </p>
@@ -246,7 +238,7 @@
             value="card"
             style="display: none"
           />
-          <label for="card">PayPal 신용카드</label>
+          <label for="card">신용카드</label>
         </div>
       </div>
       <div class="desc-container" v-if="paymentMethod === 'bank'">
@@ -259,55 +251,34 @@
           <input type="text" v-model="bankName" />
         </div>
       </div>
-      <div class="desc-container" v-else>
-        <p>PayPal로 결제를 위해 <span>달러($)</span>로 결제됩니다.</p>
-        <p>
-          PayPal 결제는
-          <span>해외결제가 지원되는 카드(Visa, Mastercard 등)</span>를 이용해야
-          결제가 가능합니다.
-        </p>
-        <p>
-          카드사에서 해외 원화 결제 차단을 활성화하면 이중환전이 되지 않아
-          <span>수수료 없이 더욱 저렴하게 구매</span>가 가능합니다.
-        </p>
-        <p>
-          할부의 경우 PayPal 결제 후
-          <span>카드사 어플이나 고객센터를 통해 할부로 전환</span>이 가능합니다.
-        </p>
-      </div>
     </div>
     <hr />
     <button @click="checkout" v-if="paymentMethod === 'bank'">
       {{
-        paymentMethod === "bank"
-          ? `${(
-              totalBankPrice +
-              (typeof deliveryFee === "string" ? 0 : deliveryFee)
-            ).toLocaleString()}원`
-          : `${(
-              totalCardDollar +
-              (typeof deliveryFee === "string" ? 0 : deliveryFee)
-            ).toLocaleString()}$`
+        `${(
+          totalBankPrice + (typeof deliveryFee === "string" ? 0 : deliveryFee)
+        ).toLocaleString()}원`
       }}
       결제하기
     </button>
-    <div
-      v-else
-      ref="paypalButtonContainer"
-      class="paypal-button-container"
-    ></div>
+    <button @click="checkoutCard" v-else>
+      {{
+        `${(
+          totalCardDollar + (typeof deliveryFee === "string" ? 0 : deliveryFee)
+        ).toLocaleString()}원`
+      }}
+      결제하기
+    </button>
   </div>
 </template>
 
 <script setup lang="js">
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { auth, db } from "@/lib/firebase";
 import { getDoc, doc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
-import { fetchExchangeRate } from '@/lib/paypal';
 import { sendPpurioMessage } from "@/lib/ppurio";
 import router from '@/router';
 
-const usdPrice = ref(0);
 const orderItemDatas = ref([]);
 const deliveryWay = ref('domestic');
 const paymentMethod = ref('bank');
@@ -319,40 +290,27 @@ const consumerPhone = ref("");
 const consumerEmail = ref("");
 const consumerDeliveryMessage = ref("");
 const bankName = ref("");
-const paypalButtonContainer = ref(null);
 
 const deliveryFee = computed(() => {
   switch (deliveryWay.value) {
     case 'domestic':
       if (totalBankPrice.value < 70000) {
-        let fee = 0;
-        if (paymentMethod.value === 'bank') {
-          fee = 4000;
-        } else {
-          fee = Math.ceil((4000 / usdPrice.value) * 100) / 100;
-        }
-        return fee;
+        return 4000;
       } else {
         return 0;
       }
     case 'international':
-      return "마이페이지에서 결제 필요";
+      return "안내 문자로 링크결제";
     case 'subway':
-      return "마이페이지에서 결제 필요";
+      return "안내 문자로 링크결제";
     case 'convenience':
       if (totalBankPrice.value < 70000) {
-        let fee = 0;
-        if (paymentMethod.value === 'bank') {
-          fee = 3500;
-        } else {
-          fee = Math.ceil((3500 / usdPrice.value) * 100) / 100;
-        }
-        return fee;
+        return 3500;
       } else {
         return 0;
       }
     case 'quick':
-      return "마이페이지에서 결제 필요";
+      return "안내 문자로 링크결제";
     case 'manual':
       return 0;
     default:
@@ -369,10 +327,10 @@ const totalBankPrice = computed(() =>
 
 const totalCardDollar = computed(() => {
   const total = orderItemDatas.value.reduce(
-    (sum, item) => sum + item.productSellPrice * item.count * 0.97,
+    (sum, item) => sum + item.productSellPrice * item.count,
     0
   );
-  return Math.ceil((total / usdPrice.value) * 100) / 100;
+  return total;
 });
 
 function openDaumPostcode() {
@@ -439,17 +397,16 @@ async function checkout() {
       await setDoc(doc(db, "productOrder", padOrderId), {
         orderId: orderId,
         productOrderId: padOrderId,
-        cashReceiptNumber: "",
         productId: item.id,
+        cashReceiptNumber: "",
+        cardReceiptNumber: "",
         productName: item.productName,
         optionName: item.optionName,
         count: item.count,
-        usdPrice: usdPrice.value,
         orderChannel: "NECOKUMO",
         productPrice: item.productSellPrice *
                   item.count *
                   0.95,
-        currency: "KRW",
         userId: auth.currentUser.uid,
         createdAt: Timestamp.fromDate(date),
         status: "BEFORE_DEPOSIT",
@@ -489,16 +446,9 @@ async function checkout() {
       totalPrice: totalBankPrice.value + deliveryFee.value,
       name: consumerName.value,
       deliveryWay: deliveryWay.value,
-      paymentAt: null,
-      deliveryFeePaymentRequired: false,
       userId: auth.currentUser.uid,
       orderChannel: "NECOKUMO",
-      deliveryFeePaymentLink: "",
-      deliveryFeePaied: false,
-      deliveryFeeCardAcceptNumber: "",
       updatedAt: null,
-      currency: "KRW",
-      cardAcceptNumber: "",
       memoContent: "",
     });
     await sendPpurioMessage({
@@ -510,6 +460,138 @@ async function checkout() {
       targetCount: 1,
       content: `[네코쿠모] 주문이 완료되었습니다.\n아래 계좌로 입금해 주세요.\n\n주문번호: ${orderId}\n입금은행: 케이뱅크\n계좌번호: 100-151-009519\n예금주: 김원재\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원\n\n입금 확인 후 발송됩니다. 감사합니다!`,
       refKey: `ORDER_${orderId}`,
+    });
+    await sendPpurioMessage({
+      targets: [
+        {
+          to: "01055779069"
+        }
+      ],
+      targetCount: 1,
+      content: `[네코쿠모] 신규 주문 건이 있습니다.\n관리자 페이지에서 확인 부탁드립니다.\n\n주문번호: ${orderId}\n결제수단: ${paymentMethod.value === "bank" ? "무통장입금" : "신용카드"}\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원`,
+      refKey: `ORDER_ADMIN_${orderId}`,
+    });
+    if (history.state?.query === "cart") {
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        userProductCartList: [],
+      });
+    }
+    router.push({
+      path: "/order-complete",
+      state: { orderId },
+    });
+
+  } catch (error) {
+    console.error("Checkout Error: ", error);
+  }
+}
+
+async function checkoutCard() {
+  try {
+    if (
+      consumerName.value === "" ||
+      consumerPostCode.value === "" ||
+      consumerAddress1.value === "" ||
+      consumerPhone.value === "" ||
+      consumerEmail.value === ""
+    ) {
+      alert("필수 정보를 입력해주세요!");
+      return;
+    }
+
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const hour = date.getHours().toString().padStart(2, "0");
+    const minute = date.getMinutes().toString().padStart(2, "0");;
+    const seconds = date.getSeconds().toString().padStart(2, "0");
+    const randomPart = [...Array(6)].map(() => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      return chars[Math.floor(Math.random() * chars.length)];
+    }).join('');
+    const orderId = `${year}${month}${day}_${hour}${minute}${seconds}_${randomPart}`;
+    const productOrders = [];
+
+    orderItemDatas.value.forEach(async (item, index) => {
+      const padIndex = index.toString().padStart(2, "0");
+      const padOrderId = `${orderId}_${padIndex}`;
+      productOrders.push(padOrderId);
+      await setDoc(doc(db, "productOrder", padOrderId), {
+        orderId: orderId,
+        productOrderId: padOrderId,
+        productId: item.id,
+        cashReceiptNumber: "",
+        cardRecriptNumber: "",
+        productName: item.productName,
+        optionName: item.optionName,
+        count: item.count,
+        orderChannel: "NECOKUMO",
+        productPrice: item.productSellPrice *
+                  item.count,
+        userId: auth.currentUser.uid,
+        createdAt: Timestamp.fromDate(date),
+        status: "BEFORE_DEPOSIT",
+        deliveryTrackingNumber: "",
+        deliveryTrackingLink: "",
+        deliveryCompany: "",
+        pointAmount: item.productSellPrice *
+                    item.count *
+                    0.03,
+        pointGived: false,
+        claimType: "",
+        claimReason: "",
+        claimStatus: "",
+        claimRequestedAt: null,
+        claimProcessedAt: null,
+        returnTrackingNumber: "",
+        returnTrackingLink: "",
+        returnCompany: "",
+        returnStatus: "",
+        returnReceivedAt: null,
+      });
+    });
+    await setDoc(doc(db, "order", orderId), {
+      orderId: orderId,
+      productOrders:  productOrders,
+      createdAt: Timestamp.fromDate(date),
+      deliveryFee: deliveryFee.value,
+      paymentMethod: paymentMethod.value,
+      bankName: "",
+      postCode: consumerPostCode.value,
+      address1: consumerAddress1.value,
+      address2: consumerAddress2.value,
+      phone: consumerPhone.value,
+      email: consumerEmail.value,
+      deliveryMessage: consumerDeliveryMessage.value,
+      productsPrice: totalCardDollar.value,
+      totalPrice: totalCardDollar.value + deliveryFee.value,
+      name: consumerName.value,
+      deliveryWay: deliveryWay.value,
+      userId: auth.currentUser.uid,
+      orderChannel: "NECOKUMO",
+      updatedAt: null,
+      memoContent: "",
+    });
+    await sendPpurioMessage({
+      targets: [
+        {
+          to: consumerPhone.value
+        }
+      ],
+      targetCount: 1,
+      content: `[네코쿠모] 주문이 완료되었습니다.\n문자로 결제요청이 도착하면 결제 부탁드리겠습니다.\n\n주문번호: ${orderId}\n결제금액: ${(totalCardDollar.value + deliveryFee.value).toLocaleString()}원\n\n결제 확인 후 발송됩니다. 감사합니다!`,
+      refKey: `ORDER_${orderId}`,
+    });
+    await sendPpurioMessage({
+      targets: [
+        {
+          to: "01055779069"
+        }
+      ],
+      targetCount: 1,
+      content: `[네코쿠모] 신규 주문 건이 있습니다.\n관리자 페이지에서 확인 부탁드립니다.\n\n주문번호: ${orderId}\n결제수단: ${paymentMethod.value === "bank" ? "무통장입금" : "신용카드"}\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원`,
+      refKey: `ORDER_ADMIN_${orderId}`,
     });
     if (history.state?.query === "cart") {
       await updateDoc(doc(db, "users", auth.currentUser.uid), {
@@ -543,37 +625,14 @@ async function fetchOrderItemDatas(orderItems) {
   }
 }
 
-async function fetchUSDPrice() {
-  try {
-    console.log("Fetching USD Price...");
-    usdPrice.value = await fetchExchangeRate();
-    console.log("USD Price Fetched Successfully!: ", usdPrice.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
-}
-
-function loadPayPalSDK() {
-  return new Promise((resolve, reject) => {
-    if (window.paypal) return resolve();
-    const script = document.createElement('script');
-    script.src = 'https://www.paypal.com/sdk/js?client-id=AdKgezyAzq_AQhtF4i1R1UT7CnSpGh_Vqck8lCBACg2aCe_TkPLsaTGeyzvHRgOmsB8H0GJ-tINVZ24u&currency=USD';
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-}
-
 onMounted(async () => {
   try {
-    await loadPayPalSDK();
     const orderItems = history.state?.orderItems;
     if (!orderItems) {
       console.warn("주문 데이터가 없습니다.");
       router.replace("/");
     } else {
       console.log("받은 주문 데이터: ", orderItems);
-      await fetchUSDPrice();
       await fetchOrderItemDatas(orderItems);
       const userData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
       consumerName.value = userData.userName;
@@ -587,168 +646,6 @@ onMounted(async () => {
     console.error('Failed to fetch data:', error);
   }
 });
-
-watch(paymentMethod, async (newVal) => {
-  if (newVal !== 'bank') {
-    await nextTick(); // DOM이 렌더된 다음
-    if (paypalButtonContainer.value && window.paypal) {
-      window.paypal.Buttons({
-        createOrder(data, actions) {
-          if (
-            consumerName.value === "" ||
-            consumerPostCode.value === "" ||
-            consumerAddress1.value === "" ||
-            consumerPhone.value === "" ||
-            consumerEmail.value === ""
-          ) {
-            alert("필수 정보를 입력해주세요!");
-            // 결제 흐름을 중단하려면 reject Promise
-            return actions.reject(); // 중요!
-          }
-
-          const paymentAmount = totalCardDollar.value + deliveryFee.value;
-          return actions.order.create({
-            purchase_units: [{
-              amount: {
-                value: paymentAmount.toString(),
-                currency_code: "USD"
-              }
-            }],
-            application_context: {
-              shipping_preference: "NO_SHIPPING"
-            }
-          });
-        },
-        onApprove(data, actions) {
-          return actions.order.capture().then(async (details) => {
-            if (details.status === "COMPLETED") {
-              // ✅ 정상 결제 처리
-              const date = new Date();
-              const year = date.getFullYear();
-              const month = (date.getMonth() + 1).toString().padStart(2, "0");
-              const day = date.getDate().toString().padStart(2, "0");
-              const hour = date.getHours().toString().padStart(2, "0");
-              const minute = date.getMinutes().toString().padStart(2, "0");;
-              const seconds = date.getSeconds().toString().padStart(2, "0");
-              const randomPart = [...Array(6)].map(() => {
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                return chars[Math.floor(Math.random() * chars.length)];
-              }).join('');
-              const orderId = `${year}${month}${day}_${hour}${minute}${seconds}_${randomPart}`;
-              const productOrders = [];
-
-              orderItemDatas.value.forEach(async (item, index) => {
-                const padIndex = index.toString().padStart(2, "0");
-                const padOrderId = `${orderId}_${padIndex}`;
-                productOrders.push(padOrderId);
-                await setDoc(doc(db, "productOrder", padOrderId), {
-                  orderId: orderId,
-                  productOrderId: padOrderId,
-                  productId: item.id,
-                  productName: item.productName,
-                  optionName: item.optionName,
-                  orderChannel: "NECOKUMO",
-                  count: item.count,
-                  userId: auth.currentUser.uid,
-                  usdPrice: usdPrice.value,
-                  productPrice: Math.ceil(
-                              ((item.productSellPrice * item.count * 0.97) /
-                                usdPrice.value) *
-                                100
-                            ) / 100,
-                  currency: "USD",
-                  createdAt: Timestamp.fromDate(date),
-                  status: "PAYMENT_COMPLETED",
-                  deliveryTrackingNumber: "",
-                  deliveryTrackingLink: "",
-                  deliveryCompany: "",
-                  pointAmount: item.productSellPrice *
-                              item.count *
-                              0.97 * 0.03,
-                  pointGived: false,
-                  claimType: "",
-                  claimReason: "",
-                  claimStatus: "",
-                  claimRequestedAt: null,
-                  claimProcessedAt: null,
-                  returnTrackingNumber: "",
-                  returnTrackingLink: "",
-                  returnCompany: "",
-                  returnStatus: "",
-                  returnReceivedAt: null,
-                });
-              });
-              await setDoc(doc(db, "order", orderId), {
-                orderId: orderId,
-                productOrders:  productOrders,
-                createdAt: Timestamp.fromDate(date),
-                deliveryFee: deliveryFee.value,
-                paymentMethod: paymentMethod.value,
-                bankName: "",
-                postCode: consumerPostCode.value,
-                address1: consumerAddress1.value,
-                address2: consumerAddress2.value,
-                phone: consumerPhone.value,
-                orderChannel: "NECOKUMO",
-                email: consumerEmail.value,
-                userId: auth.currentUser.uid,
-                deliveryMessage: consumerDeliveryMessage.value,
-                productsPrice: totalCardDollar.value,
-                totalPrice: totalCardDollar.value + deliveryFee.value,
-                name: consumerName.value,
-                deliveryWay: deliveryWay.value,
-                paymentAt: details.update_time,
-                deliveryFeePaymentRequired: false,
-                deliveryFeePaymentLink: "",
-                deliveryFeePaied: false,
-                deliveryFeeCardAcceptNumber: "",
-                updatedAt: null,
-                currency: "USD",
-                cardAcceptNumber: details.purchase_units[0].payments.captures[0].id,
-                memoContent: "",
-              });
-              console.log("결제 성공:", details);
-              await sendPpurioMessage({
-                targets: [
-                  {
-                    to: consumerPhone.value
-                  }
-                ],
-                targetCount: 1,
-                content: `[네코쿠모] 주문 및 결제가 완료되었습니다.\n\n주문번호: ${orderId}\n결제수단: PayPal\n\n상품은 곧 배송 준비에 들어갑니다. 감사합니다!`,
-                refKey: `ORDER_${orderId}`,
-              });
-              if (history.state?.query === "cart") {
-                await updateDoc(doc(db, "users", auth.currentUser.uid), {
-                  userProductCartList: [],
-                });
-              }
-              router.push({
-                path: "/order-complete",
-                state: { orderId },
-              });
-            } else {
-              // ⚠️ 보류되거나 실패한 결제
-              console.warn("결제 상태:", details.status);
-              alert("결제가 완료되지 않았습니다. 상태: " + details.status);
-            }
-          }).catch((err) => {
-            // ❌ 완전한 실패 (네트워크/권한 등)
-            console.error("결제 처리 중 오류: ", err);
-            alert("결제 처리 중 문제가 발생했습니다.");
-          });
-        },
-        onError(err) {
-          // ❌ 완전한 실패 (네트워크/권한 등)
-          console.error("결제 처리 중 오류: ", err);
-          alert("결제 처리 중 문제가 발생했습니다.");
-        }
-      }).render(paypalButtonContainer.value)
-    } else {
-      console.error('PayPal container is not ready')
-    }
-  }
-})
 </script>
 
 <style lang="scss" scoped>

@@ -15,13 +15,7 @@
               </p>
               <p class="sell-price">
                 <span>카드결제가</span>
-                {{
-                  (
-                    Math.ceil(
-                      ((item.productSellPrice * 0.97) / usdPrice) * 100
-                    ) / 100
-                  ).toLocaleString()
-                }}$
+                {{ item.productSellPrice.toLocaleString() }}원
               </p>
             </div>
             <button type="button" @click="removeCart(index)">
@@ -59,13 +53,8 @@
             <strong>
               {{ (item.productSellPrice * item.count * 0.95).toLocaleString()
               }}<span>원</span> ({{
-                (
-                  Math.ceil(
-                    ((item.productSellPrice * item.count * 0.97) / usdPrice) *
-                      100
-                  ) / 100
-                ).toLocaleString()
-              }}<span>$</span>)
+                (item.productSellPrice * item.count).toLocaleString()
+              }}<span>원</span>)
             </strong>
           </div>
         </div>
@@ -77,7 +66,7 @@
             <p>
               {{ totalBankSellPrice.toLocaleString() }}<span>원</span><br />({{
                 totalCardSellPrice.toLocaleString()
-              }}<span>$</span>)
+              }}<span>원</span>)
             </p>
           </div>
           <div>
@@ -90,7 +79,7 @@
             <strong>
               {{ totalBankSellPrice.toLocaleString() }}<span>원</span><br />({{
                 totalCardSellPrice.toLocaleString()
-              }}<span>$</span>)
+              }}<span>원</span>)
             </strong>
           </div>
         </div>
@@ -109,10 +98,8 @@
 import { onMounted, ref, computed } from 'vue';
 import { auth, db } from "@/lib/firebase";
 import { getDoc, doc, updateDoc } from "firebase/firestore";
-import { fetchExchangeRate } from '@/lib/paypal';
 import { useRouter } from 'vue-router';
 
-const usdPrice = ref(0);
 const cartDatas = ref([]);
 const productDatas = ref([]);
 
@@ -123,10 +110,7 @@ const totalBankSellPrice = computed(() => {
 });
 
 const totalCardSellPrice = computed(() => {
-  return productDatas.value.reduce((acc, curr) => acc + (Math.ceil(
-    ((curr.productSellPrice * curr.count * 0.97) / usdPrice.value) *
-      100
-  ) / 100), 0);
+  return productDatas.value.reduce((acc, curr) => acc + (curr.productSellPrice * curr.count), 0);
 });
 
 async function buyNow() {
@@ -226,16 +210,6 @@ async function fetchProductData() {
   }
 }
 
-async function fetchUSDPrice() {
-  try {
-    console.log("Fetching USD Price...");
-    usdPrice.value = await fetchExchangeRate();
-    console.log("USD Price Fetched Successfully!: ", usdPrice.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
-}
-
 async function fetchCartData() {
   try {
     console.log("Fetching Cart Data...");
@@ -251,7 +225,6 @@ onMounted(async () => {
     try {
       await fetchCartData();
       await fetchProductData();
-      await fetchUSDPrice();
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }

@@ -125,11 +125,9 @@
                       {{ productOrderItem.productData.productName }}
                     </p>
                     <p class="price">
-                      {{ productOrderItem.productPrice.toLocaleString()
-                      }}{{
-                        productOrderItem.currency === "KRW" ? "원" : "$"
-                      }}
-                      ({{ productOrderItem.count }}개)
+                      {{ productOrderItem.productPrice.toLocaleString() }}원 ({{
+                        productOrderItem.count
+                      }}개)
                     </p>
                     <p class="option">
                       [옵션: {{ productOrderItem.optionName }}]
@@ -149,10 +147,7 @@
                   <div v-else class="order-total-container">
                     <p>
                       총 결제금액:
-                      <span>
-                        {{ order.totalPrice.toLocaleString()
-                        }}{{ order.currency === "KRW" ? "원" : "$" }}
-                      </span>
+                      <span> {{ order.totalPrice.toLocaleString() }}원 </span>
                     </p>
                     <strong
                       v-if="

@@ -163,11 +163,6 @@
       </button>
       <div v-if="isOpenedClaimList" class="admin-menu-sub">
         <h3>고객 클레임 관련 메뉴</h3>
-        <router-link to="/admin/claim/before-deposit" class="admin-menu-item">
-          <div>
-            <p>입금전 취소 관리하기</p>
-          </div>
-        </router-link>
         <router-link to="/admin/claim/cancelled" class="admin-menu-item">
           <div>
             <p>취소 관리하기</p>

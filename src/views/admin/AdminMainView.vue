@@ -5,7 +5,21 @@
       <div class="admin-summary-content">
         <div>
           <p class="admin-summary-title primary">입금전</p>
-          <p class="admin-summary-value">1,234,567 개</p>
+          <p class="admin-summary-value">
+            {{ beforeDepositCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay primary"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title primary">결제완료</p>
+          <p class="admin-summary-value">
+            {{ paymentCompletedCount.toLocaleString() }} 개
+          </p>
         </div>
         <span class="material-icons-round">report_problem</span>
       </div>
@@ -15,7 +29,9 @@
       <div class="admin-summary-content">
         <div>
           <p class="admin-summary-title primary">상품 준비중</p>
-          <p class="admin-summary-value">1,234,567 개</p>
+          <p class="admin-summary-value">
+            {{ preparingProductCount.toLocaleString() }} 개
+          </p>
         </div>
         <span class="material-icons-round">report_problem</span>
       </div>
@@ -25,17 +41,9 @@
       <div class="admin-summary-content">
         <div>
           <p class="admin-summary-title primary">배송 준비중</p>
-          <p class="admin-summary-value">1,234,567 개</p>
-        </div>
-        <span class="material-icons-round">report_problem</span>
-      </div>
-    </div>
-    <div class="admin-summary-item">
-      <div class="admin-summary-overlay primary"></div>
-      <div class="admin-summary-content">
-        <div>
-          <p class="admin-summary-title primary">배송 대기</p>
-          <p class="admin-summary-value">1,234,567 개</p>
+          <p class="admin-summary-value">
+            {{ preparingDeliveryCount.toLocaleString() }} 개
+          </p>
         </div>
         <span class="material-icons-round">report_problem</span>
       </div>
@@ -45,7 +53,9 @@
       <div class="admin-summary-content">
         <div>
           <p class="admin-summary-title green">배송 중</p>
-          <p class="admin-summary-value">1,234,567 개</p>
+          <p class="admin-summary-value">
+            {{ shippingProgressCount.toLocaleString() }} 개
+          </p>
         </div>
         <span class="material-icons-round">report_problem</span>
       </div>
@@ -54,18 +64,10 @@
       <div class="admin-summary-overlay yellow"></div>
       <div class="admin-summary-content">
         <div>
-          <p class="admin-summary-title yellow">7일 배송완료</p>
-          <p class="admin-summary-value">1,234,567 개</p>
-        </div>
-        <span class="material-icons-round">report_problem</span>
-      </div>
-    </div>
-    <div class="admin-summary-item">
-      <div class="admin-summary-overlay red"></div>
-      <div class="admin-summary-content">
-        <div>
-          <p class="admin-summary-title red">입금 전 취소 요청</p>
-          <p class="admin-summary-value">1,234,567 개</p>
+          <p class="admin-summary-title yellow">배송완료</p>
+          <p class="admin-summary-value">
+            {{ deliveryCompleted.toLocaleString() }} 개
+          </p>
         </div>
         <span class="material-icons-round">report_problem</span>
       </div>
@@ -75,17 +77,9 @@
       <div class="admin-summary-content">
         <div>
           <p class="admin-summary-title red">취소 요청</p>
-          <p class="admin-summary-value">1,234,567 개</p>
-        </div>
-        <span class="material-icons-round">report_problem</span>
-      </div>
-    </div>
-    <div class="admin-summary-item">
-      <div class="admin-summary-overlay red"></div>
-      <div class="admin-summary-content">
-        <div>
-          <p class="admin-summary-title red">반품 요청</p>
-          <p class="admin-summary-value">1,234,567 개</p>
+          <p class="admin-summary-value">
+            {{ requestCancelCount.toLocaleString() }} 개
+          </p>
         </div>
         <span class="material-icons-round">report_problem</span>
       </div>
@@ -95,7 +89,9 @@
       <div class="admin-summary-content">
         <div>
           <p class="admin-summary-title red">교환 요청</p>
-          <p class="admin-summary-value">1,234,567 개</p>
+          <p class="admin-summary-value">
+            {{ requestExchangeCount.toLocaleString() }} 개
+          </p>
         </div>
         <span class="material-icons-round">report_problem</span>
       </div>
@@ -104,8 +100,118 @@
       <div class="admin-summary-overlay red"></div>
       <div class="admin-summary-content">
         <div>
-          <p class="admin-summary-title red">환불 요청</p>
-          <p class="admin-summary-value">1,234,567 개</p>
+          <p class="admin-summary-title red">반품 요청</p>
+          <p class="admin-summary-value">
+            {{ requestReturnCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay info"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title info">취소 처리중</p>
+          <p class="admin-summary-value">
+            {{ processingCancelCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay info"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title info">교환 처리중</p>
+          <p class="admin-summary-value">
+            {{ processingExchangeCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay info"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title info">반품 처리중</p>
+          <p class="admin-summary-value">
+            {{ processingReturnCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay secondary"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title secondary">취소 보류</p>
+          <p class="admin-summary-value">
+            {{ holdCancelCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay secondary"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title secondary">교환 보류</p>
+          <p class="admin-summary-value">
+            {{ holdExchangeCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay secondary"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title secondary">반품 보류</p>
+          <p class="admin-summary-value">
+            {{ holdReturnCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay green"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title green">취소 승인</p>
+          <p class="admin-summary-value">
+            {{ approvedCancelCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay green"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title green">교환 승인</p>
+          <p class="admin-summary-value">
+            {{ approvedExchangeCount.toLocaleString() }} 개
+          </p>
+        </div>
+        <span class="material-icons-round">report_problem</span>
+      </div>
+    </div>
+    <div class="admin-summary-item">
+      <div class="admin-summary-overlay green"></div>
+      <div class="admin-summary-content">
+        <div>
+          <p class="admin-summary-title green">반품 승인</p>
+          <p class="admin-summary-value">
+            {{ approvedReturnCount.toLocaleString() }} 개
+          </p>
         </div>
         <span class="material-icons-round">report_problem</span>
       </div>
@@ -161,6 +267,31 @@ import {
   Tooltip,
   Colors,
 } from "chart.js";
+import { onMounted, ref } from "vue";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+const beforeDepositCount = ref(0);
+const paymentCompletedCount = ref(0);
+const preparingProductCount = ref(0);
+const preparingDeliveryCount = ref(0);
+const shippingProgressCount = ref(0);
+const deliveryCompleted = ref(0);
+
+const requestCancelCount = ref(0);
+const processingCancelCount = ref(0);
+const holdCancelCount = ref(0);
+const approvedCancelCount = ref(0);
+
+const requestExchangeCount = ref(0);
+const processingExchangeCount = ref(0);
+const holdExchangeCount = ref(0);
+const approvedExchangeCount = ref(0);
+
+const requestReturnCount = ref(0);
+const processingReturnCount = ref(0);
+const holdReturnCount = ref(0);
+const approvedReturnCount = ref(0);
 
 const salesChartOptions = {
   responsive: true,
@@ -182,6 +313,96 @@ ChartJS.register(
   Tooltip,
   Colors
 );
+
+onMounted(async () => {
+  // 주문 내역 카운트
+  const productOrderRefs = await getDocs(collection(db, "productOrder"));
+  const productOrderDatas = productOrderRefs.docs.map((doc) => doc.data());
+
+  beforeDepositCount.value = productOrderDatas.filter(
+    (order) => order.status === "BEFORE_DEPOSIT"
+  ).length;
+
+  paymentCompletedCount.value = productOrderDatas.filter(
+    (order) => order.status === "PAYMENT_COMPLETED"
+  ).length;
+
+  preparingProductCount.value = productOrderDatas.filter(
+    (order) => order.status === "PREPARING_PRODUCT"
+  ).length;
+
+  preparingDeliveryCount.value = productOrderDatas.filter(
+    (order) => order.status === "PREPARING_DELIVERY"
+  ).length;
+
+  shippingProgressCount.value = productOrderDatas.filter(
+    (order) => order.status === "SHIPPING_PROGRESS"
+  ).length;
+
+  deliveryCompleted.value = productOrderDatas.filter(
+    (order) => order.status === "DELIVERY_COMPLETED"
+  ).length;
+
+  requestCancelCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "CANCELLED" && order.claimStatus === "REQUEST_CANCEL"
+  ).length;
+
+  processingCancelCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "CANCELLED" && order.claimStatus === "PROCESSING_CANCEL"
+  ).length;
+
+  holdCancelCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "CANCELLED" && order.claimStatus === "HOLD_CANCEL"
+  ).length;
+
+  approvedCancelCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "CANCELLED" && order.claimStatus === "APPROVED_CANCEL"
+  ).length;
+
+  requestExchangeCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "EXCHANGE" && order.claimStatus === "REQUEST_EXCHANGE"
+  ).length;
+
+  processingExchangeCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "EXCHANGE" && order.claimStatus === "PROCESSING_EXCHANGE"
+  ).length;
+
+  holdExchangeCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "EXCHANGE" && order.claimStatus === "HOLD_EXCHANGE"
+  ).length;
+
+  approvedExchangeCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "EXCHANGE" && order.claimStatus === "APPROVED_EXCHANGE"
+  ).length;
+
+  requestReturnCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "RETURNED" && order.claimStatus === "REQUEST_RETURN"
+  ).length;
+
+  processingReturnCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "RETURNED" && order.claimStatus === "PROCESSING_RETURN"
+  ).length;
+
+  holdReturnCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "RETURNED" && order.claimStatus === "HOLD_RETURN"
+  ).length;
+
+  approvedReturnCount.value = productOrderDatas.filter(
+    (order) =>
+      order.status === "RETURNED" && order.claimStatus === "APPROVED_RETURN"
+  ).length;
+});
 </script>
 
 <style lang="scss" scoped>
@@ -192,7 +413,7 @@ ChartJS.register(
   gap: 24px;
   > .admin-summary-item {
     height: 120px;
-    width: 280px;
+    width: 304px;
     position: relative;
     box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.2);
     border-radius: 8px;

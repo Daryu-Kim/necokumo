@@ -316,6 +316,11 @@ export async function uploadProduct() {
         collection(db, "product"),
         where("isActive", "==", true),
         where("isSellCafe24", "==", true)
+        // where(
+        //   "createdAt",
+        //   ">=",
+        //   Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000))
+        // )
       )
     );
 

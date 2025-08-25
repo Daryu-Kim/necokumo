@@ -251,6 +251,28 @@
           <input type="text" v-model="bankName" />
         </div>
       </div>
+      <div class="desc-container" v-else>
+        <p>
+          <span>결제하기 버튼</span>을 누르시면, 고객님이 입력하신 휴대폰 번호로
+          <span>결제 링크 문자</span>가 발송됩니다.
+        </p>
+        <p>
+          문자에서 안내된 링크를 열어 <span>신용카드 또는 체크카드</span>로
+          결제를 진행해 주세요.
+        </p>
+        <p>
+          고객님이 결제를 완료하시면, 저희가 <span>수동으로 확인</span> 후
+          주문을 확정해 드립니다.
+        </p>
+        <p>
+          확인까지는 약간의 시간이 소요될 수 있으며, 확인이 끝나는 즉시
+          <span>주문이 정상 진행</span>됩니다.
+        </p>
+        <p>
+          혹시 <span>결제 링크 문자가 도착하지 않거나 오류</span>가 발생할 경우,
+          1:1 문의로 알려주시면 빠르게 도와드릴게요 😊
+        </p>
+      </div>
     </div>
     <hr />
     <button @click="checkout" v-if="paymentMethod === 'bank'">
@@ -292,27 +314,44 @@ const consumerDeliveryMessage = ref("");
 const bankName = ref("");
 
 const deliveryFee = computed(() => {
+  const address = consumerAddress1.value || "";
+
+  const metroKeywords = [
+    "서울", "경기", "인천"
+  ];
+
+  const isMetroArea = metroKeywords.some((kw) => address.includes(kw));
+
   switch (deliveryWay.value) {
-    case 'domestic':
+    case "domestic":
       if (totalBankPrice.value < 70000) {
         return 4000;
       } else {
         return 0;
       }
-    case 'international':
-      return "안내 문자로 링크결제";
-    case 'subway':
-      return "안내 문자로 링크결제";
-    case 'convenience':
+
+    case "international":
+      return "해외배송은 별도 안내드린 링크로 결제 진행됩니다";
+
+    case "subway":
+      return "지하철 거래는 별도 안내드린 링크로 결제 진행됩니다";
+
+    case "convenience":
       if (totalBankPrice.value < 70000) {
         return 3500;
       } else {
         return 0;
       }
-    case 'quick':
-      return "안내 문자로 링크결제";
-    case 'manual':
+
+    case "quick":
+      return "퀵 배송은 별도 안내드린 링크로 결제 진행됩니다";
+
+    case "manual":
+      if (!isMetroArea) {
+        return "수도권 지역만 이용 가능한 배송 방식입니다";
+      }
       return 0;
+
     default:
       return 0;
   }
@@ -938,10 +977,6 @@ onMounted(async () => {
     font-size: 18px;
     border-radius: 4px;
     height: 48px;
-  }
-
-  .paypal-button-container {
-    margin: 0 auto;
   }
 }
 </style>

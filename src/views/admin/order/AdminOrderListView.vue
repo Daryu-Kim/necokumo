@@ -496,6 +496,21 @@ const handleReceiptInputChange = async (e) => {
   }
 };
 
+const handleCardReceiptInputChange = async (e) => {
+  const orderId = e.target.getAttribute("data-id");
+  const value = e.target.value;
+
+  try {
+    await updateDoc(doc(db, "productOrder", orderId), {
+      cardReceiptNumber: value,
+    });
+    console.log(`📦 카드청구서 발급번호 저장됨: ${value}`);
+  } catch (err) {
+    alert("저장 실패");
+    console.error(err);
+  }
+};
+
 const setupDeliveryTrackingLink = async (orderId) => {
   try {
     const data = (await getDoc(doc(db, "productOrder", orderId))).data();
@@ -538,6 +553,14 @@ function bindCRNInputs() {
   });
 }
 
+function bindCardRNInputs() {
+  // 이전 바인딩 제거
+  document.querySelectorAll(".card-receipt-number").forEach((select) => {
+    select.removeEventListener("blur", handleCardReceiptInputChange);
+    select.addEventListener("blur", handleCardReceiptInputChange);
+  });
+}
+
 onMounted(async () => {
   // 1. Firebase에서 데이터 가져오기
   const q = query(collection(db, "productOrder"), orderBy("createdAt", "desc"));
@@ -551,7 +574,11 @@ onMounted(async () => {
 
   for (const order of originData.value) {
     const userRef = await getDoc(doc(db, "users", order.userId));
+    const orderRef = await getDoc(doc(db, "order", order.orderId));
+
     let userData = null;
+    let orderData = null;
+
     if (userRef.exists()) {
       const tempData = userRef.data();
       tempData.id = userRef.id;
@@ -559,6 +586,14 @@ onMounted(async () => {
     }
 
     order.userData = userData;
+
+    if (orderRef.exists()) {
+      const tempData = orderRef.data();
+      tempData.id = orderRef.id;
+      orderData = tempData;
+    }
+
+    order.orderData = orderData;
   }
 
   const data = originData.value.map((item) => {
@@ -609,6 +644,10 @@ onMounted(async () => {
       },
       {
         content: item.deliveryTrackingLink,
+        editable: false,
+      },
+      {
+        content: item,
         editable: false,
       },
       {
@@ -690,11 +729,7 @@ onMounted(async () => {
         width: 96,
         align: "center",
         format: (value) => {
-          if (value.currency == "KRW") {
-            return `${value.productPrice.toLocaleString()}원`;
-          } else {
-            return `${value.productPrice.toLocaleString()}$`;
-          }
+          return `${value.productPrice.toLocaleString()}원`;
         },
       },
       {
@@ -765,11 +800,26 @@ onMounted(async () => {
         width: 180,
         align: "center",
         format: (value, row) => {
-          if (value.currency === "KRW") {
+          if (value.orderData.paymentMethod === "bank") {
             const id = row[3].content;
             return `<input type="text" class="cash-receipt-number" data-id="${id}" value="${value.cashReceiptNumber}" />`;
           } else {
             return "현금영수증 미발급";
+          }
+        },
+      },
+      {
+        name: "카드결제 청구서번호",
+        editable: false,
+        resizable: false,
+        width: 180,
+        align: "center",
+        format: (value, row) => {
+          if (value.orderData.paymentMethod === "card") {
+            const id = row[3].content;
+            return `<input type="text" class="card-receipt-number" data-id="${id}" value="${value.cardReceiptNumber}" />`;
+          } else {
+            return "카드청구서 미발급";
           }
         },
       },
@@ -798,6 +848,7 @@ watch(
       bindDeliverySelects();
       bindDTNInputs();
       bindCRNInputs();
+      bindCardRNInputs();
     });
   },
   { immediate: true }

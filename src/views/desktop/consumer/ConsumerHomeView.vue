@@ -291,41 +291,6 @@ onMounted(async () => {
           .banner-slide {
             width: 100%;
             height: 100%;
-            &.usd-price {
-              background-color: #000;
-              border-radius: 8px;
-              color: white;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              padding: 12px 24px;
-              > h3 {
-                margin-top: 4px;
-                align-self: flex-end;
-              }
-
-              > div {
-                display: flex;
-                align-items: end;
-                gap: 8px;
-
-                > div {
-                  display: flex;
-                  gap: 4px;
-
-                  > h1 {
-                    background-color: white;
-                    color: #000;
-                    padding: 2px 4px;
-                  }
-
-                  > span {
-                    font-weight: 700;
-                    font-size: 32px;
-                  }
-                }
-              }
-            }
 
             > a {
               width: fit-content;

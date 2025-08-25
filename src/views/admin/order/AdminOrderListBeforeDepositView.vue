@@ -419,11 +419,7 @@ onMounted(async () => {
         width: 96,
         align: "center",
         format: (value) => {
-          if (value.currency == "KRW") {
-            return `${value.productPrice.toLocaleString()}원`;
-          } else {
-            return `${value.productPrice.toLocaleString()}$`;
-          }
+          return `${value.productPrice.toLocaleString()}원`;
         },
       },
       {

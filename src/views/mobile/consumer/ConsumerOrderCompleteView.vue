@@ -62,7 +62,7 @@
       <h3>결제수단</h3>
       <div>
         <p>
-          {{ orderData.paymentMethod === "bank" ? "무통장입금" : "PayPal" }}
+          {{ orderData.paymentMethod === "bank" ? "무통장입금" : "신용카드" }}
         </p>
         <span>
           {{ orderData.totalPrice.toLocaleString()

@@ -542,17 +542,11 @@ const crawlProduct = async (buyer) => {
         break;
       case "siasiu":
         replaceUrl = "";
-        thumbnailImage = doc.querySelector(
-          "#contents > div > div.xans-element-.xans-product.xans-product-detail.timesale-active > div.detailArea > div.xans-element-.xans-product.xans-product-image.imgArea > div.RW > div.prdImg > div.thumbnail > img"
-        );
-        detailImages = doc.querySelectorAll("#prdDetail > div.cont img");
-        options = doc.querySelectorAll(
-          "table.xans-element-.xans-product.xans-product-option.xans-record- optgroup > option"
-        );
+        thumbnailImage = doc.querySelector("div.thumb-item__main-img > img");
+        detailImages = doc.querySelectorAll("#PRODUCT_DETAIL img");
+        options = doc.querySelectorAll("div.select optgroup option");
         if (options.length == 0) {
-          options = doc.querySelectorAll(
-            "table.xans-element-.xans-product.xans-product-option.xans-record- option"
-          );
+          options = doc.querySelectorAll("div.select option");
         }
         break;
       case "vanom":

@@ -45,6 +45,7 @@ import {
   Timestamp,
   query,
   where,
+  getDoc,
 } from "firebase/firestore";
 import { onMounted, ref } from "vue";
 import { db } from "@/lib/firebase";
@@ -71,22 +72,20 @@ onMounted(async () => {
 
   // 무통장입금 금액 산정
   let bankTotal = 0;
-  data.forEach((doc) => {
-    const data = doc.data();
-    if (data.currency === "KRW" && typeof data.productPrice === "number") {
-      bankTotal += data.productPrice;
-    }
-  });
-  orderBankPrice.value = bankTotal;
-
-  // 카드매출 금액 산정
   let cardTotal = 0;
-  data.forEach((doc) => {
+
+  data.forEach(async (doc) => {
     const data = doc.data();
-    if (data.currency === "USD" && typeof data.productPrice === "number") {
+    const orderData = await (
+      await getDoc(doc(db, "order", data.orderId))
+    ).data();
+    if (orderData.paymentMethod === "bank") {
+      bankTotal += data.productPrice;
+    } else {
       cardTotal += data.productPrice;
     }
   });
+  orderBankPrice.value = bankTotal;
   orderCardPrice.value = cardTotal;
 
   // 환불승인 금액 산정

@@ -4,6 +4,7 @@
       <div>
         <h3 v-if="currentCategoryData">
           {{ currentCategoryData.categoryName }}
+          <span>({{ productDatas.length.toLocaleString() }}개 상품)</span>
         </h3>
         <table v-if="categoryRows.length > 0">
           <tr v-for="(row, rowIndex) in categoryRows" :key="rowIndex">
@@ -252,6 +253,10 @@ watch(() => route.query.category, async (newVal, oldVal) => {
 
       > h3 {
         text-align: center;
+
+        > span {
+          font-size: 14px;
+        }
       }
 
       > table {

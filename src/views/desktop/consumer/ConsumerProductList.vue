@@ -1,6 +1,9 @@
 <template>
   <div class="consumer-product-list">
-    <h1 v-if="currentCategoryData">{{ currentCategoryData.categoryName }}</h1>
+    <h1 v-if="currentCategoryData">
+      {{ currentCategoryData.categoryName }}
+      <span>({{ productDatas.length.toLocaleString() }}개 상품)</span>
+    </h1>
     <div class="product-list-box">
       <div class="filter-container">
         <div class="order-filter-container">
@@ -344,6 +347,10 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
     margin-top: 24px;
     margin-bottom: 24px;
     text-align: center;
+
+    > span {
+      font-size: 20px;
+    }
   }
 
   > .product-list-box {

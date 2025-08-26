@@ -1,42 +1,6 @@
 <template>
   <div class="consumer-product-list">
-    <div class="main-content-box">
-      <nav>
-        <router-link
-          v-for="item in categoryDatas"
-          :key="item.id"
-          :to="`/list?category=${item.id}`"
-          >{{ item.title }}</router-link
-        >
-      </nav>
-      <div>
-        <router-link to="">
-          <img src="https://picsum.photos/948/180" />
-        </router-link>
-        <h3 v-if="currentCategoryData">
-          현재 카테고리:
-          <router-link
-            v-if="parentCategoryData"
-            :to="`/list?category=${parentCategoryData.categoryId}`"
-          >
-            {{ parentCategoryData.categoryName }} </router-link
-          ><span v-if="parentCategoryData"> > </span>
-          <router-link
-            :to="`/list?category=${currentCategoryData.categoryId}`"
-            >{{ currentCategoryData.categoryName }}</router-link
-          >
-        </h3>
-        <table>
-          <tr v-for="(row, rowIndex) in categoryRows" :key="rowIndex">
-            <td v-for="(item, colIndex) in row" :key="colIndex">
-              <router-link v-if="item" :to="`/list?category=${item.id}`">{{
-                item.categoryName
-              }}</router-link>
-            </td>
-          </tr>
-        </table>
-      </div>
-    </div>
+    <h1 v-if="currentCategoryData">{{ currentCategoryData.categoryName }}</h1>
     <div class="product-list-box">
       <div class="filter-container">
         <div class="order-filter-container">
@@ -243,33 +207,15 @@
 </template>
 
 <script setup lang="js">
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { db } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy, getDoc, doc } from "firebase/firestore";
 import { useRoute } from 'vue-router';
 const categoryDatas = ref([]);
-const childCategoryDatas = ref([]);
 const productDatas = ref([]);
-const topBannerDatas = ref([]);
 const orderFilterData = ref("popular");
 const viewFilterData = ref("list");
 const currentCategoryData = ref(null);
-const parentCategoryData = ref(null);
-const categoryRows = computed(() => {
-  const result = []
-  const chunkSize = 5
-  const itemsCopy = [...childCategoryDatas.value]
-
-  while (itemsCopy.length) {
-    const chunk = itemsCopy.splice(0, chunkSize)
-    while (chunk.length < chunkSize) {
-      chunk.push(null) // 빈 칸 채우기
-    }
-    result.push(chunk)
-  }
-
-  return result;
-});
 
 const route = useRoute();
 
@@ -335,17 +281,6 @@ async function fetchFilteredData() {
   }
 }
 
-async function fetchChildCategoryData() {
-  try {
-    console.log("Fetching Child Category Data...");
-    const childCategory = await getDocs(query(collection(db, "category"), where("categoryParentId", "==", route.query.category), where("categoryGrade", "==", 1), orderBy("categoryOrder", "asc")));
-    childCategoryDatas.value = childCategory.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log("Child Category Data Fetched Successfully!: ", childCategoryDatas.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
-}
-
 async function fetchProductData() {
   try {
     console.log("Fetching Product Data...");
@@ -362,12 +297,6 @@ async function fetchCurrentCategoryData() {
     console.log("Fetching Current Category Data...");
     const currentCategory = await getDoc(doc(db, "category", route.query.category));
     currentCategoryData.value = currentCategory.data();
-    if (currentCategoryData.value.categoryParentId) {
-      const parentCategory = await getDoc(doc(db, "category", currentCategoryData.value.categoryParentId));
-      parentCategoryData.value = parentCategory.data();
-    } else {
-      parentCategoryData.value = null;
-    }
     console.log("Current Category Data Fetched Successfully!: ", currentCategory.docs[0].id);
   } catch (error) {
     console.error('Failed to fetch data:', error);
@@ -381,15 +310,9 @@ onMounted(async () => {
         categoryDatas.value = category.docs.filter(doc => doc.id !== '1').map(doc => ({ id: doc.id,title: doc.data().categoryName }));
         console.log("Category Data Fetched Successfully!: ", categoryDatas.value);
 
-        await fetchChildCategoryData();
         await fetchProductData();
         await fetchFilteredData();
         await fetchCurrentCategoryData();
-
-        console.log("Fetching Top Banner Data...");
-        const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
-        topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, url: doc.data().url, redirect: doc.data().redirect }));
-        console.log("Top Banner Data Fetched Successfully!: ", topBannerDatas.value);
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
@@ -397,7 +320,6 @@ onMounted(async () => {
 
 watch(() => route.query.category, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
-    await fetchChildCategoryData();
     await fetchProductData();
     await fetchFilteredData();
     await fetchCurrentCategoryData();
@@ -418,83 +340,10 @@ watch(() => orderFilterData.value, async (newVal, oldVal) => {
   max-width: 1200px;
   min-height: 70vh;
 
-  > .main-content-box {
-    display: flex;
-    gap: 24px;
-
-    > nav {
-      display: flex;
-      flex-direction: column;
-      border-radius: 8px;
-      background-color: #007bff;
-      min-width: 180px;
-      > a {
-        width: 100%;
-        height: 42px;
-        line-height: 42px;
-        padding: 0 16px;
-        font-weight: 700;
-        color: white;
-        font-size: 14px;
-
-        &:hover {
-          background-color: #0069d9;
-        }
-
-        &:first-child {
-          &:hover {
-            border-radius: 8px 8px 0 0;
-            background-color: #0069d9;
-          }
-        }
-
-        &:last-child {
-          &:hover {
-            border-radius: 0 0 8px 8px;
-            background-color: #0069d9;
-          }
-        }
-      }
-    }
-
-    > div {
-      width: 100%;
-
-      > a {
-        > img {
-          border-radius: 8px;
-        }
-      }
-      > h3 {
-        margin-top: 24px;
-
-        > a {
-          &:hover {
-            text-decoration: underline;
-          }
-        }
-      }
-      > table {
-        width: 100%;
-        margin-top: 24px;
-        border-top: 2px solid #ccc;
-        border-collapse: collapse;
-        > tr {
-          > td {
-            padding: 12px;
-            border: 1px solid #efefef;
-            font-size: 14px;
-            text-align: center;
-            width: 20%;
-
-            > a {
-              width: 100%;
-              height: 100%;
-            }
-          }
-        }
-      }
-    }
+  > h1 {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    text-align: center;
   }
 
   > .product-list-box {

@@ -1,82 +1,17 @@
 <template>
   <div class="consumer-home">
     <div class="main-content-box">
-      <nav>
-        <router-link
-          v-for="item in categoryDatas"
-          :key="item.id"
-          :to="`/list?category=${item.id}`"
-          >{{ item.title }}</router-link
+      <swiper class="banner-container" :space-between="16">
+        <swiper-slide
+          class="banner-slide"
+          v-for="(item, index) in topBannerDatas"
+          :key="index"
         >
-      </nav>
-      <div>
-        <div class="top-banner-box">
-          <swiper class="banner-container" :space-between="16">
-            <swiper-slide
-              class="banner-slide"
-              v-for="(item, index) in topBannerDatas"
-              :key="index"
-            >
-              <router-link :to="item.redirect">
-                <img :src="item.url" />
-              </router-link>
-            </swiper-slide>
-          </swiper>
-          <div class="topic-box">
-            <ul>
-              <li>
-                <router-link to="">
-                  현재 게시판에 등록된 토픽이 없습니다.
-                </router-link>
-              </li>
-              <li>
-                <router-link to="">
-                  현재 게시판에 등록된 토픽이 없습니다.
-                </router-link>
-              </li>
-              <li>
-                <router-link to="">
-                  현재 게시판에 등록된 토픽이 없습니다.
-                </router-link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="top-news-box">
-          <div class="news-container">
-            <h4>최신 토픽</h4>
-            <div class="news-box">
-              <router-link
-                :to="`/board?id=${item.id}`"
-                v-for="(item, index) in mainNewsDatas"
-                :key="index"
-              >
-                <img :src="item.thumbnail" />
-                <p>{{ item.title }}</p>
-              </router-link>
-            </div>
-          </div>
-          <div class="sale-container">
-            <div class="sale-box">
-              <h4>펀스퀘어 공식 사이트</h4>
-              <a href="" target="_blank">
-                <img src="https://picsum.photos/144/72" />
-                <div class="slogan">
-                  <p>빠르게 맞춤 제작 가능한 영상!</p>
-                </div>
-              </a>
-              <a href="" target="_blank">
-                <div class="company-container">
-                  <img src="https://picsum.photos/20" />
-                  <p class="company">펀스퀘어</p>
-                </div>
-                <p class="btn">지금 바로가기 ></p>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+          <router-link :to="item.redirect">
+            <img :src="item.pcUrl" />
+          </router-link>
+        </swiper-slide>
+      </swiper>
     </div>
     <div class="event-products-box">
       <h2>현재 진행중인 <span>이벤트 특가</span> 상품</h2>
@@ -137,7 +72,6 @@ import { getDocs, query, collection, where, orderBy, limit } from "firebase/fire
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 
-const categoryDatas = ref([]);
 const topBannerDatas = ref([]);
 const eventProductDatas = ref([]);
 const saleDatasByCategory = ref({});
@@ -159,14 +93,9 @@ const saleCategoryNames = [
 
 onMounted(async () => {
     try {
-        console.log("Fetching Category Data...");
-        const category = await getDocs(query(collection(db, "category"), where("categoryGrade", "==", 0), orderBy("categoryOrder", "asc")));
-        categoryDatas.value = category.docs.filter(doc => doc.id !== '1').map(doc => ({ id: doc.id,title: doc.data().categoryName }));
-        console.log("Category Data Fetched Successfully!: ", categoryDatas.value);
-
         console.log("Fetching Top Banner Data...");
         const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
-        topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, url: doc.data().url, redirect: doc.data().redirect }));
+        topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log("Top Banner Data Fetched Successfully!: ", topBannerDatas.value);
 
         console.log("Fetching Main News Data...");
@@ -237,200 +166,22 @@ onMounted(async () => {
   }
 
   > .main-content-box {
-    display: flex;
-    gap: 24px;
+    > .banner-container {
+      width: 1200px;
+      height: 510%;
 
-    > nav {
-      display: flex;
-      flex-direction: column;
-      border-radius: 8px;
-      background-color: #007bff;
-      min-width: 180px;
-      > a {
+      .banner-slide {
         width: 100%;
-        height: 44px;
-        line-height: 44px;
-        padding: 0 16px;
-        font-weight: 700;
-        color: white;
-        font-size: 14px;
+        height: 100%;
 
-        &:hover {
-          background-color: #0069d9;
-        }
-
-        &:first-child {
-          &:hover {
-            border-radius: 8px 8px 0 0;
-            background-color: #0069d9;
-          }
-        }
-
-        &:last-child {
-          &:hover {
-            border-radius: 0 0 8px 8px;
-            background-color: #0069d9;
-          }
-        }
-      }
-    }
-
-    > div {
-      display: flex;
-      flex-direction: column;
-      > .top-banner-box {
-        flex: 1;
-        display: flex;
-        gap: 16px;
-        height: fit-content;
-
-        > .banner-container {
-          width: 720px;
-          height: 128px;
-
-          .banner-slide {
-            width: 100%;
-            height: 100%;
-
-            > a {
-              width: fit-content;
-              height: fit-content;
-              > img {
-                width: 720px;
-                height: 128px;
-                border-radius: 8px;
-                object-fit: cover;
-              }
-            }
-          }
-        }
-
-        > .topic-box {
-          padding: 8px;
-          background-color: #efefef;
-          border-radius: 8px;
-          width: 212px;
-          height: 128px;
-
-          > ul {
-            list-style: disc;
-            padding-left: 24px;
-            font-size: 14px;
-
-            > li {
-              word-wrap: break-word;
-              white-space: normal;
-              overflow-wrap: break-word;
-              word-break: break-word;
-              &:not(:first-child) {
-                margin-top: 2px;
-              }
-
-              > a:hover {
-                text-decoration: underline;
-              }
-            }
-          }
-        }
-      }
-
-      > .top-news-box {
-        display: flex;
-        gap: 16px;
-        flex: 1;
-        > .news-container {
-          border-radius: 8px;
-          flex: 2;
-          border: 1px solid #efefef;
-          height: 100%;
-          padding: 16px;
-
-          > .news-box {
-            margin-top: 8px;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            > a {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              > img {
-                height: 102px;
-                aspect-ratio: 5 / 3;
-                border-radius: 8px;
-                object-fit: cover;
-                border: 1.5px solid #efefef;
-                padding: 4px;
-              }
-
-              > p {
-                flex: 1;
-                font-size: 14px;
-                color: #333;
-                font-weight: 700;
-              }
-            }
-          }
-        }
-
-        > .sale-container {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          height: 100%;
-          > .sale-box {
-            flex: 1;
+        > a {
+          width: fit-content;
+          height: fit-content;
+          > img {
+            width: 1200px;
+            height: 510px;
             border-radius: 8px;
-            border: 1px solid #efefef;
-            padding: 16px;
-
-            > a {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              margin-top: 8px;
-              gap: 16px;
-
-              > img {
-                width: 144px;
-                height: 72px;
-                border-radius: 4px;
-              }
-
-              > .company-container {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-
-                > img {
-                  border-radius: 50%;
-                }
-
-                > p {
-                  font-size: 14px;
-                  color: #666;
-                }
-              }
-
-              > .btn {
-                font-size: 14px;
-                color: #666;
-              }
-
-              > .slogan {
-                height: 72px;
-                font-size: 14px;
-                font-weight: 500;
-                border-top: 1px solid #efefef;
-                border-bottom: 1px solid #efefef;
-                flex: 1;
-                text-align: center;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              }
-            }
+            object-fit: cover;
           }
         }
       }

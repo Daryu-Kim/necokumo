@@ -10,37 +10,57 @@
     </div>
     <hr />
     <header>
-      <router-link to="/" class="home-btn">
-        <img src="@/assets/logo.png" alt="logo" />
-      </router-link>
-      <div class="search-bar">
-        <input
-          type="text"
-          placeholder="검색어를 입력해주세요."
-          v-model="searchKeyword"
-          @keyup.enter="handleSearch"
-        />
-        <button @click="handleSearch">
-          <span class="material-icons-outlined"> search </span>
-        </button>
+      <div class="main-header">
+        <router-link to="/" class="home-btn">
+          <img src="@/assets/logo.png" alt="logo" />
+        </router-link>
+        <div class="search-bar">
+          <input
+            type="text"
+            placeholder="검색어를 입력해주세요."
+            v-model="searchKeyword"
+            @keyup.enter="handleSearch"
+          />
+          <button @click="handleSearch">
+            <span class="material-icons-outlined"> search </span>
+          </button>
+        </div>
+        <div class="user-info">
+          <router-link to="/mypage" v-if="isLogged">
+            <span class="material-icons-outlined"> person </span>
+            <p>MY</p>
+          </router-link>
+          <router-link to="/cart" v-if="isLogged">
+            <span class="material-icons-outlined"> shopping_cart </span>
+            <p>CART</p>
+          </router-link>
+          <button @click="logout" v-if="isLogged">
+            <span class="material-icons-outlined"> logout </span>
+            <p>LOGOUT</p>
+          </button>
+          <router-link to="/login" v-else>
+            <span class="material-icons-outlined"> login </span>
+            <p>LOGIN</p>
+          </router-link>
+        </div>
       </div>
-      <div class="user-info">
-        <router-link to="/mypage" v-if="isLogged">
-          <span class="material-icons-outlined"> person </span>
-          <p>MY</p>
-        </router-link>
-        <router-link to="/cart" v-if="isLogged">
-          <span class="material-icons-outlined"> shopping_cart </span>
-          <p>CART</p>
-        </router-link>
-        <button @click="logout" v-if="isLogged">
-          <span class="material-icons-outlined"> logout </span>
-          <p>LOGOUT</p>
-        </button>
-        <router-link to="/login" v-else>
-          <span class="material-icons-outlined"> login </span>
-          <p>LOGIN</p>
-        </router-link>
+      <div class="category-container">
+        <nav class="main-category-nav">
+          <router-link
+            v-for="item in categoryDatas"
+            :key="item.id"
+            :to="`/list?category=${item.id}`"
+            >{{ item.title }}</router-link
+          >
+        </nav>
+        <nav class="sub-category-nav" v-if="subCategoryDatas.length > 0">
+          <router-link
+            v-for="item in subCategoryDatas"
+            :key="item.id"
+            :to="`/list?category=${item.id}`"
+            >{{ item.title }}</router-link
+          >
+        </nav>
       </div>
     </header>
     <div class="content"><router-view></router-view></div>
@@ -101,13 +121,32 @@
 <script setup lang="js">
 import { auth, db } from '@/lib/firebase';
 import router from '@/router';
-import { doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { computed, ref, onMounted } from 'vue';
+import { doc, updateDoc, Timestamp, getDocs, query, collection, where, orderBy } from 'firebase/firestore';
+import { computed, ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
+const categoryDatas = ref([]);
+const subCategoryDatas = ref([]);
 const currentUser = ref(null);
 const searchKeyword = ref("");
 
+const route = useRoute();
+
 onMounted(async () => {
+  console.log("Fetching Category Data...");
+  const category = await getDocs(query(collection(db, "category"), where("categoryGrade", "==", 0), orderBy("categoryOrder", "asc")));
+  categoryDatas.value = category.docs.filter(doc => doc.id !== '1').map(doc => ({ id: doc.id,title: doc.data().categoryName }));
+  console.log("Category Data Fetched Successfully!: ", categoryDatas.value);
+
+  if (route.query.category) {
+    console.log("Fetching Sub Category Data...");
+    const subCategory = await getDocs(query(collection(db, "category"), where("categoryParentId", "==", route.query.category), orderBy("categoryOrder", "asc")));
+    subCategoryDatas.value = subCategory.docs.filter(doc => doc.id !== '1').map(doc => ({ id: doc.id,title: doc.data().categoryName }));
+    console.log("Sub Category Data Fetched Successfully!: ", subCategoryDatas.value);
+  } else {
+    subCategoryDatas.value = [];
+  }
+
   auth.onAuthStateChanged(async (user) => {
     currentUser.value = user;
     if (user) {
@@ -138,6 +177,19 @@ const handleSearch = () => {
     router.push(`/search?keyword=${encodedKeyword}`);
   }
 }
+
+watch(() => route.query.category, async (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    if (route.query.category) {
+      console.log("Fetching Sub Category Data...");
+      const subCategory = await getDocs(query(collection(db, "category"), where("categoryParentId", "==", route.query.category), orderBy("categoryOrder", "asc")));
+      subCategoryDatas.value = subCategory.docs.filter(doc => doc.id !== '1').map(doc => ({ id: doc.id,title: doc.data().categoryName }));
+      console.log("Sub Category Data Fetched Successfully!: ", subCategoryDatas.value);
+    } else {
+      subCategoryDatas.value = [];
+    }
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -162,11 +214,7 @@ const handleSearch = () => {
   }
 
   > header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     padding: 16px 24px;
-    gap: 16px;
     margin: auto;
     max-width: 1200px;
     min-width: 1200px;
@@ -175,61 +223,99 @@ const handleSearch = () => {
     background: white;
     z-index: 10;
 
-    > .home-btn {
-      > img {
-        width: 128px;
-      }
-    }
-
-    > .search-bar {
-      padding: 8px 16px;
-      width: 360px;
-      border-radius: 100rem;
-      border: 1px solid black;
+    > .main-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      height: 44px;
+      justify-content: space-between;
+      gap: 16px;
 
-      > input {
-        flex: 1;
-        height: 100%;
-        font-size: 16px;
-        border: none;
-
-        &:focus {
-          outline: none;
+      > .home-btn {
+        > img {
+          width: 128px;
         }
       }
 
-      > button {
-        background: none;
-        border: none;
-        cursor: pointer;
-      }
-    }
-
-    > .user-info {
-      display: flex;
-      align-items: center;
-      gap: 36px;
-
-      > a,
-      button {
+      > .search-bar {
+        padding: 8px 16px;
+        width: 360px;
+        border-radius: 100rem;
+        border: 1px solid black;
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 4px;
-        background: none;
-        border: none;
-        cursor: pointer;
+        gap: 8px;
+        height: 44px;
 
-        > span {
-          font-size: 36px;
+        > input {
+          flex: 1;
+          height: 100%;
+          font-size: 16px;
+          border: none;
+
+          &:focus {
+            outline: none;
+          }
         }
 
-        > p {
-          font-size: 14px;
+        > button {
+          background: none;
+          border: none;
+          cursor: pointer;
+        }
+      }
+
+      > .user-info {
+        display: flex;
+        align-items: center;
+        gap: 36px;
+
+        > a,
+        button {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          background: none;
+          border: none;
+          cursor: pointer;
+
+          > span {
+            font-size: 36px;
+          }
+
+          > p {
+            font-size: 14px;
+          }
+        }
+      }
+    }
+
+    > .category-container {
+      margin-top: 24px;
+      > .main-category-nav {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        > a {
+          font-weight: 700;
+          font-size: 18px;
+
+          &:hover {
+            color: #007bff;
+          }
+        }
+      }
+
+      > .sub-category-nav {
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        > a {
+          font-weight: 500;
+
+          &:hover {
+            color: #007bff;
+          }
         }
       }
     }

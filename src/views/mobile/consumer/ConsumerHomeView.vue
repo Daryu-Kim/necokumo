@@ -9,7 +9,7 @@
             :key="index"
           >
             <router-link :to="item.redirect">
-              <img :src="item.url" />
+              <img :src="item.mobileUrl" />
             </router-link>
           </swiper-slide>
         </swiper>
@@ -114,7 +114,7 @@ onMounted(async () => {
 
         console.log("Fetching Top Banner Data...");
         const topBanner = await getDocs(query(collection(db, "banners"), where("category", "==", "MAIN_TOP_BANNER"), orderBy("order", "asc")));
-        topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, url: doc.data().url, redirect: doc.data().redirect }));
+        topBannerDatas.value = topBanner.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log("Top Banner Data Fetched Successfully!: ", topBannerDatas.value);
 
         console.log("Fetching Main News Data...");
@@ -188,7 +188,7 @@ onMounted(async () => {
       width: 100%;
       > .banner-container {
         width: 100%;
-        aspect-ratio: 3 / 1;
+        aspect-ratio: 4 / 3;
 
         .banner-slide {
           width: 100%;
@@ -199,7 +199,7 @@ onMounted(async () => {
             height: fit-content;
             > img {
               width: 100%;
-              aspect-ratio: 3 / 1;
+              aspect-ratio: 4 / 3;
               border-radius: 8px;
               object-fit: cover;
             }

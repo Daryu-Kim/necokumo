@@ -225,7 +225,7 @@ watch(() => route.query.category, async (newVal, oldVal) => {
     }
 
     > header {
-      padding: 24px;
+      padding: 16px 24px;
       margin: auto;
       max-width: 1200px;
       min-width: 1200px;
@@ -297,7 +297,7 @@ watch(() => route.query.category, async (newVal, oldVal) => {
       }
 
       > hr {
-        margin: 24px 0;
+        margin: 16px 0;
         border: none;
         border-top: 1px solid #efefef;
       }

@@ -31,6 +31,24 @@
         </router-link>
       </div>
     </div>
+    <div class="event-products-box">
+      <h2>새로 출시된 <span>따끈따끈한</span> 신상품</h2>
+      <div class="event-products-container">
+        <router-link
+          :to="`/product?id=${item.productId}`"
+          v-for="(item, index) in newProductDatas"
+          :key="index"
+        >
+          <img :src="item.productThumbnailUrl.originalUrl" />
+          <p class="name">{{ item.productName }}</p>
+          <p class="price">
+            {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+              item.productSellPrice.toLocaleString()
+            }}원)
+          </p>
+        </router-link>
+      </div>
+    </div>
     <div class="popular-products-box">
       <h2>지금 가장 <span>인기 있는</span> 상품</h2>
       <div
@@ -74,6 +92,7 @@ import "swiper/css";
 
 const topBannerDatas = ref([]);
 const eventProductDatas = ref([]);
+const newProductDatas = ref([]);
 const saleDatasByCategory = ref({});
 const mainNewsDatas = ref([]);
 
@@ -121,6 +140,19 @@ onMounted(async () => {
         }));
         console.log("Event Product Data Fetched Successfully!: ", eventProductDatas.value);
 
+        console.log("Fetching New Product Data...");
+        const newProductSnap = await getDocs(query(
+          collection(db, "product"),
+          where("isActive", "==", true),
+          orderBy("createdAt", "desc"),
+          limit(6)
+        ));
+        newProductDatas.value = newProductSnap.docs.map(doc => ({
+          id: doc.id,
+         ...doc.data()
+        }));
+        console.log("New Product Data Fetched Successfully!: ", newProductDatas.value);
+
         console.log("Fetching Sale Data...");
         for (const categoryName of saleCategoryNames) {
           const categoryDocs = await getDocs(query(collection(db, "category"), where("categoryName", "==", categoryName)));
@@ -131,7 +163,7 @@ onMounted(async () => {
             where("productCategory", "array-contains", categoryId),
             orderBy("productLikeCount", "desc"),
             orderBy("createdAt", "desc"),
-            limit(10)
+            limit(5)
           ));
 
           // 각 카테고리 ID를 키로 하여 데이터 저장

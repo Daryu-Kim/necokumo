@@ -43,6 +43,25 @@
       </div>
     </div>
     <hr />
+    <div class="event-products-box">
+      <h3>새로 출시된 <span>따끈따끈한</span> 신상품</h3>
+      <div class="event-products-container">
+        <router-link
+          :to="`/product?id=${item.productId}`"
+          v-for="(item, index) in newProductDatas"
+          :key="index"
+        >
+          <img :src="item.productThumbnailUrl.originalUrl" />
+          <p class="name">{{ item.productName }}</p>
+          <p class="price">
+            {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+              item.productSellPrice.toLocaleString()
+            }}원)
+          </p>
+        </router-link>
+      </div>
+    </div>
+    <hr />
     <div class="popular-products-box">
       <h3>지금 가장 <span>인기 있는</span> 상품</h3>
       <div
@@ -88,6 +107,7 @@ import "swiper/css";
 const categoryDatas = ref([]);
 const topBannerDatas = ref([]);
 const eventProductDatas = ref([]);
+const newProductDatas = ref([]);
 const saleDatasByCategory = ref({});
 const mainNewsDatas = ref([]);
 
@@ -138,6 +158,18 @@ onMounted(async () => {
          ...doc.data()
         }));
         console.log("Event Product Data Fetched Successfully!: ", eventProductDatas.value);
+
+        console.log("Fetching New Product Data...");
+        const newProductSnap = await getDocs(query(
+          collection(db, "product"),
+          orderBy("createdAt", "desc"),
+          limit(2)
+        ));
+        newProductDatas.value = newProductSnap.docs.map(doc => ({
+          id: doc.id,
+         ...doc.data()
+        }));
+        console.log("New Product Data Fetched Successfully!: ", newProductDatas.value);
 
         console.log("Fetching Sale Data...");
         for (const categoryName of saleCategoryNames) {

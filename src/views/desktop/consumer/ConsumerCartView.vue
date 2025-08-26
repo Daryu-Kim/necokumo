@@ -25,13 +25,7 @@
           <div class="option-container">
             <p>
               └ [옵션:
-              <span>
-                {{
-                  cartDatas.find((cart) =>
-                    item.option2List.includes(cart.optionName)
-                  )?.optionName || ""
-                }} </span
-              >]
+              <span> {{ item.selectedOptionName }} </span>]
             </p>
           </div>
           <div class="count-container">
@@ -201,7 +195,7 @@ async function fetchProductData() {
     console.log("Fetching Product Data...");
     cartDatas.value.forEach(async (product) => {
       const productDoc = await getDoc(doc(db, "product", product.productCode));
-      productDatas.value.push({ selectedOptionCode: product.productOptionCode, count: product.count, ...productDoc.data() });
+      productDatas.value.push({ selectedOptionCode: product.productOptionCode, selectedOptionName: product.optionName, count: product.count, ...productDoc.data() });
     })
     console.log("Product Data Fetched Successfully!: ", productDatas.value);
   } catch (error) {

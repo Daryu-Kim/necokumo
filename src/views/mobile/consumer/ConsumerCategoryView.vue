@@ -55,7 +55,7 @@ const fetchChildCategoryData = async () => {
 onMounted(async () => {
     try {
       console.log("Fetching Parent Category Datas..");
-      const parentCategoryRef = await getDocs(query(collection(db, "category"), where("categoryGrade", "==", 0), orderBy("categoryOrder", "asc")));
+      const parentCategoryRef = await getDocs(query(collection(db, "category"), where("categoryId", "!=", "1"), where("categoryGrade", "==", 0), orderBy("categoryOrder", "asc")));
       parentCategoryDatas.value = parentCategoryRef.docs.map(doc => doc.data());
       console.log("Fetched Parent Category Datas:", parentCategoryDatas.value);
 

@@ -1,68 +1,71 @@
 <template>
   <div class="consumer-layout">
-    <div class="header">
-      <a href="https://instagram.com/necokumo.shop" target="_blank"
-        >인스타그램</a
-      >
-      <a href="https://discord.gg/mGWqRdz4bN" target="_blank">디스코드</a>
-      <router-link to="/company">판매자</router-link>
-      <router-link to="/admin">관리자</router-link>
+    <div class="main-header">
+      <div class="header">
+        <a href="https://instagram.com/necokumo.shop" target="_blank"
+          >인스타그램</a
+        >
+        <a href="https://discord.gg/mGWqRdz4bN" target="_blank">디스코드</a>
+        <router-link to="/company">판매자</router-link>
+        <router-link to="/admin">관리자</router-link>
+      </div>
+      <hr />
+      <header>
+        <div class="main-header">
+          <router-link to="/" class="home-btn">
+            <img src="@/assets/logo.png" alt="logo" />
+          </router-link>
+          <div class="search-bar">
+            <input
+              type="text"
+              placeholder="검색어를 입력해주세요."
+              v-model="searchKeyword"
+              @keyup.enter="handleSearch"
+            />
+            <button @click="handleSearch">
+              <span class="material-icons-outlined"> search </span>
+            </button>
+          </div>
+          <div class="user-info">
+            <router-link to="/mypage" v-if="isLogged">
+              <span class="material-icons-outlined"> person </span>
+              <p>MY</p>
+            </router-link>
+            <router-link to="/cart" v-if="isLogged">
+              <span class="material-icons-outlined"> shopping_cart </span>
+              <p>CART</p>
+            </router-link>
+            <button @click="logout" v-if="isLogged">
+              <span class="material-icons-outlined"> logout </span>
+              <p>LOGOUT</p>
+            </button>
+            <router-link to="/login" v-else>
+              <span class="material-icons-outlined"> login </span>
+              <p>LOGIN</p>
+            </router-link>
+          </div>
+        </div>
+        <hr />
+        <div class="category-container">
+          <nav class="main-category-nav">
+            <router-link
+              v-for="item in categoryDatas"
+              :key="item.id"
+              :to="`/list?category=${item.id}`"
+              >{{ item.title }}</router-link
+            >
+          </nav>
+          <nav class="sub-category-nav" v-if="subCategoryDatas.length > 0">
+            <router-link
+              v-for="item in subCategoryDatas"
+              :key="item.id"
+              :to="`/list?category=${item.id}`"
+              >{{ item.title }}</router-link
+            >
+          </nav>
+        </div>
+      </header>
     </div>
-    <hr />
-    <header>
-      <div class="main-header">
-        <router-link to="/" class="home-btn">
-          <img src="@/assets/logo.png" alt="logo" />
-        </router-link>
-        <div class="search-bar">
-          <input
-            type="text"
-            placeholder="검색어를 입력해주세요."
-            v-model="searchKeyword"
-            @keyup.enter="handleSearch"
-          />
-          <button @click="handleSearch">
-            <span class="material-icons-outlined"> search </span>
-          </button>
-        </div>
-        <div class="user-info">
-          <router-link to="/mypage" v-if="isLogged">
-            <span class="material-icons-outlined"> person </span>
-            <p>MY</p>
-          </router-link>
-          <router-link to="/cart" v-if="isLogged">
-            <span class="material-icons-outlined"> shopping_cart </span>
-            <p>CART</p>
-          </router-link>
-          <button @click="logout" v-if="isLogged">
-            <span class="material-icons-outlined"> logout </span>
-            <p>LOGOUT</p>
-          </button>
-          <router-link to="/login" v-else>
-            <span class="material-icons-outlined"> login </span>
-            <p>LOGIN</p>
-          </router-link>
-        </div>
-      </div>
-      <div class="category-container">
-        <nav class="main-category-nav">
-          <router-link
-            v-for="item in categoryDatas"
-            :key="item.id"
-            :to="`/list?category=${item.id}`"
-            >{{ item.title }}</router-link
-          >
-        </nav>
-        <nav class="sub-category-nav" v-if="subCategoryDatas.length > 0">
-          <router-link
-            v-for="item in subCategoryDatas"
-            :key="item.id"
-            :to="`/list?category=${item.id}`"
-            >{{ item.title }}</router-link
-          >
-        </nav>
-      </div>
-    </header>
     <div class="content"><router-view></router-view></div>
     <footer>
       <div class="footer-content">
@@ -194,132 +197,143 @@ watch(() => route.query.category, async (newVal, oldVal) => {
 
 <style lang="scss" scoped>
 .consumer-layout {
-  > .header {
-    display: flex;
-    align-items: center;
-    justify-content: end;
-    padding: 8px 24px;
-    margin: auto;
-    min-width: 1200px;
-    gap: 8px;
-
-    > a {
-      font-size: 12px;
-    }
-  }
-
-  > hr {
-    border: none;
-    border-bottom: 1px solid #efefef;
-  }
-
-  > header {
-    padding: 16px 24px;
-    margin: auto;
-    max-width: 1200px;
-    min-width: 1200px;
+  > .main-header {
     position: sticky;
     top: 0;
     background: white;
-    z-index: 10;
+    z-index: 20;
+    width: 100%;
+    box-shadow: 0px 2px 6px rgba($color: #000000, $alpha: 0.25);
 
-    > .main-header {
+    > .header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      justify-content: end;
+      padding: 8px 24px;
+      margin: auto;
+      min-width: 1200px;
+      gap: 8px;
 
-      > .home-btn {
-        > img {
-          width: 128px;
-        }
-      }
-
-      > .search-bar {
-        padding: 8px 16px;
-        width: 360px;
-        border-radius: 100rem;
-        border: 1px solid black;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        height: 44px;
-
-        > input {
-          flex: 1;
-          height: 100%;
-          font-size: 16px;
-          border: none;
-
-          &:focus {
-            outline: none;
-          }
-        }
-
-        > button {
-          background: none;
-          border: none;
-          cursor: pointer;
-        }
-      }
-
-      > .user-info {
-        display: flex;
-        align-items: center;
-        gap: 36px;
-
-        > a,
-        button {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-          background: none;
-          border: none;
-          cursor: pointer;
-
-          > span {
-            font-size: 36px;
-          }
-
-          > p {
-            font-size: 14px;
-          }
-        }
+      > a {
+        font-size: 12px;
       }
     }
 
-    > .category-container {
-      margin-top: 24px;
-      > .main-category-nav {
+    > hr {
+      border: none;
+      border-bottom: 1px solid #efefef;
+    }
+
+    > header {
+      padding: 24px;
+      margin: auto;
+      max-width: 1200px;
+      min-width: 1200px;
+
+      > .main-header {
         display: flex;
         align-items: center;
-        gap: 24px;
-        > a {
-          font-weight: 700;
-          font-size: 18px;
+        justify-content: space-between;
+        gap: 16px;
 
-          &:hover {
-            color: #007bff;
+        > .home-btn {
+          > img {
+            width: 128px;
+          }
+        }
+
+        > .search-bar {
+          padding: 8px 16px;
+          width: 360px;
+          border-radius: 100rem;
+          border: 1px solid black;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          height: 44px;
+
+          > input {
+            flex: 1;
+            height: 100%;
+            font-size: 16px;
+            border: none;
+
+            &:focus {
+              outline: none;
+            }
+          }
+
+          > button {
+            background: none;
+            border: none;
+            cursor: pointer;
+          }
+        }
+
+        > .user-info {
+          display: flex;
+          align-items: center;
+          gap: 36px;
+
+          > a,
+          button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+
+            > span {
+              font-size: 36px;
+            }
+
+            > p {
+              font-size: 14px;
+            }
           }
         }
       }
 
-      > .sub-category-nav {
-        margin-top: 16px;
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        > a {
-          font-weight: 500;
+      > hr {
+        margin: 24px 0;
+        border: none;
+        border-top: 1px solid #efefef;
+      }
 
-          &:hover {
-            color: #007bff;
+      > .category-container {
+        > .main-category-nav {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          > a {
+            font-weight: 700;
+            font-size: 18px;
+
+            &:hover {
+              color: #007bff;
+            }
+          }
+        }
+
+        > .sub-category-nav {
+          margin-top: 16px;
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          > a {
+            font-weight: 500;
+
+            &:hover {
+              color: #007bff;
+            }
           }
         }
       }
     }
   }
+
   > footer {
     background-color: #efefef;
     border-top: 1px solid #cccccc;

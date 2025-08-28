@@ -145,6 +145,9 @@
             <button @click="crawlProduct('cigapong')" :disabled="isBusy">
               시가퐁
             </button>
+            <button @click="crawlProduct('manual')" :disabled="isBusy">
+              수동
+            </button>
             <button
               @click="openDialog"
               :disabled="productDetailImages.length === 0"
@@ -657,6 +660,10 @@ const crawlProduct = async (buyer) => {
           );
         }
         break;
+      case "manual":
+        replaceUrl = "";
+        detailImages = doc.querySelectorAll("img");
+        break;
       default:
         replaceUrl = "";
         break;
@@ -669,6 +676,10 @@ const crawlProduct = async (buyer) => {
         productThumbnail.value = backgroundImage.match(
           /url\(["']?(.*?)["']?\)/
         )[1];
+        break;
+      }
+      case "manual": {
+        productThumbnail.value = "";
         break;
       }
       default: {

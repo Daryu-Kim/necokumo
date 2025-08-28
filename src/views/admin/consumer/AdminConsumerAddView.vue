@@ -440,8 +440,8 @@ async function confirmUserData() {
           targetCount: 1,
           content: `[네코쿠모] 신규 고객님께서 고객님을 추천인으로 등록했습니다!\n\n추천인 성함: ${userData.value.userName}\n추천인 아이디: ${userData.value.userId}\n\n추천해주신 고객님께서 상품을 구매하면 구매 포인트의 10%를 적립받게 됩니다!\n오늘도 즐거운 쇼핑 되시길 바랍니다 :)`,
           refKey: `REFERRAL_${Timestamp.now().seconds}_${
-            userData.value.userId
-          }_${referralUserData.userId}`,
+            referralUserData.userId
+          }`,
         });
       }
 

@@ -627,7 +627,7 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: item.currency,
+        content: item.orderData.paymentMethod,
         editable: false,
       },
       {
@@ -739,7 +739,7 @@ onMounted(async () => {
         width: 96,
         align: "center",
         format: (value) => {
-          if (value == "KRW") {
+          if (value == "bank") {
             return "무통장입금";
           } else {
             return "신용/체크카드";

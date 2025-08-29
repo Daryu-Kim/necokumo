@@ -46,6 +46,7 @@ import {
   query,
   where,
   getDoc,
+  doc,
 } from "firebase/firestore";
 import { onMounted, ref } from "vue";
 import { db } from "@/lib/firebase";
@@ -74,8 +75,8 @@ onMounted(async () => {
   let bankTotal = 0;
   let cardTotal = 0;
 
-  data.forEach(async (doc) => {
-    const data = doc.data();
+  data.forEach(async (queryDoc) => {
+    const data = queryDoc.data();
     const orderData = await (
       await getDoc(doc(db, "order", data.orderId))
     ).data();
@@ -90,8 +91,8 @@ onMounted(async () => {
 
   // 환불승인 금액 산정
   let refundBankTotal = 0;
-  data.forEach((doc) => {
-    const data = doc.data();
+  data.forEach((queryDoc) => {
+    const data = queryDoc.data();
     if (
       typeof data.productPrice === "number" &&
       ["APPROVED_CANCEL", "APPROVED_RETURN"].includes(data.claimStatus ?? "")

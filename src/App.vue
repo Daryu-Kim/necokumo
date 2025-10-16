@@ -45,4 +45,23 @@ ol {
 .datatable .dt-cell__content--header-1 {
   text-align: center;
 }
+
+div.swiper-button-prev::after,
+div.swiper-button-next::after {
+  background: rgba($color: #000000, $alpha: 0.5);
+  padding: 8px;
+  width: 24px;
+  height: 24px;
+  aspect-ratio: 1 / 1;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 24px;
+  color: white;
+  font-weight: 700;
+}
+
+span.swiper-pagination-bullet-active {
+  background-color: #007bff;
+}
 </style>

@@ -2,7 +2,20 @@
   <div class="consumer-home">
     <div class="main-content-box">
       <div class="top-banner-box">
-        <swiper class="banner-container" :space-between="16">
+        <swiper
+          class="banner-container"
+          :space-between="24"
+          :loop="true"
+          :navigation="true"
+          :pagination="{
+            clickable: true,
+          }"
+          :autoplay="{
+            delay: 4000,
+            disableOnInteraction: false,
+          }"
+          :modules="[Navigation, Pagination, Autoplay]"
+        >
           <swiper-slide
             class="banner-slide"
             v-for="(item, index) in topBannerDatas"
@@ -102,7 +115,10 @@ import { onMounted, ref } from 'vue';
 import { db } from "@/lib/firebase";
 import { getDocs, query, collection, where, orderBy, limit } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/vue";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 const categoryDatas = ref([]);
 const topBannerDatas = ref([]);

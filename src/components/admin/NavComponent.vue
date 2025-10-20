@@ -276,7 +276,12 @@
         <span class="material-icons-round" v-else> expand_more </span>
       </button>
       <div v-if="isOpenedPromotionList" class="admin-menu-sub">
-        <h3>현재 준비중입니다.</h3>
+        <h3>프로모션 관련 메뉴</h3>
+        <router-link to="/admin/promotion/notice-list" class="admin-menu-item">
+          <div>
+            <p>공지사항 관리</p>
+          </div>
+        </router-link>
         <!-- <router-link to="/admin/list/category" class="admin-menu-item">
             <div>
               <p>고객 대시보드</p>

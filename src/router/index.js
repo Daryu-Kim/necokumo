@@ -36,6 +36,7 @@ import AdminOrderListPreparingDeliveryView from "@/views/admin/order/AdminOrderL
 import AdminOrderListShippingProgressView from "@/views/admin/order/AdminOrderListShippingProgressView.vue";
 import AdminOrderListDeliveryCompletedView from "@/views/admin/order/AdminOrderListDeliveryCompletedView.vue";
 import AdminConsumerAddView from "@/views/admin/consumer/AdminConsumerAddView.vue";
+import AdminPromotionNoticeListView from "@/views/admin/promotion/AdminPromotionNoticeListView.vue";
 const routes = [
   {
     path: "/",
@@ -237,6 +238,18 @@ const routes = [
             path: "deleted-list",
             name: "admin-product-deleted-list",
             component: AdminProductDeletedListView,
+          },
+        ],
+      },
+      {
+        path: "promotion",
+        name: "admin-promotion",
+        redirect: "/admin/promotion/notice-list",
+        children: [
+          {
+            path: "dashboard",
+            name: "admin-promotion-notice-list",
+            component: AdminPromotionNoticeListView,
           },
         ],
       },

@@ -10,64 +10,57 @@
         <p>3. 가입완료</p>
       </div>
       <div class="agreement-container">
-        <h3>전체 동의</h3>
         <hr />
         <div class="checkbox-container">
           <div>
-            <input type="checkbox" />
+            <input id="terms" type="checkbox" v-model="checks.terms" />
           </div>
           <div class="label-container">
-            <label class="bold">모든 약관을 확인하고 전체 동의합니다.</label>
-            <p>
-              (전체 동의는 필수 및 선택 정보에 대한 동의가 포함되어 있습니다.)
-            </p>
-          </div>
-        </div>
-        <hr class="sub" />
-        <div class="checkbox-container">
-          <div>
-            <input type="checkbox" />
-          </div>
-          <div class="label-container">
-            <label>이용약관 동의 (필수)</label>
+            <label for="terms" class="bold">이용약관 동의 (필수)</label>
           </div>
           <button @click="openDialog('AGREEMENT_TERMS')">보기</button>
         </div>
         <div class="checkbox-container">
           <div>
-            <input type="checkbox" />
+            <input
+              id="privacy-required"
+              type="checkbox"
+              v-model="checks.privacyRequired"
+            />
           </div>
           <div class="label-container">
-            <label>개인정보 수집 및 이용 동의 (필수)</label>
+            <label for="privacy-required" class="bold">
+              개인정보 수집 및 이용 동의 (필수)
+            </label>
           </div>
-          <button value="">보기</button>
+          <button @click="openDialog('AGREEMENT_PRIVACY')">보기</button>
         </div>
         <div class="checkbox-container">
           <div>
-            <input type="checkbox" />
+            <input id="marketing" type="checkbox" v-model="checks.marketing" />
           </div>
           <div class="label-container">
-            <label>개인정보 수집 및 이용 동의 (선택)</label>
+            <label for="marketing" class="bold"
+              >마케팅 목적의 개인정보 수집 및 이용 (필수)</label
+            >
           </div>
-          <button>보기</button>
+          <button @click="openDialog('AGREEMENT_MARKETING')">보기</button>
         </div>
         <div class="checkbox-container">
           <div>
-            <input type="checkbox" />
+            <input id="sms" type="checkbox" v-model="checks.sms" />
           </div>
           <div class="label-container">
-            <label>마케팅 목적의 개인정보 수집 및 이용 (선택)</label>
+            <label for="sms" class="bold">
+              쇼핑정보 SMS / 알림톡 수신 동의 (필수)
+            </label>
           </div>
-          <button>보기</button>
+          <button @click="openDialog('AGREEMENT_SMS')">보기</button>
         </div>
-        <div class="checkbox-container">
-          <div>
-            <input type="checkbox" />
-          </div>
-          <div class="label-container">
-            <label>쇼핑정보 SMS / 알림톡 수신 동의 (선택)</label>
-          </div>
-          <button>보기</button>
+        <hr class="sub" />
+        <div class="button-container">
+          <button @click="router.back()">취소</button>
+          <button @click="nextStep">다음</button>
         </div>
       </div>
     </div>
@@ -76,7 +69,7 @@
         <div class="title-container">
           <h2>{{ dialogTitle }}</h2>
           <button class="close-button" @click="isDialogOpened = false">
-            <Icon>
+            <Icon size="24">
               <CloseRound />
             </Icon>
           </button>
@@ -96,10 +89,36 @@ import { doc, getDoc } from "firebase/firestore";
 import { ref } from "vue";
 import { Icon } from "@vicons/utils";
 import { CloseRound } from "@vicons/material";
+import router from "@/router";
 
 const isDialogOpened = ref(false);
 const dialogTitle = ref("");
 const dialogContent = ref("");
+
+// 개별 체크박스 상태
+const checks = ref({
+  terms: false,
+  privacyRequired: false,
+  marketing: false,
+  sms: false,
+});
+
+const nextStep = () => {
+  try {
+    const allRequiredChecked = Object.values(checks.value).every(
+      (v) => v === true
+    );
+
+    if (allRequiredChecked) {
+      router.push("/member/join");
+    } else {
+      alert("필수 항목을 모두 체크해주십시오!");
+      return;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+};
 
 const openDialog = async (docId) => {
   try {
@@ -182,6 +201,7 @@ const closeDialog = () => {
 
           > label {
             font-size: 18px;
+            line-height: 24px;
             &.bold {
               font-weight: 700;
             }
@@ -205,6 +225,33 @@ const closeDialog = () => {
 
           &:hover {
             filter: brightness(1.15);
+          }
+        }
+      }
+
+      > .button-container {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+
+        > button {
+          flex: 1;
+          background: none;
+          border: none;
+          border-radius: 8px;
+          padding: 12px 24px;
+          font-size: 18px;
+          cursor: pointer;
+
+          &:first-child {
+            border: 1px solid black;
+          }
+
+          &:last-child {
+            border: 1px solid #007bff;
+            background-color: #007bff;
+            font-weight: 700;
+            color: white;
           }
         }
       }
@@ -242,6 +289,11 @@ const closeDialog = () => {
         > .close-button {
           background: none;
           border: none;
+          cursor: pointer;
+
+          &:hover {
+            filter: brightness(1.15);
+          }
         }
       }
 

@@ -41,7 +41,7 @@
       </router-link>
     </footer>
     <a
-      href="https://open.kakao.com/o/sUuhRGDh"
+      href="http://pf.kakao.com/_SxgVFn"
       target="_blank"
       style="position: fixed; bottom: 72px; right: 24px; z-index: 100"
     >

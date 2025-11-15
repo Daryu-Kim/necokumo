@@ -98,7 +98,14 @@
               </p>
               <hr v-if="viewFilterData == 'list'" />
               <p>
-                관심 <span>{{ item.productLikeCount.toLocaleString() }}</span>
+                관심
+                <span>{{ item.productLikeCount.toLocaleString() }}</span>
+              </p>
+              <hr v-if="viewFilterData == 'list'" />
+              <hr v-if="viewFilterData == 'grid'" />
+              <p>
+                조회수
+                <span>{{ item.productViewCount.toLocaleString() }}</span>
               </p>
             </div>
           </div>

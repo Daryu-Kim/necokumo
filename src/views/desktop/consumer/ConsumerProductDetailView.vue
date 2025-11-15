@@ -125,13 +125,12 @@
         </div>
       </div>
     </div>
-    <hr v-if="!productData.isSellCafe24" />
+    <hr v-if="!productData.isSellOnline" />
     <h2
-      v-if="!productData.isSellCafe24"
+      v-if="!productData.isSellOnline"
       style="text-align: center; word-break: keep-all"
     >
-      본 상품은 [온라인 판매금지] 상품으로 공식몰에서는 구매가 불가하며, 이
-      쇼핑몰에서만 구매 가능한 상품입니다!
+      본 상품은 [온라인 판매금지] 상품으로 VIP 회원 분만 구매 가능한 상품입니다!
     </h2>
     <hr />
     <div class="product-detail-container">
@@ -147,7 +146,7 @@
 <script setup lang="js">
 import { nextTick, onMounted, ref, watch, computed } from 'vue';
 import { auth, db } from "@/lib/firebase";
-import { getDoc, doc, setDoc, arrayUnion, increment, arrayRemove } from "firebase/firestore";
+import { getDoc, doc, setDoc, arrayUnion, increment, arrayRemove, updateDoc } from "firebase/firestore";
 import { useRoute } from 'vue-router';
 import router from '@/router';
 
@@ -366,11 +365,23 @@ async function fetchUserData() {
   }
 }
 
+async function incrementViewCount() {
+  try {
+    console.log("Increment View Count...");
+    await updateDoc(doc(db, "product", productData.value.id), {
+      productViewCount: increment(1),
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 onMounted(async () => {
   try {
     await fetchProductData();
     await fetchUserData();
     await fetchWishListData();
+    await incrementViewCount();
   } catch (error) {
     console.error('Failed to fetch data:', error);
   }

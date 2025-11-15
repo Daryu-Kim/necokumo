@@ -127,13 +127,12 @@
         </div>
       </div>
     </div>
-    <hr v-if="!productData.isSellCafe24" />
+    <hr v-if="!productData.isSellOnline" />
     <h3
-      v-if="!productData.isSellCafe24"
+      v-if="!productData.isSellOnline"
       style="text-align: center; word-break: keep-all"
     >
-      본 상품은 [온라인 판매금지] 상품으로 공식몰에서는 구매가 불가하며, 이
-      쇼핑몰에서만 구매 가능한 상품입니다!
+      본 상품은 [온라인 판매금지] 상품으로 VIP 회원 분만 구매 가능한 상품입니다!
     </h3>
     <hr />
     <div class="product-detail-container">

@@ -70,19 +70,19 @@
     <footer>
       <div class="footer-content">
         <div>
-          <h2>네코쿠모 폐쇄몰</h2>
+          <h2>네코쿠모</h2>
           <p class="f-info">회사명: 냥이네구름가게 / 대표자: 김원재</p>
           <p class="f-info">
             사업자등록번호: 228-15-02857 / 통신판매업 신고: 간이과세자
           </p>
           <p class="f-info">
-            전화: 010-5577-9069 / 주소: 인천광역시 남동구 예술로258번길 24
+            전화: 070-4047-4096 / 주소: 대구광역시 남구 계명중앙1길 17
           </p>
           <p class="f-info">
-            개인정보관리책임: 김원재 (necokumo23@gmail.com) Hosting by Gabia
+            개인정보관리책임: 김원재 (ceo@necokumo.co.kr) Hosting by MailPlug
           </p>
           <p class="f-cont">
-            고객센터: 010-5577-9069 / 상담시간: 평일 10:00 ~ 19:00
+            고객센터: 070-4047-4096 / 상담시간: 연중무휴 09:30 ~ 03:00
           </p>
         </div>
         <div>
@@ -104,11 +104,11 @@
         </div>
       </div>
       <div class="copyright">
-        <p>Copyrightⓒ 2025 네코쿠모 폐쇄몰. All rights reserved.</p>
+        <p>Copyrightⓒ 2025 네코쿠모. All rights reserved.</p>
       </div>
     </footer>
     <a
-      href="https://open.kakao.com/o/sUuhRGDh"
+      href="http://pf.kakao.com/_SxgVFn"
       target="_blank"
       style="position: fixed; bottom: 72px; right: 24px; z-index: 100"
     >

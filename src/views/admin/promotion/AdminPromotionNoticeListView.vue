@@ -228,9 +228,7 @@ const deleteSelectedItems = async () => {
         checkedItems.map(async (item) => {
           try {
             await updateDoc(doc(db, "product", item.productId), {
-              isSellCafe24: false,
-              isSellYoutube: false,
-              isSellVue: false,
+              isSellOnline: false,
               isActive: false,
               updatedAt: Timestamp.fromDate(new Date()),
             });
@@ -269,7 +267,7 @@ const setSellCafe24 = async () => {
         checkedItems.map(async (item) => {
           try {
             await updateDoc(doc(db, "product", item.productId), {
-              isSellCafe24: true,
+              isSellOnline: true,
               updatedAt: Timestamp.fromDate(new Date()),
             });
           } catch (error) {
@@ -306,7 +304,7 @@ const unsetSellCafe24 = async () => {
         checkedItems.map(async (item) => {
           try {
             await updateDoc(doc(db, "product", item.productId), {
-              isSellCafe24: false,
+              isSellOnline: false,
               updatedAt: Timestamp.fromDate(new Date()),
             });
           } catch (error) {
@@ -372,7 +370,7 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: item.isSellCafe24,
+        content: item.isSellOnline,
         editable: false,
         format: (value) => {
           if (value) {

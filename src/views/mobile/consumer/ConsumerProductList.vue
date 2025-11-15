@@ -95,7 +95,14 @@
               </p>
               <hr v-if="viewFilterData == 'list'" />
               <p>
-                관심 <span>{{ item.productLikeCount.toLocaleString() }}</span>
+                관심
+                <span>{{ item.productLikeCount.toLocaleString() }}</span>
+              </p>
+              <hr v-if="viewFilterData == 'list'" />
+              <hr v-if="viewFilterData == 'grid'" />
+              <p>
+                조회수
+                <span>{{ item.productViewCount.toLocaleString() }}</span>
               </p>
             </div>
           </div>
@@ -146,19 +153,37 @@ function formatTimestampToYearMonth(timestamp) {
 async function fetchFilteredData() {
   try {
     console.log("Fetching Popular Data...");
-    productDatas.value.sort((a, b) => {
-      // 1️⃣ 우선 productLikeCount 기준 내림차순
-      if (b.productLikeCount !== a.productLikeCount) {
-        return b.productLikeCount - a.productLikeCount;
-      }
 
-      // 2️⃣ 둘 다 0이면 createdAt 기준 최신순
-      if (a.productLikeCount === 0 && b.productLikeCount === 0) {
-        return b.createdAt - a.createdAt;
-      }
+    // 1️⃣ 각 product에 구매수 조회 후 score 계산
+    const productsWithScore = await Promise.all(
+      productDatas.value.map(async (product) => {
+        // productOrder 컬렉션에서 productId 일치하는 문서 수
+        const ordersSnap = await getDocs(
+          query(collection(db, "productOrder"), where("productId", "==", product.productId))
+        );
+        const purchaseCount = ordersSnap.size;
 
-      return 0; // 같으면 순서 그대로
+        // score 계산
+        const score =
+          (product.productLikeCount || 0) * 5 +
+          purchaseCount * 10 +
+          (product.productViewCount || 0) * 2;
+
+        return {
+          ...product,
+          score,
+        };
+      })
+    );
+
+    // 2️⃣ score 내림차순 정렬 + score 같으면 createdAt 최신순
+    productsWithScore.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return b.createdAt - a.createdAt;
     });
+
+    // 3️⃣ productDatas.value에 반영
+    productDatas.value = productsWithScore;
   } catch (error) {
     console.error('Failed to fetch data:', error);
   }

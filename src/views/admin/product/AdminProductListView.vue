@@ -6,65 +6,19 @@
         상품 등록
       </button>
       <button @click="deleteSelectedItems" class="red" :disabled="isBusy">
-        삭제
+        상품 삭제
       </button>
-      <button class="blue" @click="uploadProducts" :disabled="isBusy">
-        카페24 업로드하기
-      </button>
-      <button @click="triggerProductMatch" class="blue" :disabled="isBusy">
-        카페24 상품 매칭하기
-      </button>
-      <input
-        type="file"
-        ref="productMatchRef"
-        accept=".csv"
-        @change="handleProductMatchFileChange"
-        style="display: none"
-      />
-      <button
-        @click="triggerProductOptionMatch"
-        class="blue"
-        :disabled="isBusy"
-      >
-        카페24 상품 옵션 매칭하기
-      </button>
-      <input
-        type="file"
-        ref="productOptionMatchRef"
-        accept=".csv"
-        @change="handleProductOptionMatchFileChange"
-        style="display: none"
-      />
       <button @click="unsetSellCafe24" class="secondary" :disabled="isBusy">
         카페24 판매금지 처리
       </button>
       <button @click="setSellCafe24" class="secondary" :disabled="isBusy">
         카페24 판매금지 해제
       </button>
-      <button @click="openImportDialog" :disabled="isBusy">
-        엑셀 자동화 툴
-      </button>
     </div>
     <div class="table-box">
       <h3>상품 목록 테이블</h3>
       <div ref="tableRef"></div>
     </div>
-    <dialog ref="dialogRef">
-      <header>
-        <h2>엑셀 자동화 툴</h2>
-        <button @click="closeImportDialog">
-          <span class="material-icons-round">close</span>
-        </button>
-      </header>
-      <main>
-        <textarea v-model="importHtmlText"></textarea>
-        <div class="button-box">
-          <button @click="convertHtmlToTable('medusa_liquid')">
-            메두사 액상
-          </button>
-        </div>
-      </main>
-    </dialog>
   </div>
 </template>
 
@@ -83,133 +37,16 @@ import {
   updateDoc,
   Timestamp,
 } from "firebase/firestore";
-import {
-  uploadProduct,
-  matchProductByCode,
-  matchProductOptionsByCode,
-} from "@/lib/cafe24";
 import { db } from "@/lib/firebase";
 
 const router = useRouter();
-
-const productMatchRef = ref(null);
-const productOptionMatchRef = ref(null);
 const tableRef = ref(null);
 const dataTable = ref(null);
 const isBusy = ref(false);
 const originData = ref([]);
-const dialogRef = ref(null);
-const importHtmlText = ref("");
-
-const openImportDialog = () => {
-  importHtmlText.value = "";
-  dialogRef.value.showModal();
-};
-
-const closeImportDialog = () => {
-  dialogRef.value.close();
-};
-
-const convertHtmlToTable = (url) => {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(importHtmlText.value, "text/html");
-  let convertDatas = "";
-  switch (url) {
-    case "medusa_liquid": {
-      const items = doc.querySelectorAll(".item.DB_rate.xans-record-");
-      console.log(items);
-      items.forEach((item) => {
-        const itemName = item
-          .querySelector("div.description > p.name > a > span:nth-child(2)")
-          .textContent.split("(")[0]
-          .replace("기성액상", "입호흡 액상")
-          .replace("모드액상", "폐호흡 액상")
-          .trim();
-        const consumerPrice = item
-          .querySelector("div.description > ul > li:nth-child(1) > span")
-          .textContent.replaceAll("원", "")
-          .replaceAll(",", "")
-          .trim();
-        const sellingPrice = item
-          .querySelector(
-            "div.description > ul > li:nth-child(2) > span:nth-child(2)"
-          )
-          .textContent.replaceAll("원", "")
-          .replaceAll(",", "")
-          .trim();
-        convertDatas += `${itemName}\t\t${consumerPrice}\t${sellingPrice}\n`;
-      });
-      navigator.clipboard.writeText(convertDatas).then(() => {
-        alert("데이터가 클립보드에 복사되었습니다!");
-      });
-      break;
-    }
-
-    default:
-      break;
-  }
-};
 
 const createItems = () => {
   router.push("/admin/product/add");
-};
-
-const triggerProductMatch = () => {
-  productMatchRef.value.click();
-};
-
-const triggerProductOptionMatch = () => {
-  productOptionMatchRef.value.click();
-};
-
-const handleProductMatchFileChange = async (event) => {
-  try {
-    const file = event.target.files[0];
-    isBusy.value = true;
-    if (file && file.type === "text/csv") {
-      await matchProductByCode(file); // 원하는 함수로 전달
-      isBusy.value = false;
-      alert("상품 매칭이 완료되었습니다!");
-      window.location.reload();
-    } else {
-      alert("CSV 파일만 업로드해주세요.");
-      isBusy.value = false;
-    }
-  } catch (error) {
-    console.error("Error matching product by code:", error);
-    isBusy.value = false;
-  }
-};
-
-const handleProductOptionMatchFileChange = async (event) => {
-  try {
-    const file = event.target.files[0];
-    isBusy.value = true;
-    if (file && file.type === "text/csv") {
-      await matchProductOptionsByCode(file); // 원하는 함수로 전달
-      isBusy.value = false;
-      alert("상품 옵션 매칭이 완료되었습니다!");
-      window.location.reload();
-    } else {
-      alert("CSV 파일만 업로드해주세요.");
-      isBusy.value = false;
-    }
-  } catch (error) {
-    console.error("Error matching product options by code:", error);
-    isBusy.value = false;
-  }
-};
-
-const uploadProducts = async () => {
-  try {
-    isBusy.value = true;
-    await uploadProduct();
-    isBusy.value = false;
-    console.log("Selected items deleted successfully.");
-  } catch (error) {
-    console.error("Error deleting selected items:", error);
-    isBusy.value = false;
-  }
 };
 
 const deleteSelectedItems = async () => {
@@ -228,9 +65,7 @@ const deleteSelectedItems = async () => {
         checkedItems.map(async (item) => {
           try {
             await updateDoc(doc(db, "product", item.productId), {
-              isSellCafe24: false,
-              isSellYoutube: false,
-              isSellVue: false,
+              isSellOnline: false,
               isActive: false,
               updatedAt: Timestamp.fromDate(new Date()),
             });
@@ -264,12 +99,12 @@ const setSellCafe24 = async () => {
       return;
     }
 
-    if (confirm("선택한 상품을 Cafe24 판매중으로 설정하시겠습니까?")) {
+    if (confirm("선택한 상품을 온라인 판매 가능 상태로 설정하시겠습니까?")) {
       await Promise.all(
         checkedItems.map(async (item) => {
           try {
             await updateDoc(doc(db, "product", item.productId), {
-              isSellCafe24: true,
+              isSellOnline: true,
               updatedAt: Timestamp.fromDate(new Date()),
             });
           } catch (error) {
@@ -281,7 +116,7 @@ const setSellCafe24 = async () => {
       isBusy.value = false;
       return;
     }
-    alert("상품이 Cafe24 판매중으로 설정되었습니다!");
+    alert("상품이 온라인 판매 가능 상태로 설정되었습니다!");
     isBusy.value = false;
     window.location.reload();
   } catch (error) {
@@ -301,12 +136,12 @@ const unsetSellCafe24 = async () => {
       return;
     }
 
-    if (confirm("선택한 상품을 Cafe24 판매중지로 설정하시겠습니까?")) {
+    if (confirm("선택한 상품을 온라인 판매 금지 상태로 설정하시겠습니까?")) {
       await Promise.all(
         checkedItems.map(async (item) => {
           try {
             await updateDoc(doc(db, "product", item.productId), {
-              isSellCafe24: false,
+              isSellOnline: false,
               updatedAt: Timestamp.fromDate(new Date()),
             });
           } catch (error) {
@@ -318,7 +153,7 @@ const unsetSellCafe24 = async () => {
       isBusy.value = false;
       return;
     }
-    alert("상품이 Cafe24 판매중지로 설정되었습니다!");
+    alert("상품이 온라인 판매 금지 상태로 설정되었습니다!");
     isBusy.value = false;
     window.location.reload();
   } catch (error) {
@@ -372,13 +207,13 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: item.isSellCafe24,
+        content: item.isSellOnline,
         editable: false,
         format: (value) => {
           if (value) {
-            return "<p style='font-size: 24px'>❌</p>";
-          } else {
             return "<p style='font-size: 24px'>✅</p>";
+          } else {
+            return "<p style='font-size: 24px'>❌</p>";
           }
         },
       },
@@ -409,17 +244,16 @@ onMounted(async () => {
         format: (value) => {
           console.log(value);
           const lines = value.map(
-            (o) => `${o.optionName} | ${o.optionPrice.toLocaleString()}원`
+            (o) =>
+              `${
+                o.optionName
+              } | ${o.optionPrice.toLocaleString()}원 | ${o.optionStock.toLocaleString()}개`
           );
           return `<p>${lines.join("<br/>")}</p>`;
         },
       },
       item.createdAt?.toDate().toLocaleString() || "",
       item.updatedAt?.toDate().toLocaleString() || "",
-      item.updatedAt.toDate().getTime() !==
-      item.updatedAtCafe24.toDate().getTime()
-        ? "<span style='color: #007bff; font-weight: 700;'>변동사항 있음</span>"
-        : "<span style='color: #ff0000; font-weight: 700;'>변동사항 없음</span>",
     ];
   });
 
@@ -447,7 +281,7 @@ onMounted(async () => {
         },
       },
       {
-        name: "판매금지 여부",
+        name: "온라인 판매 여부",
         editable: false,
         resizable: false,
         width: 128,
@@ -493,13 +327,6 @@ onMounted(async () => {
         editable: false,
         resizable: false,
         width: 192,
-        align: "center",
-      },
-      {
-        name: "상품 변동사항",
-        editable: false,
-        resizable: false,
-        width: 128,
         align: "center",
       },
     ],

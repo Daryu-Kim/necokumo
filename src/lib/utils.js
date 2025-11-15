@@ -52,11 +52,13 @@ export function generateDeliveryTrackingLinkOrigin(company) {
 export function generateOrderStatusLabel(status) {
   const data = {
     BEFORE_DEPOSIT: "입금전",
+    BEFORE_PAYMENT: "결제전",
     PAYMENT_COMPLETED: "결제완료",
     PREPARING_PRODUCT: "상품준비중",
     PREPARING_DELIVERY: "배송준비중",
     SHIPPING_PROGRESS: "배송중",
     DELIVERY_COMPLETED: "배송완료",
+    CONFIRM_PURCHASE: "구매확정",
     CANCELLED: "취소",
     REQUEST_CANCEL: "취소요청",
     PROCESSING_CANCEL: "취소처리중",

@@ -117,9 +117,7 @@ onMounted(async () => {
       },
       {
         content: {
-          cafe24: item.isSellCafe24,
-          youtube: item.isSellYoutube,
-          vue: item.isSellVue,
+          cafe24: item.isSellOnline,
         },
         editable: false,
         format: (value) => {

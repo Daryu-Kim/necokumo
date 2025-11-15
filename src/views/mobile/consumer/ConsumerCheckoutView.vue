@@ -18,40 +18,9 @@
           <div>
             <input
               type="radio"
-              id="international"
-              v-model="deliveryWay"
-              value="international"
-              disabled
-            />
-            <label for="international">해외배송</label>
-          </div>
-          <div>
-            <input
-              type="radio"
-              id="subway"
-              v-model="deliveryWay"
-              value="subway"
-              disabled
-            />
-            <label for="subway">지하철역 무인보관함</label>
-          </div>
-          <div>
-            <input
-              type="radio"
-              id="convenience"
-              v-model="deliveryWay"
-              value="convenience"
-              disabled
-            />
-            <label for="convenience">편의점 반값택배</label>
-          </div>
-          <div>
-            <input
-              type="radio"
               id="quick"
               v-model="deliveryWay"
               value="quick"
-              disabled
             />
             <label for="quick">카카오 T 퀵</label>
           </div>
@@ -61,66 +30,36 @@
               id="manual"
               v-model="deliveryWay"
               value="manual"
-              disabled
             />
             <label for="manual">직접수령</label>
           </div>
         </div>
         <div class="description-container">
           <div v-if="deliveryWay === 'domestic'">
-            <p>한진택배를 통해 발송되는 배송방법입니다.</p>
+            <p>로젠택배를 통해 발송되는 배송방법입니다.</p>
             <p>
               기본 배송료는 4,000원이며 원화 기준 7만원 이상 주문 시
               무료배송됩니다.
             </p>
             <p>제주 / 도서산간 지역은 구매 금액 상관없이 5,000원 추가됩니다.</p>
-          </div>
-          <div v-else-if="deliveryWay === 'international'">
-            <p>현재 미국, 일본 배송만 지원됩니다.</p>
-            <p>
-              상품 가격 먼저 결제 후, 문자 혹은 이메일로 배송료 결제 안내를
-              받으면 마이페이지에서 배송료 결제를 추가로 진행해주세요.
-            </p>
-          </div>
-          <div v-else-if="deliveryWay === 'subway'">
-            <p>
-              "또타라커" 어플을 통해 받고자 하는 지하철역을 검색한 후, 받으실
-              무인보관함 고유번호를 입력해주세요. (ex. 동대문 TL128A)
-            </p>
-            <div class="app-link-container">
-              <a
-                href="https://play.google.com/store/search?q=%EB%98%90%ED%83%80%EB%9D%BC%EC%BB%A4&c=apps"
-                target="_blank"
-              >
-                <img src="@/assets/google.png" />
-              </a>
-              <a
-                href="https://apps.apple.com/kr/app/t-locker-%EB%98%90%ED%83%80%EB%9D%BC%EC%BB%A4-%EC%A7%80%ED%95%98%EC%B2%A0-%EB%AC%BC%ED%92%88-%EB%B3%B4%EA%B4%80-%EC%A0%84%EB%8B%AC%ED%95%A8/id1503291383"
-                target="_blank"
-              >
-                <img src="@/assets/apple.png" />
-              </a>
-            </div>
-          </div>
-          <div v-else-if="deliveryWay === 'convenience'">
-            <p>편의점 반값택배를 통해 발송되는 배송방법입니다.</p>
-            <p>받으실 편의점 지점명을 정확하게 적어주세요.</p>
-            <p>
-              기본 배송료는 3,500원이며 원화 기준 7만원 이상 주문 시
-              무료배송됩니다.
-            </p>
-            <p>제주 / 도서산간 지역은 구매 금액 상관없이 5,000원 추가됩니다.</p>
+            <br />
+            <p>배송 기간 : 결제 시점으로부터 영업일 기준 1 ~ 3일</p>
           </div>
           <div v-else-if="deliveryWay === 'quick'">
-            <p>현재 수도권 지역만 지원됩니다.</p>
+            <p>현재 대구 지역만 지원되니 꼭 확인 부탁드립니다.</p>
             <p>
-              상품 가격 먼저 결제 후, 문자 혹은 이메일로 배송료 결제 안내를
-              받으면 마이페이지에서 배송료 결제를 추가로 진행해주세요.
+              알림톡으로 퀵비 결제 링크가 발송됩니다. 링크를 통해 배송료 결제를
+              추가로 진행해주세요.
             </p>
+            <br />
+            <p>배송 기간 : 결제 시점으로부터 영업일 기준 1 ~ 2일</p>
           </div>
           <div v-else>
-            <p>인천에 있는 사무실에서 직접 수령하는 배송방법입니다.</p>
-            <p>상품이 준비되면 문자와 이메일로 연락드립니다.</p>
+            <p>네코쿠모 본점에서 직접 수령하는 방법입니다.</p>
+            <p>상품 준비에는 당일 ~ 영업일 기준 2일 정도 걸리실 수 있으시며,</p>
+            <p>상품이 준비되면 알림톡으로 연락드립니다.</p>
+            <br />
+            <p>픽업 가능일 : 결제 시점으로부터 영업일 기준 1 ~ 2일</p>
             <button @click="openMapPopup">지도보기</button>
           </div>
         </div>
@@ -131,7 +70,7 @@
             <p>받는사람<span style="color: #007bff">*</span></p>
             <input type="text" v-model="consumerName" />
           </div>
-          <div>
+          <div v-if="deliveryWay === 'domestic' || deliveryWay === 'quick'">
             <p>주소<span style="color: #007bff">*</span></p>
             <div>
               <div>
@@ -244,7 +183,7 @@
       <div class="desc-container" v-if="paymentMethod === 'bank'">
         <div>
           <p>입금은행<span>*</span></p>
-          <input type="text" disabled value="케이뱅크 100-151-009519 김원재" />
+          <input type="text" disabled value="토스뱅크 1002-2582-0340 김원재" />
         </div>
         <div>
           <p>입금자명<span>*</span></p>
@@ -252,25 +191,37 @@
         </div>
       </div>
       <div class="desc-container" v-else>
+        <div>
+          <p>카드번호<span>*</span></p>
+          <input
+            type="text"
+            maxlength="16"
+            placeholder="숫자만 입력 (- 제외)"
+            v-model="consumerCardNumber"
+          />
+        </div>
+        <div>
+          <p>유효기간<span>*</span></p>
+          <input
+            type="month"
+            v-model="consumerCardValidDate"
+            @change="checkCard"
+          />
+        </div>
+        <div>
+          <input type="checkbox" id="cardSave" v-model="consumercardSave" />
+          <label for="cardSave">
+            이 카드를 저장하고 다음 결제에도 사용합니다.
+          </label>
+        </div>
         <p>
-          <span>결제하기 버튼</span>을 누르시면, 고객님이 입력하신 휴대폰 번호로
-          <span>결제 링크 문자</span>가 발송됩니다.
+          <span>결제하기 버튼</span>을 누르시면,
+          <span>영업시간 내에 카드 키인 결제</span>가 진행됩니다.
         </p>
         <p>
-          문자에서 안내된 링크를 열어 <span>신용카드 또는 체크카드</span>로
-          결제를 진행해 주세요.
-        </p>
-        <p>
-          고객님이 결제를 완료하시면, 저희가 <span>수동으로 확인</span> 후
-          주문을 확정해 드립니다.
-        </p>
-        <p>
-          확인까지는 약간의 시간이 소요될 수 있으며, 확인이 끝나는 즉시
-          <span>주문이 정상 진행</span>됩니다.
-        </p>
-        <p>
-          혹시 <span>결제 링크 문자가 도착하지 않거나 오류</span>가 발생할 경우,
-          1:1 문의로 알려주시면 빠르게 도와드릴게요 😊
+          <span>카드 정보가 올바르지 않거나</span> 고액 결제로 인해 CVC 등
+          <span>수동 승인이 필요할 경우</span>, 영업시간 내에 담당자가 통화
+          요청을 진행할 수 있습니다.
         </p>
       </div>
     </div>
@@ -311,17 +262,12 @@ const consumerAddress2 = ref("");
 const consumerPhone = ref("");
 const consumerEmail = ref("");
 const consumerDeliveryMessage = ref("");
+const consumerCardNumber = ref("");
+const consumerCardValidDate = ref("");
+const consumercardSave = ref(false);
 const bankName = ref("");
 
 const deliveryFee = computed(() => {
-  const address = consumerAddress1.value || "";
-
-  const metroKeywords = [
-    "서울", "경기", "인천"
-  ];
-
-  const isMetroArea = metroKeywords.some((kw) => address.includes(kw));
-
   switch (deliveryWay.value) {
     case "domestic":
       if (totalBankPrice.value < 70000) {
@@ -330,26 +276,10 @@ const deliveryFee = computed(() => {
         return 0;
       }
 
-    case "international":
-      return "해외배송은 별도 안내드린 링크로 결제 진행됩니다";
-
-    case "subway":
-      return "지하철 거래는 별도 안내드린 링크로 결제 진행됩니다";
-
-    case "convenience":
-      if (totalBankPrice.value < 70000) {
-        return 3500;
-      } else {
-        return 0;
-      }
-
     case "quick":
-      return "퀵 배송은 별도 안내드린 링크로 결제 진행됩니다";
+      return 0;
 
     case "manual":
-      if (!isMetroArea) {
-        return "수도권 지역만 이용 가능한 배송 방식입니다";
-      }
       return 0;
 
     default:
@@ -437,18 +367,14 @@ async function checkout() {
         orderId: orderId,
         productOrderId: padOrderId,
         productId: item.id,
-        cashReceiptNumber: "",
-        cardReceiptNumber: "",
         productName: item.productName,
         optionName: item.optionName,
         count: item.count,
-        orderChannel: "NECOKUMO",
         productPrice: item.productSellPrice *
                   item.count *
                   0.95,
         userId: auth.currentUser.uid,
         createdAt: Timestamp.fromDate(date),
-        status: "BEFORE_DEPOSIT",
         deliveryTrackingNumber: "",
         deliveryTrackingLink: "",
         deliveryCompany: "",
@@ -489,6 +415,9 @@ async function checkout() {
       orderChannel: "NECOKUMO",
       updatedAt: null,
       memoContent: "",
+      cashReceiptNumber: "",
+      cardReceiptNumber: "",
+      status: "BEFORE_DEPOSIT",
     });
     await sendPpurioMessage({
       targets: [
@@ -560,17 +489,13 @@ async function checkoutCard() {
         orderId: orderId,
         productOrderId: padOrderId,
         productId: item.id,
-        cashReceiptNumber: "",
-        cardRecriptNumber: "",
         productName: item.productName,
         optionName: item.optionName,
         count: item.count,
-        orderChannel: "NECOKUMO",
         productPrice: item.productSellPrice *
                   item.count,
         userId: auth.currentUser.uid,
         createdAt: Timestamp.fromDate(date),
-        status: "BEFORE_DEPOSIT",
         deliveryTrackingNumber: "",
         deliveryTrackingLink: "",
         deliveryCompany: "",
@@ -611,6 +536,9 @@ async function checkoutCard() {
       orderChannel: "NECOKUMO",
       updatedAt: null,
       memoContent: "",
+      cashReceiptNumber: "",
+      cardReceiptNumber: "",
+      status: "BEFORE_PAYMENT",
     });
     await sendPpurioMessage({
       targets: [
@@ -637,6 +565,14 @@ async function checkoutCard() {
         userProductCartList: [],
       });
     }
+
+    if (consumercardSave.value) {
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        cardNumber: consumerCardNumber.value,
+        cardValidDate: consumerCardValidDate.value,
+      })
+    }
+
     router.push({
       path: "/order-complete",
       state: { orderId },
@@ -648,7 +584,7 @@ async function checkoutCard() {
 }
 
 function openMapPopup() {
-  window.open("https://naver.me/5RhLKSA0");
+  window.open("https://map.naver.com/p/entry/place/2027661166");
 }
 
 async function fetchOrderItemDatas(orderItems) {
@@ -955,6 +891,21 @@ onMounted(async () => {
           border: 1px solid black;
           font-size: 14px;
           border-radius: 4px;
+
+          &[type="checkbox"] {
+            width: fit-content;
+          }
+        }
+      }
+
+      > p {
+        &:nth-child(4) {
+          margin-top: 16px;
+        }
+
+        > span {
+          color: #007bff;
+          font-weight: 700;
         }
       }
 

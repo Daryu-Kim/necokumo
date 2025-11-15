@@ -37,6 +37,9 @@ import AdminOrderListShippingProgressView from "@/views/admin/order/AdminOrderLi
 import AdminOrderListDeliveryCompletedView from "@/views/admin/order/AdminOrderListDeliveryCompletedView.vue";
 import AdminConsumerAddView from "@/views/admin/consumer/AdminConsumerAddView.vue";
 import AdminPromotionNoticeListView from "@/views/admin/promotion/AdminPromotionNoticeListView.vue";
+import MemberAgreementView from "@/views/template/member/MemberAgreementView.vue";
+import MemberJoinView from "@/views/template/member/MemberJoinView.vue";
+import MemberJoinSuccessView from "@/views/template/member/MemberJoinSuccessView.vue";
 const routes = [
   {
     path: "/",
@@ -92,6 +95,28 @@ const routes = [
         name: "consumer-cart",
         component: ConsumerCartView,
         meta: { requiresAuthConsumer: true },
+      },
+      {
+        path: "member",
+        name: "member",
+        redirect: "/member/agreement",
+        children: [
+          {
+            path: "agreement",
+            name: "member-agreement",
+            component: MemberAgreementView,
+          },
+          {
+            path: "join",
+            name: "member-join",
+            component: MemberJoinView,
+          },
+          {
+            path: "join-success",
+            name: "member-join-success",
+            component: MemberJoinSuccessView,
+          },
+        ],
       },
       {
         path: "mypage",

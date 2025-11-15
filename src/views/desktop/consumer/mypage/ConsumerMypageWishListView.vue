@@ -215,11 +215,15 @@
               </p>
               <hr v-if="viewFilterData == 'list'" />
               <p>
-                상품리뷰 <span>{{ item.productReviews.length }}</span>
+                관심
+                <span>{{ item.productLikeCount.toLocaleString() }}</span>
               </p>
               <hr v-if="viewFilterData == 'list'" />
               <hr v-if="viewFilterData == 'grid'" />
-              <p>관심</p>
+              <p>
+                조회수
+                <span>{{ item.productViewCount.toLocaleString() }}</span>
+              </p>
             </div>
           </div>
           <div class="price-container">
@@ -278,22 +282,42 @@ const resetPassword = async () => {
 async function fetchFilteredData() {
   try {
     switch (orderFilterData.value) {
-      case "popular":
+      case "popular": {
         console.log("Fetching Popular Data...");
-        productDatas.value.sort((a, b) => {
-          // 1️⃣ 우선 productLikeCount 기준 내림차순
-          if (b.productLikeCount !== a.productLikeCount) {
-            return b.productLikeCount - a.productLikeCount;
-          }
 
-          // 2️⃣ 둘 다 0이면 createdAt 기준 최신순
-          if (a.productLikeCount === 0 && b.productLikeCount === 0) {
-            return b.createdAt - a.createdAt;
-          }
+        // 1️⃣ 각 product에 구매수 조회 후 score 계산
+        const productsWithScore = await Promise.all(
+          productDatas.value.map(async (product) => {
+            // productOrder 컬렉션에서 productId 일치하는 문서 수
+            const ordersSnap = await getDocs(
+              query(collection(db, "productOrder"), where("productId", "==", product.productId))
+            );
+            const purchaseCount = ordersSnap.size;
 
-          return 0; // 같으면 순서 그대로
+            // score 계산
+            const score =
+              (product.productLikeCount || 0) * 5 +
+              purchaseCount * 10 +
+              (product.productViewCount || 0) * 2;
+
+            return {
+              ...product,
+              score,
+            };
+          })
+        );
+
+        // 2️⃣ score 내림차순 정렬 + score 같으면 createdAt 최신순
+        productsWithScore.sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return b.createdAt - a.createdAt;
         });
+
+        // 3️⃣ productDatas.value에 반영
+        productDatas.value = productsWithScore;
+
         break;
+      }
       case "ascPrice":
         console.log("Fetching Ascending Price Data...");
         productDatas.value.sort((a, b) => a.productSellPrice - b.productSellPrice);
@@ -305,22 +329,6 @@ async function fetchFilteredData() {
       case "newest":
         console.log("Fetching Newest Data...");
         productDatas.value.sort((a, b) => b.createdAt - a.createdAt);
-        break;
-      case "review":
-        console.log("Fetching Review Data...");
-        productDatas.value.sort((a, b) => {
-          // 1️⃣ 우선 productLikeCount 기준 내림차순
-          if (b.productReviews.length !== a.productReviews.length) {
-            return b.productReviews.length - a.productReviews.length;
-          }
-
-          // 2️⃣ 둘 다 0이면 createdAt 기준 최신순
-          if (a.productReviews.length === 0 && b.productReviews.length === 0) {
-            return b.createdAt - a.createdAt;
-          }
-
-          return 0; // 같으면 순서 그대로
-        });
         break;
       default:
         break;

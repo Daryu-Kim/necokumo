@@ -5,7 +5,7 @@
       <h3>판매 채널</h3>
       <div>
         <div>
-          <input id="cafe24" type="checkbox" checked v-model="isSellCafe24" />
+          <input id="cafe24" type="checkbox" checked v-model="isSellOnline" />
           <label for="cafe24">카페24</label>
         </div>
       </div>
@@ -314,7 +314,7 @@ const isBusy = ref(false);
 const productOriginData = ref({});
 const route = useRoute();
 
-const isSellCafe24 = ref(true);
+const isSellOnline = ref(true);
 
 const excelContent = ref("");
 const productName = ref("");
@@ -439,6 +439,7 @@ const addOptionList = async () => {
         optionList.value.push({
           optionName: `${option1}/${option2}`,
           optionPrice: 0,
+          optionStock: 0,
         });
       });
     });
@@ -807,8 +808,8 @@ const addProduct = async () => {
       const uuid = route.query.id;
       let updateData = {};
 
-      if (isSellCafe24.value !== productOriginData.value.isSellCafe24) {
-        updateData.isSellCafe24 = isSellCafe24.value;
+      if (isSellOnline.value !== productOriginData.value.isSellOnline) {
+        updateData.isSellOnline = isSellOnline.value;
       }
 
       if (
@@ -933,6 +934,16 @@ const addProduct = async () => {
         .map((kw) => kw.trim())
         .filter(Boolean);
 
+      const cleanedOptionList = optionList.value.map((opt, index) => {
+        // 🔢 index를 4자리 문자열로 (예: 1 → "0001")
+        const paddedIndex = String(index + 1).padStart(4, "0");
+
+        return {
+          ...opt,
+          optionCode: `${uuid}${paddedIndex}`,
+        };
+      });
+
       const productData = {
         productId: uuid,
         productName: productName.value,
@@ -943,17 +954,16 @@ const addProduct = async () => {
         productCategory: category,
         option1List: option1List.value,
         option2List: option2List.value,
-        optionList: optionList.value,
+        optionList: cleanedOptionList,
         productThumbnailUrl: thumbnailURL,
         productDetailUrl: detailImageURL,
         productLikeCount: 0,
-        productReviews: [],
+        productViewCount: 0,
         createdBy: auth.currentUser.uid,
         createdAt: Timestamp.fromDate(new Date()),
         updatedAt: Timestamp.fromDate(new Date()),
-        isSellCafe24: isSellCafe24.value,
+        isSellOnline: isSellOnline.value,
         isActive: true,
-        updatedAtCafe24: Timestamp.fromDate(new Date(1970, 1, 1)),
       };
 
       await setDoc(doc(db, "product", uuid), productData);
@@ -986,7 +996,7 @@ onMounted(async () => {
         .filter(Boolean); // originUrl이 없는 경우 제외
 
       // 기존 Product Data 매치
-      isSellCafe24.value = originData.isSellCafe24;
+      isSellOnline.value = originData.isSellOnline;
 
       if (originData.productCategory[0]) {
         const category0Data = (

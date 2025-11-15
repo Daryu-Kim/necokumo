@@ -185,11 +185,15 @@
               </p>
               <hr v-if="viewFilterData == 'list'" />
               <p>
-                상품리뷰 <span>{{ item.productReviews.length }}</span>
+                관심
+                <span>{{ item.productLikeCount.toLocaleString() }}</span>
               </p>
               <hr v-if="viewFilterData == 'list'" />
               <hr v-if="viewFilterData == 'grid'" />
-              <p>관심</p>
+              <p>
+                조회수
+                <span>{{ item.productViewCount.toLocaleString() }}</span>
+              </p>
             </div>
           </div>
           <div class="price-container">
@@ -266,22 +270,6 @@ async function fetchFilteredData() {
       case "newest":
         console.log("Fetching Newest Data...");
         productDatas.value.sort((a, b) => b.createdAt - a.createdAt);
-        break;
-      case "review":
-        console.log("Fetching Review Data...");
-        productDatas.value.sort((a, b) => {
-          // 1️⃣ 우선 productLikeCount 기준 내림차순
-          if (b.productReviews.length !== a.productReviews.length) {
-            return b.productReviews.length - a.productReviews.length;
-          }
-
-          // 2️⃣ 둘 다 0이면 createdAt 기준 최신순
-          if (a.productReviews.length === 0 && b.productReviews.length === 0) {
-            return b.createdAt - a.createdAt;
-          }
-
-          return 0; // 같으면 순서 그대로
-        });
         break;
       default:
         break;

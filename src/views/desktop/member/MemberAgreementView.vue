@@ -37,6 +37,17 @@
         </div>
         <div class="checkbox-container">
           <div>
+            <input id="gps" type="checkbox" v-model="checks.gps" />
+          </div>
+          <div class="label-container">
+            <label for="gps" class="bold">
+              위치기반서비스 이용약관 동의 (필수)
+            </label>
+          </div>
+          <button @click="openDialog('AGREEMENT_GPS')">보기</button>
+        </div>
+        <div class="checkbox-container">
+          <div>
             <input id="marketing" type="checkbox" v-model="checks.marketing" />
           </div>
           <div class="label-container">
@@ -76,7 +87,7 @@
         </div>
         <hr />
         <div class="content-container">
-          <p>{{ dialogContent }}</p>
+          <p v-html="dialogContent"></p>
         </div>
       </div>
     </div>
@@ -99,6 +110,7 @@ const dialogContent = ref("");
 const checks = ref({
   terms: false,
   privacyRequired: false,
+  gps: false,
   marketing: false,
   sms: false,
 });
@@ -273,7 +285,7 @@ const closeDialog = () => {
     > .modal {
       background: #fff;
       width: 90%;
-      max-width: 480px;
+      max-width: 540px;
       border-radius: 8px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 
@@ -299,6 +311,8 @@ const closeDialog = () => {
 
       > .content-container {
         padding: 16px 24px;
+        max-height: 70vh;
+        overflow-y: scroll;
       }
     }
   }

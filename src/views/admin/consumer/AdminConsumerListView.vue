@@ -2,19 +2,12 @@
   <div class="admin-product-list">
     <h2>회원 정보 조회하기</h2>
     <div class="button-box">
-      <button @click="triggerConsumerMatch" class="blue" :disabled="isBusy">
-        회원 정보 가져오기
-      </button>
       <button @click="router.push('/admin/consumer/add')" :disabled="isBusy">
         회원 정보 등록하기
       </button>
-      <input
-        type="file"
-        ref="consumerMatchRef"
-        accept=".csv"
-        @change="handleConsumerMatchFileChange"
-        style="display: none"
-      />
+      <button @click="syncConsumerGrade" :disabled="isBusy">
+        회원 등급 동기화하기
+      </button>
     </div>
     <div class="table-box">
       <h3>상품 목록 테이블</h3>
@@ -27,37 +20,129 @@
 import { ref, onMounted } from "vue";
 import "frappe-datatable/dist/frappe-datatable.min.css";
 import DataTable from "frappe-datatable";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  where,
+  Timestamp,
+  writeBatch,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { matchConsumerByEmail } from "@/lib/cafe24";
-import { formatDate } from "@/lib/utils";
+import { convertPriceToUserGradeCode, formatDate } from "@/lib/utils";
 import router from "@/router";
 
 const tableRef = ref(null);
 const dataTable = ref(null);
 const isBusy = ref(false);
 const originData = ref([]);
-const consumerMatchRef = ref(null);
 
-const triggerConsumerMatch = () => {
-  consumerMatchRef.value.click();
+const gradeOrder = [
+  "N1",
+  "N2",
+  "N3",
+  "N4",
+  "N5",
+  "N6",
+  "N7",
+  "N8",
+  "N9",
+  "N10",
+]; // 필요하면 확장 가능
+
+const normalizeGrade = (grade, minGrade) => {
+  return gradeOrder.indexOf(grade) < gradeOrder.indexOf(minGrade)
+    ? minGrade
+    : grade;
 };
 
-const handleConsumerMatchFileChange = async (event) => {
+const getSyncDateRange = (currentDate = new Date()) => {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
+
+  // 3개월 전 1일
+  let startMonth = month - 3;
+  let startYear = year;
+  if (startMonth <= 0) {
+    startMonth += 12;
+    startYear -= 1;
+  }
+  const start = new Date(startYear, startMonth - 1, 1);
+
+  // 직전 달 말일
+  let endMonth = month - 1;
+  let endYear = year;
+  if (endMonth <= 0) {
+    endMonth += 12;
+    endYear -= 1;
+  }
+  const end = new Date(endYear, endMonth, 0);
+
+  return {
+    start: Timestamp.fromDate(start),
+    end: Timestamp.fromDate(end),
+    periodLabel: `${startYear}년 ${startMonth}월 ~ ${endYear}년 ${endMonth}월`,
+  };
+};
+
+const syncConsumerGrade = async () => {
   try {
-    const file = event.target.files[0];
-    isBusy.value = true;
-    if (file && file.type === "text/csv") {
-      await matchConsumerByEmail(file); // 원하는 함수로 전달
-      isBusy.value = false;
-      alert("회원 정보를 불러왔습니다!");
-      window.location.reload();
-    } else {
-      alert("CSV 파일만 업로드해주세요.");
-      isBusy.value = false;
+    const currentDate = new Date();
+    const { start, end, periodLabel } = getSyncDateRange(currentDate);
+
+    if (!confirm(`${periodLabel} 기준으로 등급 동기화를 진행하시겠습니까?`)) {
+      return;
     }
+
+    isBusy.value = true;
+
+    const USERS = await getDocs(collection(db, "users"));
+    const batch = writeBatch(db);
+
+    for (const userDoc of USERS.docs) {
+      const userData = userDoc.data();
+
+      // 구매 확정된 주문(3개월 기준 데이터)
+      const productOrders = await getDocs(
+        query(
+          collection(db, "productOrder"),
+          where("userId", "==", userData.userId),
+          where("status", "==", "CONFIRM_PURCHASE"),
+          where("createdAt", ">=", start),
+          where("createdAt", "<=", end)
+        )
+      );
+
+      // 총 구매금액 계산
+      const totalPrice = productOrders.docs.reduce(
+        (acc, doc) => acc + Number(doc.data().productPrice || 0),
+        0
+      );
+
+      // 새 등급 계산
+      const calculatedGrade = convertPriceToUserGradeCode(totalPrice);
+
+      // userMinGrade 보정 적용
+      const finalGrade = normalizeGrade(calculatedGrade, userData.userMinGrade);
+
+      // 변경 필요할 때만 업데이트
+      if (finalGrade !== userData.userGrade) {
+        batch.update(userDoc.ref, {
+          userGrade: finalGrade,
+        });
+      }
+    }
+
+    // 저장
+    await batch.commit();
+
+    alert("회원 등급 동기화가 완료되었습니다!");
+    isBusy.value = false;
+    window.location.reload();
   } catch (error) {
-    console.error("Error matching product by code:", error);
+    console.error("Error syncing consumer grade:", error);
+    alert("회원 등급 동기화에 실패하였습니다!");
     isBusy.value = false;
   }
 };
@@ -76,11 +161,7 @@ onMounted(async () => {
     const item = doc.data();
     return [
       {
-        content: `<a href="${window.location.origin}/admin/consumer/detail?id=${doc.id}" style="color: #007bff; font-weight: 700">${item.userId}</a>`,
-        editable: false,
-      },
-      {
-        content: item.userEmail,
+        content: `<a href="${window.location.origin}/admin/consumer/detail?id=${doc.id}" style="color: #007bff; font-weight: 700">${item.userPhone}</a>`,
         editable: false,
       },
       {
@@ -88,23 +169,11 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: item.userAge,
-        editable: false,
-      },
-      {
         content: item.userBirthday,
         editable: false,
       },
       {
-        content: item.userGender,
-        editable: false,
-      },
-      {
-        content: item.userCarrier,
-        editable: false,
-      },
-      {
-        content: item.userPhone,
+        content: item.userMinGrade,
         editable: false,
       },
       {
@@ -112,50 +181,15 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: item.userPostCode,
+        content: item.isAdmin ? "관리자" : "일반 회원",
         editable: false,
       },
       {
-        content: item.userAddress1,
+        content: item.userSalespersonCode,
         editable: false,
       },
       {
-        content: item.userAddress2,
-        editable: false,
-      },
-      {
-        content: `${item.userActualPaymentAmount.toLocaleString()}원`,
-        editable: false,
-      },
-      {
-        content: `${item.userTotalActualOrderCount.toLocaleString()}건`,
-        editable: false,
-      },
-      {
-        content: `${item.userAvailablePoint.toLocaleString()} 냥코인`,
-        editable: false,
-      },
-      {
-        content: `${item.userTotalUsedPoint.toLocaleString()} 냥코인`,
-        editable: false,
-      },
-      {
-        content: `${item.userTotalPoint.toLocaleString()} 냥코인`,
-        editable: false,
-      },
-      {
-        content: item.userReferralId,
-        editable: false,
-      },
-      {
-        content: item.userRefundAccount.split("/"),
-        editable: false,
-        format: (value) => {
-          return `<p>${value.join("<br/>")}</p>`;
-        },
-      },
-      {
-        content: formatDate(new Date(item.createdAt.seconds * 1000)),
+        content: formatDate(item.visitedAt.toDate()),
         editable: false,
       },
       {
@@ -169,17 +203,10 @@ onMounted(async () => {
   dataTable.value = new DataTable(tableRef.value, {
     columns: [
       {
-        name: "아이디",
+        name: "휴대폰 번호",
         editable: false,
         resizable: false,
         width: 128,
-        align: "center",
-      },
-      {
-        name: "이메일",
-        editable: false,
-        resizable: false,
-        width: 216,
         align: "center",
       },
       {
@@ -190,129 +217,52 @@ onMounted(async () => {
         align: "center",
       },
       {
-        name: "나이",
-        editable: false,
-        resizable: false,
-        width: 72,
-        align: "center",
-      },
-      {
-        name: "생년월일",
+        name: "생일",
         editable: false,
         resizable: false,
         width: 128,
         align: "center",
       },
       {
-        name: "성별",
-        editable: false,
-        resizable: false,
-        width: 72,
-        align: "center",
-      },
-      {
-        name: "통신사",
+        name: "최소 회원 등급",
         editable: false,
         resizable: false,
         width: 128,
         align: "center",
       },
       {
-        name: "전화번호",
+        name: "현재 회원 등급",
         editable: false,
         resizable: false,
         width: 128,
         align: "center",
       },
       {
-        name: "회원등급",
-        editable: false,
-        resizable: false,
-        width: 112,
-        align: "center",
-      },
-      {
-        name: "우편번호",
+        name: "관리자 여부",
         editable: false,
         resizable: false,
         width: 96,
         align: "center",
       },
       {
-        name: "주소1",
-        editable: false,
-        resizable: false,
-        width: 320,
-        align: "center",
-      },
-      {
-        name: "주소2",
-        editable: false,
-        resizable: false,
-        width: 128,
-        align: "center",
-      },
-      {
-        name: "실결제금액",
+        name: "영업자 코드",
         editable: false,
         resizable: false,
         width: 112,
         align: "center",
       },
       {
-        name: "총 실주문건",
+        name: "마지막 방문일자",
         editable: false,
         resizable: false,
-        width: 108,
+        width: 180,
         align: "center",
       },
       {
-        name: "사용가능 적립금",
+        name: "가입일자",
         editable: false,
         resizable: false,
-        width: 136,
-        align: "center",
-      },
-      {
-        name: "총 사용 적립금",
-        editable: false,
-        resizable: false,
-        width: 128,
-        align: "center",
-      },
-      {
-        name: "총 적립금",
-        editable: false,
-        resizable: false,
-        width: 128,
-        align: "center",
-      },
-      {
-        name: "추천인 아이디",
-        editable: false,
-        resizable: false,
-        width: 128,
-        align: "center",
-      },
-      {
-        name: "환불계좌 정보",
-        editable: false,
-        resizable: false,
-        width: 144,
-        align: "center",
-      },
-      {
-        name: "최근 접속일",
-        editable: false,
-        resizable: false,
-        width: 128,
-        align: "center",
-      },
-      {
-        name: "회원 가입일",
-        editable: false,
-        resizable: false,
-        width: 128,
+        width: 180,
         align: "center",
       },
     ],
@@ -320,7 +270,7 @@ onMounted(async () => {
     checkboxColumn: true,
     serialNoColumn: false,
     inlineFilters: true,
-    cellHeight: 84,
+    cellHeight: 48,
   });
 });
 </script>

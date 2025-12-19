@@ -6,7 +6,7 @@
           >인스타그램</a
         >
         <a href="https://discord.gg/mGWqRdz4bN" target="_blank">디스코드</a>
-        <router-link to="/company">판매자</router-link>
+        <router-link to="/salesperson">영업자</router-link>
         <router-link to="/admin">관리자</router-link>
       </div>
       <hr />
@@ -73,7 +73,7 @@
           <h2>네코쿠모</h2>
           <p class="f-info">회사명: 냥이네구름가게 / 대표자: 김원재</p>
           <p class="f-info">
-            사업자등록번호: 228-15-02857 / 통신판매업 신고: 간이과세자
+            사업자등록번호: 228-15-02857 / 통신판매업 신고: 2025-대구남구-0495
           </p>
           <p class="f-info">
             전화: 070-4047-4096 / 주소: 대구광역시 남구 계명중앙1길 17
@@ -104,7 +104,7 @@
         </div>
       </div>
       <div class="copyright">
-        <p>Copyrightⓒ 2025 네코쿠모. All rights reserved.</p>
+        <p>Copyrightⓒ 2025 냥이네구름가게. All rights reserved.</p>
       </div>
     </footer>
     <a
@@ -122,7 +122,8 @@
 </template>
 
 <script setup lang="js">
-import { auth, db } from '@/lib/firebase';
+import { getUserId, logoutProcess } from '@/lib/auth';
+import { db } from '@/lib/firebase';
 import router from '@/router';
 import { doc, updateDoc, Timestamp, getDocs, query, collection, where, orderBy } from 'firebase/firestore';
 import { computed, ref, onMounted, watch } from 'vue';
@@ -150,25 +151,21 @@ onMounted(async () => {
     subCategoryDatas.value = [];
   }
 
-  auth.onAuthStateChanged(async (user) => {
+  const user = getUserId();
+  console.error(user);
+  if (user) {
     currentUser.value = user;
-    if (user) {
-      await updateDoc(doc(db, "users", user.uid), {
-        visitedAt: Timestamp.fromDate(new Date()),
-      });
-    }
-  });
+    await updateDoc(doc(db, "users", user), {
+      visitedAt: Timestamp.fromDate(new Date()),
+    });
+  }
 });
 
 const isLogged = computed(() => currentUser.value !== null);
 
 const logout = async () => {
-  try {
-    await auth.signOut();
-    router.push("/");
-  } catch (error) {
-    console.error('Failed to log out:', error);
-  }
+  await logoutProcess();
+  window.location.href = "/";
 }
 
 const handleSearch = () => {

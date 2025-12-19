@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { auth, db } from "../lib/firebase";
+import { db } from "../lib/firebase";
 import AdminMainView from "../views/admin/AdminMainView.vue";
 import LoginView from "@/views/template/LoginView.vue";
 import { collection, where, getDocs, query } from "firebase/firestore";
@@ -37,9 +37,10 @@ import AdminOrderListShippingProgressView from "@/views/admin/order/AdminOrderLi
 import AdminOrderListDeliveryCompletedView from "@/views/admin/order/AdminOrderListDeliveryCompletedView.vue";
 import AdminConsumerAddView from "@/views/admin/consumer/AdminConsumerAddView.vue";
 import AdminPromotionNoticeListView from "@/views/admin/promotion/AdminPromotionNoticeListView.vue";
-import MemberAgreementView from "@/views/template/member/MemberAgreementView.vue";
 import MemberJoinView from "@/views/template/member/MemberJoinView.vue";
 import MemberJoinSuccessView from "@/views/template/member/MemberJoinSuccessView.vue";
+import { getUserId } from "@/lib/auth";
+import ConsumerMypageResetPasswordView from "@/views/template/consumer/mypage/ConsumerMypageResetPasswordView.vue";
 const routes = [
   {
     path: "/",
@@ -61,6 +62,7 @@ const routes = [
         path: "list",
         name: "consumer-product-list",
         component: ConsumerProductList,
+        meta: { requiresAuthConsumer: true },
       },
       {
         path: "category",
@@ -71,6 +73,7 @@ const routes = [
         path: "search",
         name: "consumer-search",
         component: ConsumerSearchResultView,
+        meta: { requiresAuthConsumer: true },
       },
       {
         path: "product",
@@ -99,13 +102,8 @@ const routes = [
       {
         path: "member",
         name: "member",
-        redirect: "/member/agreement",
+        redirect: "/member/join",
         children: [
-          {
-            path: "agreement",
-            name: "member-agreement",
-            component: MemberAgreementView,
-          },
           {
             path: "join",
             name: "member-join",
@@ -152,6 +150,12 @@ const routes = [
             path: "order/detail",
             name: "consumer-mypage-order-detail",
             component: ConsumerMypageOrderDetailView,
+            meta: { requiresAuthConsumer: true },
+          },
+          {
+            path: "reset-password",
+            name: "consumer-mypage-reset-password",
+            component: ConsumerMypageResetPasswordView,
             meta: { requiresAuthConsumer: true },
           },
         ],
@@ -311,83 +315,74 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   if (to.matched.some((record) => record.meta.requiresAuthConsumer)) {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      unsubscribe(); // Unsubscribe the listener immediately after getting the result
-      if (user) {
-        next();
-      } else {
-        alert("로그인 후 이용가능합니다.");
-        next({ path: "/login" });
-      }
-    });
+    const user = getUserId();
+    console.warn(user);
+    if (user) {
+      next();
+    } else {
+      alert("로그인 후 이용가능합니다.");
+      next({ path: "/login" });
+    }
   } else {
     next();
   }
 });
 
-router.beforeEach((to, from, next) => {
-  if (to.matched.some((record) => record.meta.requiresAuthCompany)) {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      unsubscribe(); // Unsubscribe the listener immediately after getting the result
-      if (user) {
-        try {
-          const userDocs = await getDocs(
-            query(
-              collection(db, "managers"),
-              where("uid", "==", user.uid),
-              where("role", "==", "company")
-            )
-          );
-          if (userDocs.size > 0) {
-            next();
-          } else {
-            console.warn(`No document found for user ID: ${user.uid}`);
-            alert("협력사만 접근할 수 있습니다.");
-            next({ path: "/" });
-          }
-        } catch (error) {
-          alert("협력사만 접근할 수 있습니다.");
+router.beforeEach(async (to, from, next) => {
+  if (to.matched.some((record) => record.meta.requiresAuthSalesperson)) {
+    const user = getUserId();
+    if (user) {
+      try {
+        const userDocs = await getDocs(
+          query(collection(db, "salespersons"), where("userId", "==", user))
+        );
+        if (userDocs.size > 0) {
+          next();
+        } else {
+          console.warn(`No document found for user ID: ${user}`);
+          alert("영업자만 접근할 수 있습니다.");
           next({ path: "/" });
         }
-      } else {
-        alert("협력사 로그인 후 이용가능합니다.");
-        next({ path: "/login" });
+      } catch (error) {
+        alert("영업자만 접근할 수 있습니다.");
+        next({ path: "/" });
       }
-    });
+    } else {
+      alert("영업자 로그인 후 이용가능합니다.");
+      next({ path: "/login" });
+    }
   } else {
     next();
   }
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   if (to.matched.some((record) => record.meta.requiresAuthAdmin)) {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      unsubscribe(); // Unsubscribe the listener immediately after getting the result
-      if (user) {
-        try {
-          const userDocs = await getDocs(
-            query(
-              collection(db, "managers"),
-              where("uid", "==", user.uid),
-              where("role", "==", "admin")
-            )
-          );
-          if (userDocs.size > 0) {
-            next();
-          } else {
-            console.warn(`No document found for user ID: ${user.uid}`);
-            alert("관리자만 접근할 수 있습니다.");
-            next({ path: "/" });
-          }
-        } catch (error) {
+    const user = getUserId();
+    if (user) {
+      try {
+        const userDocs = await getDocs(
+          query(
+            collection(db, "users"),
+            where("userId", "==", user),
+            where("isAdmin", "==", true)
+          )
+        );
+        if (userDocs.size > 0) {
+          next();
+        } else {
+          console.warn(`No document found for user ID: ${user.uid}`);
           alert("관리자만 접근할 수 있습니다.");
           next({ path: "/" });
         }
-      } else {
-        alert("관리자 로그인 후 이용가능합니다.");
-        next({ path: "/login" });
+      } catch (error) {
+        alert("관리자만 접근할 수 있습니다.");
+        next({ path: "/" });
       }
-    });
+    } else {
+      alert("관리자 로그인 후 이용가능합니다.");
+      next({ path: "/login" });
+    }
   } else {
     next();
   }

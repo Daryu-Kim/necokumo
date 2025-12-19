@@ -145,7 +145,8 @@
 </template>
 
 <script setup lang="js">
-import { db, auth } from '@/lib/firebase';
+import { getUserId } from '@/lib/auth';
+import { db } from '@/lib/firebase';
 import { generateOrderStatusLabel } from '@/lib/utils';
 import { doc, getDoc  } from 'firebase/firestore';
 import { onMounted, ref } from 'vue';
@@ -169,7 +170,8 @@ const formatDate = (date) => {
 }
 
 onMounted(async () => {
-  const userDataRef = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+  const uid = getUserId();
+  const userDataRef = (await getDoc(doc(db, "users", uid))).data();
   userData.value = userDataRef;
 
   const orderSnap = await getDoc(doc(db, "order", route.query.id));

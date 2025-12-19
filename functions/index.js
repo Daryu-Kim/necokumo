@@ -2,11 +2,17 @@ const { onRequest } = require("firebase-functions/v2/https");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const cors = require("cors")({ origin: true });
+const FormData = require("form-data");
 
 const ppurioAuthData = {
   API_URL: "https://message.ppurio.com",
   USER_NAME: "necokumo",
   TOKEN: "5f410db7a5427c87a9f98d0a41ad3bc115abc78d36c79b3f12724499cb546dcf",
+};
+
+const apickAuthData = {
+  API_URL: "https://apick.app",
+  CL_AUTH_KEY: "62813d75195164c2eb8807f718b8ec3a",
 };
 
 exports.getImageBlobFromUrl = onRequest(async (req, res) => {
@@ -133,6 +139,59 @@ exports.sendMessage = onRequest(
         return res
           .status(500)
           .json({ error: "문자 발송 실패", detail: error.message || error });
+      }
+    });
+  }
+);
+
+exports.checkResidentCard = onRequest(
+  {
+    region: "us-central1",
+    vpcConnector:
+      "projects/necokumo-c21e3/locations/us-central1/connectors/functions-connector",
+    ingressSettings: "ALLOW_ALL", // 외부에서 접근 허용
+    timeoutSeconds: 30,
+    memory: "256MiB",
+    vpcConnectorEgressSettings: "ALL_TRAFFIC",
+  },
+  async (req, res) => {
+    cors(req, res, async () => {
+      if (req.method !== "POST") {
+        return res.status(405).send("Method Not Allowed");
+      }
+
+      try {
+        const { name, rrn1, rrn2, date } = req.body;
+
+        const formData = new FormData();
+
+        formData.append("name", name);
+        formData.append("rrn1", rrn1);
+        formData.append("rrn2", rrn2);
+        formData.append("date", date);
+
+        const msgRes = await fetch(
+          `${apickAuthData.API_URL}/rest/identi_card/1`,
+          {
+            method: "POST",
+            headers: {
+              CL_AUTH_KEY: apickAuthData.CL_AUTH_KEY,
+              ...formData.getHeaders(),
+            },
+            body: formData,
+          }
+        );
+
+        const msgJson = await msgRes.json();
+
+        return res.status(200).json(msgJson);
+      } catch (error) {
+        console.error("주민등록증 인증 오류:", error);
+
+        return res.status(500).json({
+          error: "주민등록증 인증 실패",
+          detail: error.message || error,
+        });
       }
     });
   }

@@ -39,7 +39,7 @@
           <div class="order-filter-container">
             <select v-model="orderStatusFilter">
               <option value="">전체 주문처리상태</option>
-              <option value="BEFORE_DEPOSIT">입금전</option>
+              <option value="BEFORE_PAYMENT">결제전</option>
               <option value="PAYMENT_COMPLETED">결제완료</option>
               <option value="PREPARING_PRODUCT">상품준비중</option>
               <option value="PREPARING_DELIVERY">배송준비중</option>
@@ -174,9 +174,9 @@
 </template>
 
 <script setup lang="js">
-import { db, auth } from '@/lib/firebase';
+import { getUserId, logoutProcess } from '@/lib/auth';
+import { db } from '@/lib/firebase';
 import { generateOrderStatusLabel } from '@/lib/utils';
-import { sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc, getDocs, query, collection, where, orderBy, Timestamp } from 'firebase/firestore';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -203,18 +203,12 @@ function formatDate(date) {
 }
 
 const resetPassword = async () => {
-  try {
-    await sendPasswordResetEmail(auth, userData.value.userEmail);
-    alert('비밀번호 초기화 링크를 전송하였습니다.\n메일보관함을 확인하세요!');
-  } catch (error) {
-    console.error('Error sending password reset email:', error);
-    alert('비밀번호 초기화 실패하였습니다.\n관리자에게 문의해주세요!');
-  }
+  router.push("/mypage/reset-password");
 }
 
 const logout = async () => {
-  await auth.signOut();
-  router.push('/');
+  await logoutProcess();
+  window.location.href = "/";
 }
 
 const toDateInputFormat = (date) => date.toISOString().split("T")[0];
@@ -230,9 +224,10 @@ const applyFilters = async () => {
 };
 
 const fetchOrders = async () => {
+  const uid = getUserId();
   const filters = [];
   filters.push(where("orderChannel", "==", "NECOKUMO"));
-  filters.push(where("userId", "==", auth.currentUser.uid));
+  filters.push(where("userId", "==", uid));
 
   let start = new Date(startDate.value);
   start.setHours(0, 0, 0, 0);
@@ -272,6 +267,7 @@ const fetchOrders = async () => {
 };
 
 onMounted(async () => {
+  const uid = getUserId();
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
@@ -288,7 +284,7 @@ onMounted(async () => {
 
   orderStatusFilter.value = queryFilter || "";
 
-  const userDataRef = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+  const userDataRef = (await getDoc(doc(db, "users", uid))).data();
   userData.value = userDataRef;
 
   await fetchOrders();

@@ -102,7 +102,7 @@
           class="admin-menu-item"
         >
           <div>
-            <p>입금전 관리하기</p>
+            <p>결제전 관리하기</p>
           </div>
         </router-link>
         <router-link

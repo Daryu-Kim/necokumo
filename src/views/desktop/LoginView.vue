@@ -18,11 +18,11 @@
           <input
             type="radio"
             v-model="role"
-            id="company"
+            id="salesperson"
             name="role"
-            value="company"
+            value="salesperson"
           />
-          <label for="company">협력사</label>
+          <label for="salesperson">영업자</label>
         </div>
         <div>
           <input
@@ -38,9 +38,13 @@
       <div class="form">
         <input
           type="text"
-          v-model="email"
+          v-model="phone"
           required
-          placeholder="아이디 또는 이메일 주소"
+          inputmode="numeric"
+          maxlength="11"
+          placeholder="휴대폰 번호 [-(하이픈) 제외]"
+          @input="(e) => onlyNumber(e, 'phone')"
+          @keyup.enter="login"
         />
       </div>
       <div class="form">
@@ -48,39 +52,19 @@
           type="password"
           v-model="password"
           required
-          placeholder="비밀번호 [초기 비밀번호: '-' 제외 전화번호]"
+          maxlength="16"
+          placeholder="비밀번호 입력"
+          @keyup.enter="login"
         />
       </div>
       <button @click="login">로그인</button>
       <div class="tool-container">
-        <button @click="openSearchIdDialog">아이디 / 이메일 찾기</button>
-        <hr />
         <button @click="openSearchPwDialog">비밀번호 초기화</button>
         <hr />
         <button @click="goJoinPage">회원가입</button>
       </div>
-      <p>기존 네코쿠모 사이트 계정 이메일로 로그인 가능합니다!</p>
     </div>
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-    <dialog ref="searchIdDialogRef">
-      <header>
-        <h2>아이디 / 이메일 찾기</h2>
-        <button @click="closeSearchIdDialog">
-          <span class="material-icons-round">close</span>
-        </button>
-      </header>
-      <main>
-        <input type="text" v-model="searchIdName" placeholder="이름" />
-        <input type="date" v-model="searchIdBirthday" placeholder="생년월일" />
-        <input
-          type="text"
-          v-model="searchIdPhone"
-          @input="computedSearchIdPhone"
-          placeholder="전화번호 (- 없이 입력)"
-        />
-        <button @click="searchId">아이디 / 이메일 찾기</button>
-      </main>
-    </dialog>
     <dialog ref="searchPwDialogRef">
       <header>
         <h2>비밀번호 초기화</h2>
@@ -89,7 +73,15 @@
         </button>
       </header>
       <main>
-        <input type="text" v-model="searchPwEmail" placeholder="이메일 주소" />
+        <input type="text" v-model="searchPwName" placeholder="가입자 이름" />
+        <input
+          type="text"
+          v-model="searchPwPhone"
+          placeholder="가입자 휴대폰 번호"
+          inputmode="numeric"
+          maxlength="11"
+          @input="(e) => onlyNumber(e, 'phone')"
+        />
         <button @click="searchPw">비밀번호 초기화</button>
       </main>
     </dialog>
@@ -98,43 +90,49 @@
 
 <script setup>
 import { ref } from "vue";
-import { auth, db } from "@/lib/firebase";
-import {
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { db } from "@/lib/firebase";
 import { useRouter } from "vue-router";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  Timestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { sendPpurioMessage } from "@/lib/ppurio";
+import { generateTempPasswordCryptoJS } from "@/lib/utils";
+import { encrypt } from "@/lib/crypto";
+import { loginProcess } from "@/lib/auth";
 
-const email = ref("");
+const phone = ref("");
 const password = ref("");
 const errorMessage = ref("");
 const role = ref("consumer");
-const searchIdDialogRef = ref(null);
 const searchPwDialogRef = ref(null);
-const searchIdName = ref("");
-const searchIdBirthday = ref("");
-const searchIdPhone = ref("");
-const searchPwEmail = ref("");
+const searchPwName = ref("");
+const searchPwPhone = ref("");
 
 const router = useRouter();
 
+const onlyNumber = (e, refName) => {
+  const targetRef = {
+    phone,
+    searchPwPhone,
+  }[refName];
+
+  const value = e.target.value.replace(/\D/g, "");
+  targetRef.value = value;
+  e.target.value = value;
+};
+
 const goJoinPage = () => {
-  router.push("/member/agreement");
-};
-
-const openSearchIdDialog = () => {
-  searchIdName.value = "";
-  searchIdPhone.value = "";
-  searchIdDialogRef.value.showModal();
-};
-
-const closeSearchIdDialog = () => {
-  searchIdDialogRef.value.close();
+  router.push("/member");
 };
 
 const openSearchPwDialog = () => {
-  searchPwEmail.value = "";
+  searchPwName.value = "";
+  searchPwPhone.value = "";
   searchPwDialogRef.value.showModal();
 };
 
@@ -142,96 +140,104 @@ const closeSearchPwDialog = () => {
   searchPwDialogRef.value.close();
 };
 
-const computedSearchIdPhone = () => {
-  searchIdPhone.value = searchIdPhone.value.replace(/\D/g, "");
-};
-
-const searchId = async () => {
-  try {
-    const doc = await getDocs(
-      query(
-        collection(db, "users"),
-        where("userName", "==", searchIdName.value),
-        where("userBirthday", "==", searchIdBirthday.value),
-        where("userPhone", "==", searchIdPhone.value.replaceAll("-", ""))
-      )
-    );
-    if (doc.size > 0) {
-      alert(
-        `고객님의 아이디와 이메일은 아래와 같습니다!\n\n아이디: ${
-          doc.docs[0].data().userId
-        }\n이메일: ${doc.docs[0].data().userEmail}`
-      );
-      email.value = doc.docs[0].data().userEmail;
-      searchIdDialogRef.value.close();
-    } else {
-      alert("일치하는 정보가 없습니다.");
-    }
-  } catch (error) {
-    console.error("Error getting document:", error);
-    alert("일치하는 정보가 없습니다.");
-  }
-};
-
 const searchPw = async () => {
   try {
-    await sendPasswordResetEmail(auth, searchPwEmail.value);
-    alert("비밀번호 초기화 이메일을 전송하였습니다.\n메일함을 확인하세요.");
-    searchPwDialogRef.value.close();
+    if (!searchPwName.value) {
+      alert("이름을 입력해주세요!");
+      return;
+    }
+
+    if (!searchPwPhone.value || searchPwPhone.value.length !== 11) {
+      alert("휴대폰 번호를 정확히 입력해주세요!");
+      return;
+    }
+
+    const data = await getDocs(
+      query(
+        collection(db, "users"),
+        where("userName", "==", searchPwName.value),
+        where("userPhone", "==", searchPwPhone.value)
+      )
+    );
+
+    console.log(data);
+
+    if (data.size > 0) {
+      const tempPassword = await generateTempPasswordCryptoJS(
+        searchPwPhone.value
+      );
+      const encryptedTempPassword = encrypt(tempPassword);
+
+      await updateDoc(data.docs[0].ref, {
+        userPassword: encryptedTempPassword,
+      });
+      await sendPpurioMessage({
+        targets: [
+          {
+            to: searchPwPhone.value,
+          },
+        ],
+        targetCount: 1,
+        content: `[네코쿠모] 임시 비밀번호를 전송해드립니다!\n\n임시 비밀번호: ${tempPassword}\n\n계정 보안을 위해 로그인 후 회원정보 수정에서 비밀번호를 변경해주시기 바랍니다!\n오늘도 즐거운 쇼핑 되시길 바랍니다 :)`,
+        refKey: `RESET_${Timestamp.now().seconds}_${searchPwPhone.value}`,
+      });
+      alert(
+        "임시 비밀번호를 문자로 전송하였습니다.\n문자 메시지를 확인하세요."
+      );
+      searchPwDialogRef.value.close();
+    } else {
+      errorMessage.value = "회원 정보가 없습니다. 회원가입을 진행해주세요!";
+      return;
+    }
   } catch (error) {
+    console.error(error);
     alert("일치하는 정보가 없습니다.");
   }
 };
 
 const login = async () => {
   try {
-    let inputEmail = email.value.trim();
-    if (!inputEmail.includes("@")) {
-      const data = await getDocs(
-        query(collection(db, "users"), where("userId", "==", inputEmail))
-      );
-      if (data.size > 0) {
-        inputEmail = data.docs[0].data().userEmail;
-      } else {
-        errorMessage.value = "일치하는 정보가 없습니다.";
-        return;
-      }
+    if (!phone.value || !password.value) {
+      alert("로그인 정보를 모두 입력해주세요!");
+      return;
     }
-    await signInWithEmailAndPassword(auth, inputEmail, password.value);
-    switch (role.value) {
-      case "consumer":
-        router.push("/");
-        break;
-      case "company":
-        router.push("/company");
-        break;
-      case "admin":
-        router.push("/admin");
-        break;
-      default:
-        break;
+
+    const encryptedPassword = encrypt(password.value);
+    console.log(encryptedPassword);
+
+    const data = await getDocs(
+      query(
+        collection(db, "users"),
+        where("userPhone", "==", phone.value),
+        where("userPassword", "==", encryptedPassword)
+      )
+    );
+
+    if (data.size === 0) {
+      errorMessage.value = "회원 정보가 없습니다. 회원가입을 진행해주세요!";
+      return;
+    }
+
+    const uid = data.docs[0].data().userId;
+    const isLogged = loginProcess(uid);
+
+    if (isLogged) {
+      switch (role.value) {
+        case "consumer":
+          window.location.href = "/";
+          break;
+        case "salesperson":
+          window.location.href = "/salesperson";
+          break;
+        case "admin":
+          window.location.href = "/admin";
+          break;
+        default:
+          break;
+      }
     }
   } catch (error) {
     console.error("Error logging in:", error);
-    switch (error.code) {
-      case "auth/invalid-email":
-        errorMessage.value = "유효하지 않은 이메일 주소입니다.";
-        break;
-      case "auth/user-disabled":
-        errorMessage.value = "이 계정은 비활성화되었습니다.";
-        break;
-      case "auth/user-not-found":
-        errorMessage.value = "등록된 사용자가 아닙니다.";
-        break;
-      case "auth/wrong-password":
-        errorMessage.value = "비밀번호가 틀렸습니다.";
-        break;
-      case "auth/invalid-credential":
-        errorMessage.value = "잘못된 자격 증명입니다. 다시 시도해 주세요.";
-        break;
-      default:
-        errorMessage.value = "로그인 중 오류가 발생했습니다.";
-    }
   }
 };
 </script>

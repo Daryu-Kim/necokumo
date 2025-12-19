@@ -8,11 +8,14 @@
       <button @click="deleteSelectedItems" class="red" :disabled="isBusy">
         상품 삭제
       </button>
-      <button @click="unsetSellCafe24" class="secondary" :disabled="isBusy">
-        카페24 판매금지 처리
+      <button @click="recommendSelectedItems(true)" :disabled="isBusy">
+        추천 설정
       </button>
-      <button @click="setSellCafe24" class="secondary" :disabled="isBusy">
-        카페24 판매금지 해제
+      <button @click="recommendSelectedItems(false)" :disabled="isBusy">
+        추천 해제
+      </button>
+      <button @click="syncSearchScore" :disabled="isBusy">
+        검색 스코어 갱신
       </button>
     </div>
     <div class="table-box">
@@ -88,23 +91,23 @@ const deleteSelectedItems = async () => {
   }
 };
 
-const setSellCafe24 = async () => {
+const recommendSelectedItems = async (checked) => {
   try {
     isBusy.value = true;
     const checkedItems = await getCheckedItems();
     if (!checkedItems.length) {
-      console.log("No items selected to sell on Cafe24.");
+      console.log("No items selected to delete.");
       alert("상품이 선택되지 않았습니다!");
       isBusy.value = false;
       return;
     }
 
-    if (confirm("선택한 상품을 온라인 판매 가능 상태로 설정하시겠습니까?")) {
+    if (confirm("선택한 상품의 추천 정보를 처리하시겠습니까?")) {
       await Promise.all(
         checkedItems.map(async (item) => {
           try {
             await updateDoc(doc(db, "product", item.productId), {
-              isSellOnline: true,
+              isRecommend: checked,
               updatedAt: Timestamp.fromDate(new Date()),
             });
           } catch (error) {
@@ -116,49 +119,55 @@ const setSellCafe24 = async () => {
       isBusy.value = false;
       return;
     }
-    alert("상품이 온라인 판매 가능 상태로 설정되었습니다!");
+    alert("상품이 처리되었습니다!");
     isBusy.value = false;
     window.location.reload();
+    console.log("Selected items recommend successfully.");
   } catch (error) {
-    console.error("Error selling selected items on Cafe24:", error);
+    console.error("Error deleting recommend items:", error);
     isBusy.value = false;
   }
 };
 
-const unsetSellCafe24 = async () => {
+const syncSearchScore = async () => {
   try {
     isBusy.value = true;
-    const checkedItems = await getCheckedItems();
-    if (!checkedItems.length) {
-      console.log("No items selected to sell on Cafe24.");
-      alert("상품이 선택되지 않았습니다!");
-      isBusy.value = false;
-      return;
-    }
+    const productDocs = await getDocs(collection(db, "product"));
+    productDocs.forEach(async (doc) => {
+      try {
+        const productData = doc.data();
 
-    if (confirm("선택한 상품을 온라인 판매 금지 상태로 설정하시겠습니까?")) {
-      await Promise.all(
-        checkedItems.map(async (item) => {
-          try {
-            await updateDoc(doc(db, "product", item.productId), {
-              isSellOnline: false,
-              updatedAt: Timestamp.fromDate(new Date()),
-            });
-          } catch (error) {
-            console.error(`Error updating item ${item.productId}:`, error);
-          }
-        })
-      );
-    } else {
-      isBusy.value = false;
-      return;
-    }
-    alert("상품이 온라인 판매 금지 상태로 설정되었습니다!");
+        const ordersSnap = await getDocs(
+          query(
+            collection(db, "productOrder"),
+            where("productId", "==", productData.productId)
+          )
+        );
+        const purchaseCount = ordersSnap.size;
+
+        const score =
+          (productData.productLikeCount || 0) * 5 +
+          purchaseCount * 10 +
+          (productData.productViewCount || 0) * 2;
+
+        await updateDoc(doc.ref, {
+          popularScore: score,
+          purchaseCount: purchaseCount,
+          updatedAt: Timestamp.fromDate(new Date()),
+        });
+        console.log(`Search score updated for product ${doc.id}: ${score}`);
+      } catch (error) {
+        console.error(`Error updating item ${doc.id}:`, error);
+      }
+    });
+    alert("검색 스코어 갱신 성공!");
     isBusy.value = false;
     window.location.reload();
   } catch (error) {
-    console.error("Error selling selected items on Cafe24:", error);
+    console.error("Error syncing search score:", error);
+    alert("검색 스코어 갱신 실패!");
     isBusy.value = false;
+    window.location.reload();
   }
 };
 
@@ -207,14 +216,25 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: item.isSellOnline,
+        content: item.viewMinUserGrade,
+        editable: false,
+      },
+      {
+        content: item.isRecommend ? "O" : "X",
+        editable: false,
+      },
+      {
+        content: item.productOriginPrice,
         editable: false,
         format: (value) => {
-          if (value) {
-            return "<p style='font-size: 24px'>✅</p>";
-          } else {
-            return "<p style='font-size: 24px'>❌</p>";
-          }
+          return `${value.toLocaleString()}원`;
+        },
+      },
+      {
+        content: item.productBankSellPrice,
+        editable: false,
+        format: (value) => {
+          return `${value.toLocaleString()}원`;
         },
       },
       {
@@ -244,14 +264,15 @@ onMounted(async () => {
         format: (value) => {
           console.log(value);
           const lines = value.map(
-            (o) =>
-              `${
-                o.optionName
-              } | ${o.optionPrice.toLocaleString()}원 | ${o.optionStock.toLocaleString()}개`
+            (o) => `${o.optionName} | ${o.optionStock.toLocaleString()}개`
           );
           return `<p>${lines.join("<br/>")}</p>`;
         },
       },
+      item.productViewCount.toLocaleString() || "",
+      item.productLikeCount.toLocaleString() || "",
+      item.purchaseCount.toLocaleString() || "",
+      item.popularScore.toLocaleString() || "",
       item.createdAt?.toDate().toLocaleString() || "",
       item.updatedAt?.toDate().toLocaleString() || "",
     ];
@@ -281,14 +302,35 @@ onMounted(async () => {
         },
       },
       {
-        name: "온라인 판매 여부",
+        name: "최소 구매 등급",
         editable: false,
         resizable: false,
         width: 128,
         align: "center",
       },
       {
-        name: "판매가",
+        name: "추천 여부",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+      },
+      {
+        name: "소비자가",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+      },
+      {
+        name: "계좌이체가",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+      },
+      {
+        name: "카드결제가",
         editable: false,
         resizable: false,
         width: 96,
@@ -313,6 +355,34 @@ onMounted(async () => {
         editable: false,
         resizable: false,
         width: 280,
+        align: "center",
+      },
+      {
+        name: "조회수",
+        editable: false,
+        resizable: false,
+        width: 72,
+        align: "center",
+      },
+      {
+        name: "좋아요수",
+        editable: false,
+        resizable: false,
+        width: 84,
+        align: "center",
+      },
+      {
+        name: "구매수",
+        editable: false,
+        resizable: false,
+        width: 72,
+        align: "center",
+      },
+      {
+        name: "검색 스코어",
+        editable: false,
+        resizable: false,
+        width: 96,
         align: "center",
       },
       {

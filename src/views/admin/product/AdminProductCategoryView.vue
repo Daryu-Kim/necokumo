@@ -5,19 +5,12 @@
       <router-link to="/admin/product/category/detail" class="blue">
         카테고리 추가하기
       </router-link>
+      <button @click="linkCategoryProducts">카테고리 상품 동기화</button>
     </div>
     <div class="table-box">
       <h3>상품 목록 테이블</h3>
       <div ref="tableRef"></div>
     </div>
-    <dialog ref="dialogRef">
-      <header></header>
-      <main>
-        <div>
-          <h3>ekdldjffhrm</h3>
-        </div>
-      </main>
-    </dialog>
   </div>
 </template>
 
@@ -25,12 +18,40 @@
 import { ref, onMounted } from "vue";
 import "frappe-datatable/dist/frappe-datatable.min.css";
 import DataTable from "frappe-datatable";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const tableRef = ref(null);
 const dataTable = ref(null);
-const dialogRef = ref(null);
+
+const linkCategoryProducts = async () => {
+  try {
+    alert("카테고리 상품 동기화를 시작합니다.");
+    const categories = await getDocs(collection(db, "category"));
+    categories.forEach(async (category) => {
+      const data = category.data();
+      const q = query(
+        collection(db, "product"),
+        where("productCategory", "array-contains-any", [category.id]) // 필드명 주의
+      );
+
+      const productSnap = await getDocs(q);
+      data.categoryProductCount = productSnap.size ? productSnap.size : 0;
+
+      await updateDoc(category.ref, data);
+    });
+    alert("카테고리 상품 동기화를 완료했습니다.");
+  } catch (error) {
+    console.error(error);
+    alert("카테고리 상품 동기화를 실패했습니다.");
+  }
+};
 
 onMounted(async () => {
   // 1. Firebase에서 카테고리 가져오기
@@ -83,9 +104,9 @@ onMounted(async () => {
       flattened.push({
         ID: node.categoryId,
         카테고리명: `${"-".repeat(depth)} ${node.categoryName}`,
-        "SEO 제목": node.seoTitle,
-        "SEO 설명": node.seoDescription,
-        "SEO 키워드": node.seoKeywords,
+        "상품 수": node.categoryProductCount,
+        "PC 배너 이미지": node.categoryPcImage,
+        "모바일 배너 이미지": node.categoryMobileImage,
         indent: depth,
         parent: parentId,
       });
@@ -105,7 +126,7 @@ onMounted(async () => {
         editable: false,
         resizable: false,
         align: "center",
-        width: 72,
+        width: 96,
         format: (value) => {
           return `<a style="font-weight: 700; color: #007bff;" href="/admin/product/category/detail?id=${value}">${value}</a>`;
         },
@@ -118,25 +139,42 @@ onMounted(async () => {
         align: "left",
       },
       {
-        name: "SEO 제목",
+        name: "상품 수",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+        format: (value) => {
+          return `${value}개`;
+        },
+      },
+      {
+        name: "PC 배너 이미지",
         editable: false,
         resizable: false,
         width: 192,
         align: "center",
+        format: (value) => {
+          if (value) {
+            return `<img src="${value}" />`;
+          } else {
+            return "배너 이미지 없음";
+          }
+        },
       },
       {
-        name: "SEO 설명",
+        name: "모바일 배너 이미지",
         editable: false,
         resizable: false,
-        width: 256,
+        width: 192,
         align: "center",
-      },
-      {
-        name: "SEO 키워드",
-        editable: false,
-        resizable: false,
-        width: 256,
-        align: "center",
+        format: (value) => {
+          if (value) {
+            return `<img src="${value}" />`;
+          } else {
+            return "배너 이미지 없음";
+          }
+        },
       },
     ],
     data: flattened,
@@ -158,7 +196,8 @@ onMounted(async () => {
     gap: 8px;
     flex-wrap: wrap;
 
-    > a {
+    > a,
+    button {
       padding: 8px 16px;
       border-radius: 4px;
       border: none;

@@ -112,29 +112,29 @@ onMounted(async () => {
         editable: false,
       },
       {
-        content: `<a href="${window.location.origin}/admin/product/edit?id=${doc.id}">${item.productName}</a>`,
+        content: `<a href="${window.location.origin}/admin/product/add?id=${doc.id}">${item.productName}</a>`,
         editable: false,
       },
       {
-        content: {
-          cafe24: item.isSellOnline,
-        },
+        content: item.viewMinUserGrade,
+        editable: false,
+      },
+      {
+        content: item.isRecommend ? "O" : "X",
+        editable: false,
+      },
+      {
+        content: item.productOriginPrice,
         editable: false,
         format: (value) => {
-          console.log(value);
-          const labels = {
-            cafe24: "카페24",
-            youtube: "유튜브",
-            vue: "Vue",
-          };
-
-          const lines = Object.keys(labels).map((key) => {
-            console.log(value[key]);
-            return `${labels[key]}: <span style="font-weight: 700;color: ${
-              value[key] === true ? "#007bff" : "#dc3545"
-            }">${value[key] === true ? "판매함" : "판매중지"}</span>`;
-          });
-          return `<p>${lines.join("<br/>")}</p>`;
+          return `${value.toLocaleString()}원`;
+        },
+      },
+      {
+        content: item.productBankSellPrice,
+        editable: false,
+        format: (value) => {
+          return `${value.toLocaleString()}원`;
         },
       },
       {
@@ -164,7 +164,7 @@ onMounted(async () => {
         format: (value) => {
           console.log(value);
           const lines = value.map(
-            (o) => `${o.optionName} | ${o.optionPrice.toLocaleString()}원`
+            (o) => `${o.optionName} | ${o.optionStock.toLocaleString()}개`
           );
           return `<p>${lines.join("<br/>")}</p>`;
         },
@@ -191,21 +191,42 @@ onMounted(async () => {
         name: "상품명",
         editable: false,
         resizable: false,
-        width: 320,
+        width: 192,
         align: "center",
         format: (value) => {
           return `<p style="color: #007bff;">${value}</p>`;
         },
       },
       {
-        name: "판매 채널",
+        name: "최소 구매 등급",
         editable: false,
         resizable: false,
         width: 128,
         align: "center",
       },
       {
-        name: "판매가",
+        name: "추천 여부",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+      },
+      {
+        name: "소비자가",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+      },
+      {
+        name: "계좌이체가",
+        editable: false,
+        resizable: false,
+        width: 96,
+        align: "center",
+      },
+      {
+        name: "카드결제가",
         editable: false,
         resizable: false,
         width: 96,
@@ -229,7 +250,7 @@ onMounted(async () => {
         name: "옵션",
         editable: false,
         resizable: false,
-        width: 256,
+        width: 280,
         align: "center",
       },
       {

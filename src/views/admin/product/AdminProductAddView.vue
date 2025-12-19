@@ -1,13 +1,27 @@
 <template>
   <div class="admin-product-add">
     <h2>{{ route.query.id ? "상품 수정하기" : "상품 등록하기" }}</h2>
-    <div class="channel-box">
-      <h3>판매 채널</h3>
+    <div class="add-box">
+      <h3>최소 구매 등급</h3>
       <div>
-        <div>
-          <input id="cafe24" type="checkbox" checked v-model="isSellOnline" />
-          <label for="cafe24">카페24</label>
-        </div>
+        <select v-model="viewMinUserGrade">
+          <option value="N1">N1 - 아이언</option>
+          <option value="N2">N2 - 브론즈</option>
+          <option value="N3">N3 - 실버</option>
+          <option value="N4">N4 - 골드</option>
+          <option value="N5">N5 - 플래티넘</option>
+          <option value="N6">N6 - 에메랄드</option>
+          <option value="N7">N7 - 다이아몬드</option>
+          <option value="N8">N8 - 마스터</option>
+          <option value="N9">N9 - 그랜드마스터</option>
+          <option value="N10">N10 - 챌린저</option>
+        </select>
+      </div>
+    </div>
+    <div class="add-box">
+      <h3>추천 상품 여부</h3>
+      <div>
+        <input type="checkbox" class="recommend" v-model="isRecommend" />
       </div>
     </div>
     <div class="category-box">
@@ -161,7 +175,16 @@
     <div class="add-box">
       <h3>판매 정보</h3>
       <div>
-        <h4>판매가</h4>
+        <h4>소비자가</h4>
+        <input
+          type="number"
+          v-model="productOriginPrice"
+          placeholder="예시) 35,000"
+        />
+        <span>원</span>
+      </div>
+      <div>
+        <h4>카드판매가</h4>
         <input
           type="number"
           v-model="productSellPrice"
@@ -190,52 +213,41 @@
     </div>
     <div class="option-box">
       <h3>옵션 / 재고 설정</h3>
-      <div>
-        <h4>옵션1</h4>
-        <input
-          type="text"
-          placeholder="콤마(,)로 구분 (색상, 맛 등 1차 옵션)"
-          @input="resetOption"
-          @compositionstart="isComposingOption1 = true"
-          @compositionend="isComposingOption1 = false"
-          v-model="option1Text"
-        />
-      </div>
-      <div>
-        <h4>옵션2</h4>
-        <input
-          type="text"
-          placeholder="콤마(,)로 구분 (수량 등 2차 옵션)"
-          @input="resetOption"
-          v-model="option2Text"
-          @compositionstart="isComposingOption2 = true"
-          @compositionend="isComposingOption2 = false"
-        />
-      </div>
-      <button @click="addOptionList" :disabled="isBusy">
-        모든 옵션 품목추가
-      </button>
       <table v-if="optionList.length > 0">
         <thead>
           <tr>
-            <th>No</th>
             <th>품목코드</th>
             <th>품목명</th>
-            <th>추가금액</th>
+            <th>재고</th>
+            <th>삭제</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(item, index) in optionList" :key="index">
-            <td>{{ index + 1 }}</td>
-            <td>자동등록</td>
-            <td>{{ item.optionName }}</td>
+            <td>{{ item.optionCode }}</td>
             <td>
-              <input type="number" :value="item.optionPrice" />
-              <span>원</span>
+              <input type="text" v-model="item.optionName" />
+            </td>
+            <td>
+              <input
+                type="number"
+                v-model.number="optionList[index].optionStock"
+                min="0"
+                @input="onOptionStockInput(index)"
+              />
+              <span>개</span>
+            </td>
+            <td>
+              <button @click="removeOption(index)">
+                <Icon size="24" color="#ff0000">
+                  <Trash />
+                </Icon>
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
+      <button @click="addOption">옵션 추가</button>
     </div>
     <div class="image-box">
       <h3>이미지 정보</h3>
@@ -246,24 +258,6 @@
           v-model="productThumbnail"
           placeholder="예시) https://picsum.photos/200"
         />
-      </div>
-    </div>
-    <div class="add-box">
-      <h3>선택 정보</h3>
-      <div>
-        <h4>상품 검색 키워드</h4>
-        <div>
-          <input
-            type="text"
-            v-model="productNameKeywords"
-            placeholder="검색어는 콤마로 구분, 검색어 당 최대 125자까지 입력 가능"
-          />
-          <div>
-            <button @click="generateProductNameKeywords" :disabled="isBusy">
-              자동 완성
-            </button>
-          </div>
-        </div>
       </div>
     </div>
     <div class="button-box">
@@ -302,24 +296,27 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { onMounted, ref, computed } from "vue";
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { generateUUIDFromSeed } from "@/lib/utils";
 import { uploadImageByUrl } from "@/lib/imgbb";
-import { useDeepseek } from "@/lib/openrouter";
 import router from "@/router";
 import { useRoute } from "vue-router";
+import { getUserId } from "@/lib/auth";
+import { Icon } from "@vicons/utils";
+import { Trash } from "@vicons/ionicons5";
 
 const isBusy = ref(false);
 
 const productOriginData = ref({});
 const route = useRoute();
 
-const isSellOnline = ref(true);
+const viewMinUserGrade = ref("N1");
+const isRecommend = ref(false);
 
 const excelContent = ref("");
 const productName = ref("");
-const productNameKeywords = ref("");
 const productDetail = ref("");
+const productOriginPrice = ref(0);
 const productSellPrice = ref(0);
 const productBuyPrice = ref(0);
 const productBuyDeliveryPrice = ref(3000);
@@ -347,15 +344,6 @@ const selectedCategory = computed(() => {
   }
 });
 
-const option1Text = ref("");
-const option2Text = ref("");
-
-const isComposingOption1 = ref(false);
-const isComposingOption2 = ref(false);
-
-const option1List = ref([]);
-const option2List = ref([]);
-
 const optionList = ref([]);
 
 const productThumbnail = ref("");
@@ -364,6 +352,7 @@ const conditionProductAdd = computed(() => {
   return (
     productName.value &&
     typeof productName.value === "string" &&
+    productOriginPrice.value > 0 &&
     productSellPrice.value > 0 &&
     productBuyPrice.value > 0 &&
     productBuyDeliveryPrice.value > 0 &&
@@ -373,18 +362,37 @@ const conditionProductAdd = computed(() => {
   );
 });
 
-const resetOption = () => {
-  option1List.value = [];
-  option2List.value = [];
-  optionList.value = [];
+const onOptionStockInput = (index) => {
+  // 음수 방지, 정수 보정 등 추가 검증 원하면 여기서 처리
+  const val = Number(optionList.value[index].optionStock) || 0;
+  optionList.value[index].optionStock = Math.max(0, Math.floor(val));
+};
+
+const removeOption = (index) => {
+  if (!optionList.value[index]) return;
+
+  if (optionList.value.length <= 1) {
+    alert("최소 1개 이상의 옵션이 있어야 합니다.");
+    return;
+  }
+
+  if (confirm(`"${optionList.value[index].optionName}" 옵션을 삭제할까요?`)) {
+    optionList.value.splice(index, 1);
+
+    // 리스트 재정렬 (옵션코드 순서 다시 부여)
+    optionList.value = optionList.value.map((item, idx) => ({
+      ...item,
+      optionCode: (idx + 1).toString().padStart(4, "0"),
+    }));
+  }
 };
 
 const generateExcelContent = () => {
   const data = excelContent.value.split(",");
   productName.value = data[0];
-  option1Text.value = data[0];
-  productSellPrice.value = parseInt(data[1]);
-  productBuyPrice.value = parseInt(data[2]);
+  productOriginPrice.value = parseInt(data[1]);
+  productSellPrice.value = parseInt(data[2]);
+  productBuyPrice.value = parseInt(data[3]);
 };
 
 const changeCategory0 = async () => {
@@ -421,28 +429,6 @@ const changeCategory1 = async () => {
     );
     category2List.value = categoryDatas.docs.map((doc) => doc.data());
     console.log(category2List.value);
-    isBusy.value = false;
-  } catch (error) {
-    console.error(error);
-    isBusy.value = false;
-  }
-};
-
-const addOptionList = async () => {
-  try {
-    isBusy.value = true;
-    optionList.value = [];
-    option1List.value = option1Text.value.split(",");
-    option2List.value = option2Text.value.split(",");
-    option1List.value.forEach((option1) => {
-      option2List.value.forEach((option2) => {
-        optionList.value.push({
-          optionName: `${option1}/${option2}`,
-          optionPrice: 0,
-          optionStock: 0,
-        });
-      });
-    });
     isBusy.value = false;
   } catch (error) {
     console.error(error);
@@ -710,8 +696,8 @@ const crawlProduct = async (buyer) => {
       return img.src.replace(window.location.origin, replaceUrl);
     });
 
-    option1Text.value = productName.value;
-    option2Text.value = Array.from(options)
+    optionList.value = [];
+    Array.from(options)
       .filter((opt) => {
         if (opt.value === "" || opt.value === "*" || opt.value === "**")
           return false;
@@ -748,12 +734,27 @@ const crawlProduct = async (buyer) => {
         // 남은 공백 정리
         return text.trim();
       })
-      .join(",");
+      .forEach((option, index) => {
+        optionList.value.push({
+          optionCode: (index + 1).toString().padStart(4, "0"),
+          optionName: option,
+          optionStock: 0,
+        });
+      });
     isBusy.value = false;
   } catch (error) {
     console.error(error);
     isBusy.value = false;
   }
+};
+
+const addOption = () => {
+  const newOption = {
+    optionCode: (optionList.value.length + 1).toString().padStart(4, "0"),
+    optionName: "",
+    optionStock: 0,
+  };
+  optionList.value.push(newOption);
 };
 
 const openDialog = () => {
@@ -762,30 +763,6 @@ const openDialog = () => {
 
 const closeDialog = () => {
   dialogRef.value.close();
-};
-
-const generateProductNameKeywords = async () => {
-  try {
-    if (!category1Select.value) {
-      alert("카테고리를 선택하세요.");
-      return;
-    }
-    isBusy.value = true;
-    const prompt = `"${productName.value}${
-      category2Select.value ? " " + category2Select.value.categoryName : ""
-    }${
-      category1Select.value ? " " + category1Select.value.categoryName : ""
-    }}" 이 문자열을 인터넷에 검색해서 나온 정확한 정보들을 바탕으로 불필요한 상품 요약설명, 정리, 대답 필요없으니까 전부 제외하고 소비자가 알기 쉽고 구매욕구가 들게 SEO에 노출 잘되게 50개의 키워드를 콤마로 연결하고 띄어쓰기를 모두 없애서 딱 말해줘. 무조건 키워드의 총합은 50을 넘어가면 안되고, 50개의 키워드 중에서 무조건 "네코쿠모", "네코쿠모전자담배", "네코쿠모전담", "냥이네구름가게", "냥이네구름가게전자담배", "냥이네구름가게전담" 키워드들은 무조건 들어가야해.`;
-    const data = await useDeepseek(prompt);
-    productNameKeywords.value = data.choices[0].message.content.replaceAll(
-      /"/g,
-      ""
-    );
-    isBusy.value = false;
-  } catch (error) {
-    console.error(error);
-    isBusy.value = false;
-  }
 };
 
 function isDifferentArrays(arr1, arr2) {
@@ -808,9 +785,7 @@ const addProduct = async () => {
       const uuid = route.query.id;
       let updateData = {};
 
-      if (isSellOnline.value !== productOriginData.value.isSellOnline) {
-        updateData.isSellOnline = isSellOnline.value;
-      }
+      updateData.viewMinUserGrade = viewMinUserGrade.value;
 
       if (
         category0Select.value?.categoryId !==
@@ -847,20 +822,37 @@ const addProduct = async () => {
         console.log(detailImageURL);
       }
 
-      if (
-        isDifferentArrays(
-          productOriginData.value.option1List,
-          option1List.value
-        ) ||
-        isDifferentArrays(
-          productOriginData.value.option2List,
-          option2List.value
-        )
-      ) {
-        updateData.option1List = option1List.value;
-        updateData.option2List = option2List.value;
-        updateData.optionList = optionList.value;
+      const searchKeywords = [];
+
+      const normalizeText = (txt) => {
+        return txt
+          .replace(/[^A-Za-z0-9가-힣]/g, " ") // 특수문자 제거 후 공백 처리
+          .split(" ") // 공백 기준 분리
+          .map((t) => t.trim()) // 앞뒤 공백 제거
+          .filter((t) => t.length > 0); // 빈 문자열 제거
+      };
+
+      // 1️⃣ 상품명에서 키워드 추출
+      searchKeywords.push(...normalizeText(productName.value));
+
+      // 2️⃣ 옵션명 처리
+      if (Array.isArray(optionList.value)) {
+        optionList.value.forEach((opt) => {
+          if (opt?.optionName) {
+            searchKeywords.push(...normalizeText(opt.optionName));
+          }
+        });
       }
+
+      console.log(optionList.value);
+
+      // 3️⃣ 중복 제거
+      const finalKeywords = [...new Set(searchKeywords)];
+      updateData.productNameKeywords = finalKeywords;
+
+      updateData.optionList = optionList.value;
+
+      updateData.isRecommend = isRecommend.value;
 
       const thumbnailURL = await uploadImageByUrl(
         "thumbnail",
@@ -875,31 +867,13 @@ const addProduct = async () => {
         updateData.productThumbnailUrl = thumbnailURL;
       }
 
-      const cleanProductName = productName.value
-        .replace(/\[/g, "")
-        .replace(/\]/g, "")
-        .toLowerCase();
-
-      const productNameKeywords = cleanProductName
-        .split(" ")
-        .map((kw) => kw.trim())
-        .filter(Boolean);
-
-      if (
-        isDifferentArrays(
-          productOriginData.value.productNameKeywords,
-          productNameKeywords
-        )
-      ) {
-        updateData.productNameKeywords = [...new Set(productNameKeywords)];
-      }
-
       updateData.updatedAt = Timestamp.fromDate(new Date());
 
       await updateDoc(doc(db, "product", uuid), updateData);
       alert("상품이 성공적으로 수정되었습니다.");
     } else {
       // 상품 신규 등록 로직
+      const uid = getUserId();
       const uuid = await generateUUIDFromSeed(productName.value);
 
       const thumbnailURL = await uploadImageByUrl(
@@ -924,46 +898,55 @@ const addProduct = async () => {
         category2Select.value?.categoryId,
       ].filter((id) => id != null);
 
-      const cleanProductName = productName.value
-        .replace(/\[/g, "")
-        .replace(/\]/g, "")
-        .toLowerCase();
+      const searchKeywords = [];
 
-      const productNameKeywords = cleanProductName
-        .split(" ")
-        .map((kw) => kw.trim())
-        .filter(Boolean);
+      const normalizeText = (txt) => {
+        return txt
+          .replace(/[^A-Za-z0-9가-힣]/g, " ") // 특수문자 제거 후 공백 처리
+          .split(" ") // 공백 기준 분리
+          .map((t) => t.trim()) // 앞뒤 공백 제거
+          .filter((t) => t.length > 0); // 빈 문자열 제거
+      };
 
-      const cleanedOptionList = optionList.value.map((opt, index) => {
-        // 🔢 index를 4자리 문자열로 (예: 1 → "0001")
-        const paddedIndex = String(index + 1).padStart(4, "0");
+      // 1️⃣ 상품명에서 키워드 추출
+      searchKeywords.push(...normalizeText(productName.value));
 
-        return {
-          ...opt,
-          optionCode: `${uuid}${paddedIndex}`,
-        };
-      });
+      // 2️⃣ 옵션명 처리
+      if (Array.isArray(optionList.value)) {
+        optionList.value.forEach((opt) => {
+          if (opt?.optionName) {
+            searchKeywords.push(...normalizeText(opt.optionName));
+          }
+        });
+      }
+
+      // 3️⃣ 중복 제거
+      const finalKeywords = [...new Set(searchKeywords)];
 
       const productData = {
         productId: uuid,
         productName: productName.value,
-        productNameKeywords: [...new Set(productNameKeywords)],
+        productOriginPrice: productOriginPrice.value,
+        productBankSellPrice:
+          Math.floor((productSellPrice.value * 0.95) / 100) * 100,
         productSellPrice: productSellPrice.value,
         productBuyPrice: productBuyPrice.value,
         productBuyDeliveryPrice: productBuyDeliveryPrice.value,
         productCategory: category,
-        option1List: option1List.value,
-        option2List: option2List.value,
-        optionList: cleanedOptionList,
+        optionList: optionList.value,
         productThumbnailUrl: thumbnailURL,
         productDetailUrl: detailImageURL,
         productLikeCount: 0,
         productViewCount: 0,
-        createdBy: auth.currentUser.uid,
+        productNameKeywords: finalKeywords,
+        createdBy: uid,
         createdAt: Timestamp.fromDate(new Date()),
         updatedAt: Timestamp.fromDate(new Date()),
-        isSellOnline: isSellOnline.value,
+        viewMinUserGrade: viewMinUserGrade.value,
+        isRecommend: isRecommend.value,
         isActive: true,
+        purchaseCount: 0,
+        popularScore: 0,
       };
 
       await setDoc(doc(db, "product", uuid), productData);
@@ -996,7 +979,7 @@ onMounted(async () => {
         .filter(Boolean); // originUrl이 없는 경우 제외
 
       // 기존 Product Data 매치
-      isSellOnline.value = originData.isSellOnline;
+      viewMinUserGrade.value = originData.viewMinUserGrade;
 
       if (originData.productCategory[0]) {
         const category0Data = (
@@ -1024,19 +1007,18 @@ onMounted(async () => {
 
       productName.value = originData.productName;
 
+      viewMinUserGrade.value = originData.viewMinUserGrade;
+      isRecommend.value = originData.isRecommend;
+
       productDetailImages.value = detailUrls;
 
+      productOriginPrice.value = originData.productOriginPrice;
       productSellPrice.value = originData.productSellPrice;
       productBuyPrice.value = originData.productBuyPrice;
       productBuyDeliveryPrice.value = originData.productBuyDeliveryPrice;
-
-      option1Text.value = originData.option1List.join(",");
-      option2Text.value = originData.option2List.join(",");
-      addOptionList();
+      optionList.value = originData.optionList;
 
       productThumbnail.value = originData.productThumbnailUrl.originalUrl;
-
-      productNameKeywords.value = originData.productNameKeywords.join(",");
     }
     isBusy.value = false;
   } catch (error) {
@@ -1049,31 +1031,6 @@ onMounted(async () => {
 <style scoped lang="scss">
 .admin-product-add {
   margin-top: 36px;
-
-  > .channel-box {
-    margin-top: 24px;
-    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25);
-    border-radius: 8px;
-    padding: 24px;
-
-    > div {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      margin-top: 16px;
-
-      > div {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-
-        > input[type="checkbox"] {
-          width: 20px;
-          height: 20px;
-        }
-      }
-    }
-  }
 
   > .add-box {
     margin-top: 24px;
@@ -1093,7 +1050,8 @@ onMounted(async () => {
       }
 
       > input,
-      textarea {
+      textarea,
+      select {
         flex: 1;
         padding: 8px 12px;
         border: none;
@@ -1108,6 +1066,12 @@ onMounted(async () => {
         &:focus {
           outline: 2px solid #007bff;
         }
+      }
+
+      > input.recommend {
+        flex: unset;
+        width: 24px;
+        height: 24px;
       }
 
       > span {
@@ -1218,56 +1182,6 @@ onMounted(async () => {
     border-radius: 8px;
     padding: 24px;
 
-    > div {
-      > h4 {
-        margin-top: 16px;
-      }
-
-      > input {
-        width: 100%;
-        padding: 8px 12px;
-        border: none;
-        border-radius: 4px;
-        background-color: #efefef;
-        margin-top: 8px;
-        font-size: 14px;
-
-        ::placeholder {
-          color: rgba(0, 0, 0, 0.6);
-        }
-
-        &:focus {
-          outline: 2px solid #007bff;
-        }
-      }
-
-      > div {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 8px;
-
-        > button {
-          padding: 4px 12px;
-          border: none;
-          border-radius: 100px;
-          background-color: #007bff;
-          color: #fff;
-          font-weight: 500;
-          font-size: 14px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-
-          > span {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-          }
-        }
-      }
-    }
-
     > table,
     th,
     td {
@@ -1291,17 +1205,16 @@ onMounted(async () => {
           }
 
           > th:nth-child(1) {
-            width: 52px;
-          }
-          > th:nth-child(2) {
             width: 96px;
           }
-          > th:nth-child(4) {
-            width: 180px;
-          }
-
-          > th:nth-child(3) {
+          > th:nth-child(2) {
             flex: 1;
+          }
+          > th:nth-child(3) {
+            width: 192px;
+          }
+          > th:nth-child(4) {
+            width: 64px;
           }
         }
       }
@@ -1321,13 +1234,24 @@ onMounted(async () => {
           }
 
           > td:nth-child(1) {
-            width: 52px;
-          }
-          > td:nth-child(2) {
             width: 96px;
           }
+          > td:nth-child(2) {
+            flex: 1;
+          }
+          > td:nth-child(3) {
+            width: 192px;
+          }
           > td:nth-child(4) {
-            width: 180px;
+            width: 64px;
+            > button {
+              border: none;
+              background: none;
+              cursor: pointer;
+            }
+          }
+
+          > td {
             > input {
               width: 100%;
               padding: 8px 12px;
@@ -1335,7 +1259,10 @@ onMounted(async () => {
               border-radius: 4px;
               background-color: #efefef;
               font-size: 14px;
-              width: 96px;
+
+              ::placeholder {
+                color: rgba(0, 0, 0, 0.6);
+              }
 
               &:focus {
                 outline: 2px solid #007bff;
@@ -1343,13 +1270,8 @@ onMounted(async () => {
             }
 
             > span {
-              font-weight: 700;
               margin-left: 8px;
             }
-          }
-
-          > td:nth-child(3) {
-            flex: 1;
           }
         }
       }

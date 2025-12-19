@@ -9,25 +9,41 @@
           <div>
             <p class="info-title grey">정상판매가</p>
             <p class="info-content grey">
-              {{ productData.productSellPrice.toLocaleString() }}원
+              {{ productData.productOriginPrice.toLocaleString() }}원
             </p>
           </div>
           <div>
             <p class="info-title bold">계좌이체가</p>
             <p class="info-content bold">
-              {{ (productData.productSellPrice * 0.95).toLocaleString() }}원
+              {{ productData.productBankSellPrice.toLocaleString() }}원
+              <span class="sale-text"
+                >🔥{{
+                  getDiscountRate(
+                    productData.productOriginPrice,
+                    productData.productBankSellPrice
+                  )
+                }}% SALE</span
+              >
             </p>
           </div>
           <div>
             <p class="info-title bold">카드결제가</p>
             <p class="info-content bold">
               {{ productData.productSellPrice.toLocaleString() }}원
+              <span class="sale-text"
+                >🔥{{
+                  getDiscountRate(
+                    productData.productOriginPrice,
+                    productData.productSellPrice
+                  )
+                }}% SALE</span
+              >
             </p>
           </div>
           <div>
             <p class="info-title">배송비</p>
             <p class="info-content">
-              <span class="blue bold"> 70,000원 </span>
+              <span class="blue bold"> 50,000원 </span>
               이상 결제 시 배송비 무료
             </p>
           </div>
@@ -38,11 +54,11 @@
               <option value="">- [필수] 옵션을 선택해 주세요 -</option>
               <option disabled>--------------------</option>
               <option
-                v-for="(item, index) in productData.option2List"
+                v-for="(item, index) in productData.optionList"
                 :key="index"
                 :value="item"
               >
-                {{ item }}
+                {{ item.optionName }}
               </option>
             </select>
           </div>
@@ -75,9 +91,7 @@
                 <p>
                   {{
                     (
-                      productData.productSellPrice *
-                      item.count *
-                      0.95
+                      productData.productBankSellPrice * item.count
                     ).toLocaleString()
                   }}원<br />({{
                     (
@@ -93,7 +107,7 @@
             <p class="info-title>">TOTAL</p>
             <p class="info-content" style="text-align: end; font-weight: 700">
               {{ totalBankPrice.toLocaleString() }}원 ({{
-                totalCardDollar.toLocaleString()
+                totalCardPrice.toLocaleString()
               }}원)
               <span style="color: #007bff">
                 [{{ totalCount.toLocaleString() }}개]
@@ -127,13 +141,6 @@
         </div>
       </div>
     </div>
-    <hr v-if="!productData.isSellOnline" />
-    <h3
-      v-if="!productData.isSellOnline"
-      style="text-align: center; word-break: keep-all"
-    >
-      본 상품은 [온라인 판매금지] 상품으로 VIP 회원 분만 구매 가능한 상품입니다!
-    </h3>
     <hr />
     <div class="product-detail-container">
       <img
@@ -147,10 +154,12 @@
 
 <script setup lang="js">
 import { nextTick, onMounted, ref, watch, computed } from 'vue';
-import { auth, db } from "@/lib/firebase";
-import { getDoc, doc, setDoc, arrayUnion, increment, arrayRemove } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { getDoc, doc, setDoc, arrayUnion, increment, arrayRemove, updateDoc } from "firebase/firestore";
 import { useRoute } from 'vue-router';
 import router from '@/router';
+import { getUserId } from '@/lib/auth';
+import { getDiscountRate } from '@/lib/utils';
 
 const productData = ref(null);
 const option = ref("");
@@ -164,12 +173,12 @@ const totalCount = computed(() =>
 
 const totalBankPrice = computed(() =>
   selectedOptions.value.reduce(
-    (sum, item) => sum + productData.value.productSellPrice * item.count * 0.95,
+    (sum, item) => sum + productData.value.productBankSellPrice * item.count,
     0
   )
 );
 
-const totalCardDollar = computed(() => {
+const totalCardPrice = computed(() => {
   const total = selectedOptions.value.reduce(
     (sum, item) => sum + productData.value.productSellPrice * item.count,
     0
@@ -226,11 +235,12 @@ async function buyNow() {
 async function addCart() {
   try {
     console.log("Adding to Cart...");
+    const uid = getUserId();
     if (selectedOptions.value.length === 0) {
       alert("구매할 옵션이 없습니다.");
       return;
     }
-    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const userSnap = await getDoc(doc(db, "users", uid));
     const userData = userSnap.data();
     const cartList = userData.userProductCartList || [];
 
@@ -271,8 +281,9 @@ async function addCart() {
 
 async function addWishList() {
   try {
+    const uid = getUserId();
     console.log("Adding to Wish List...");
-    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const userSnap = await getDoc(doc(db, "users", uid));
     const userData = userSnap.data();
     const wishList = userData.userProductWishList || [];
 
@@ -301,7 +312,8 @@ async function addWishList() {
 async function removeWishList() {
   try {
     console.log("Removing to Wish List...");
-    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const uid = getUserId();
+    const userSnap = await getDoc(doc(db, "users", uid));
     const userData = userSnap.data();
     const wishList = userData.userProductWishList || [];
 
@@ -359,11 +371,23 @@ async function fetchProductData() {
 async function fetchUserData() {
   try {
     console.log("Fetching User Data...");
-    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const uid = getUserId();
+    const userSnap = await getDoc(doc(db, "users", uid));
     userData.value = userSnap.data();
     console.log("User Data Fetched Successfully!: ", userData.value);
   } catch (error) {
     console.error('Failed to fetch data:', error);
+  }
+}
+
+async function incrementViewCount() {
+  try {
+    console.log("Increment View Count...");
+    await updateDoc(doc(db, "product", productData.value.id), {
+      productViewCount: increment(1),
+    });
+  } catch (e) {
+    console.error(e);
   }
 }
 
@@ -372,6 +396,7 @@ onMounted(async () => {
     await fetchProductData();
     await fetchUserData();
     await fetchWishListData();
+    await incrementViewCount();
   } catch (error) {
     console.error('Failed to fetch data:', error);
   }
@@ -381,14 +406,14 @@ watch(() => option.value, async (newVal, oldVal) => {
   if (newVal !== oldVal && newVal !== "") {
     console.log("Option Selected: ", newVal);
     const existingOption = selectedOptions.value.find(
-      (item) => item.optionName === newVal
+      (item) => item.optionName === newVal.optionName
     );
 
     if (existingOption) {
-      alert("이미 선택된 옵션이 있습니다!");
+      existingOption.count += 1;
     } else {
       selectedOptions.value.push({
-        optionName: newVal,
+        optionName: newVal.optionName,
         count: 1,
       });
     }
@@ -448,6 +473,12 @@ watch(() => option.value, async (newVal, oldVal) => {
           > .info-content {
             flex: 3;
             font-size: 18px;
+            > span.sale-text {
+              margin-left: 8px;
+              font-size: 14px;
+              color: #dc3545;
+              font-weight: 500;
+            }
           }
 
           > select {

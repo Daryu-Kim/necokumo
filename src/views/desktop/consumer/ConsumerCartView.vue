@@ -11,7 +11,7 @@
               <p class="name">{{ item.productName }}</p>
               <p class="sell-price">
                 <span>계좌이체가</span>
-                {{ (item.productSellPrice * 0.95).toLocaleString() }}원
+                {{ item.productBankSellPrice.toLocaleString() }}원
               </p>
               <p class="sell-price">
                 <span>카드결제가</span>
@@ -45,8 +45,9 @@
           <div class="option-price-container">
             <p>주문금액</p>
             <strong>
-              {{ (item.productSellPrice * item.count * 0.95).toLocaleString()
-              }}<span>원</span> ({{ item.productSellPrice.toLocaleString()
+              {{ (item.productBankSellPrice * item.count).toLocaleString()
+              }}<span>원</span> ({{
+                (item.productSellPrice * item.count).toLocaleString()
               }}<span>원</span>)
             </strong>
           </div>
@@ -89,9 +90,10 @@
 
 <script setup lang="js">
 import { onMounted, ref, computed } from 'vue';
-import { auth, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { getDoc, doc, updateDoc } from "firebase/firestore";
 import { useRouter } from 'vue-router';
+import { getUserId } from '@/lib/auth';
 
 const cartDatas = ref([]);
 const productDatas = ref([]);
@@ -99,7 +101,7 @@ const productDatas = ref([]);
 const router = useRouter();
 
 const totalBankSellPrice = computed(() => {
-  return productDatas.value.reduce((acc, curr) => acc + (curr.productSellPrice * curr.count * 0.95), 0);
+  return productDatas.value.reduce((acc, curr) => acc + (curr.productBankSellPrice * curr.count), 0);
 });
 
 const totalCardSellPrice = computed(() => {
@@ -112,11 +114,9 @@ async function buyNow() {
     const itemsToBuy = [];
 
     for (const selected of cartDatas.value) {
-      const product = await (await getDoc(doc(db, "product", selected.productCode))).data();
       itemsToBuy.push({
         productCode: selected.productCode,
         optionName: selected.optionName,
-        price: product.productSellPrice,
         count: selected.count,
       });
     }
@@ -185,7 +185,8 @@ async function removeCart(index) {
 }
 
 async function updateCartData() {
-  await updateDoc(doc(db, "users", auth.currentUser.uid), {
+  const uid = getUserId();
+  await updateDoc(doc(db, "users", uid), {
     userProductCartList: cartDatas.value,
   });
 };
@@ -206,7 +207,8 @@ async function fetchProductData() {
 async function fetchCartData() {
   try {
     console.log("Fetching Cart Data...");
-    const userData = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const uid = getUserId();
+    const userData = await getDoc(doc(db, "users", uid));
     cartDatas.value = userData.data().userProductCartList;
     console.log("Cart Data Fetched Successfully!: ", cartDatas.value);
   } catch (error) {

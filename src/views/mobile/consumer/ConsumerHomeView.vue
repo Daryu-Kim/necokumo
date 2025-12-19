@@ -48,7 +48,7 @@
           <img :src="item.productThumbnailUrl.originalUrl" />
           <p class="name">{{ item.productName }}</p>
           <p class="price">
-            {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+            {{ item.productBankSellPrice.toLocaleString() }}원 ({{
               item.productSellPrice.toLocaleString()
             }}원)
           </p>
@@ -67,7 +67,7 @@
           <img :src="item.productThumbnailUrl.originalUrl" />
           <p class="name">{{ item.productName }}</p>
           <p class="price">
-            {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+            {{ item.productBankSellPrice.toLocaleString() }}원 ({{
               item.productSellPrice.toLocaleString()
             }}원)
           </p>
@@ -95,7 +95,7 @@
             <img :src="item.productThumbnailUrl.originalUrl" />
             <p class="name">{{ item.productName }}</p>
             <p class="price">
-              {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+              {{ item.productBankSellPrice.toLocaleString() }}원 ({{
                 item.productSellPrice.toLocaleString()
               }}원)
             </p>
@@ -113,7 +113,7 @@
 <script setup lang="js">
 import { onMounted, ref } from 'vue';
 import { db } from "@/lib/firebase";
-import { getDocs, query, collection, where, orderBy, limit } from "firebase/firestore";
+import { getDocs, query, collection, where, orderBy, limit, getDoc, doc } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
@@ -127,18 +127,17 @@ const newProductDatas = ref([]);
 const saleDatasByCategory = ref({});
 const mainNewsDatas = ref([]);
 
-const saleCategoryNames = [
-  "고농도",
-  "입호흡 기기",
-  "폐호흡 기기",
-  "입 / 폐호흡 기기",
-  "일회용 기기",
-  "궐련형 기기",
-  "입호흡 액상",
-  "폐호흡 액상",
-  "무화기",
-  "팟 / 코일",
-  "악세사리"
+const saleCategoryIds = [
+  "97",
+  "49",
+  "50",
+  "51",
+  "52",
+  "58",
+  "59",
+  "70",
+  "76",
+  "84"
 ];
 
 onMounted(async () => {
@@ -165,7 +164,7 @@ onMounted(async () => {
         const eventProductSnap = await getDocs(query(
           collection(db, "product"),
           where("productCategory", "array-contains", "43"),
-          orderBy("productLikeCount", "desc"),
+          orderBy("popularScore", "desc"),
           orderBy("createdAt", "desc"),
           limit(2)
         ));
@@ -178,6 +177,7 @@ onMounted(async () => {
         console.log("Fetching New Product Data...");
         const newProductSnap = await getDocs(query(
           collection(db, "product"),
+          where("isActive", "==", true),
           orderBy("createdAt", "desc"),
           limit(2)
         ));
@@ -188,15 +188,15 @@ onMounted(async () => {
         console.log("New Product Data Fetched Successfully!: ", newProductDatas.value);
 
         console.log("Fetching Sale Data...");
-        for (const categoryName of saleCategoryNames) {
-          const categoryDocs = await getDocs(query(collection(db, "category"), where("categoryName", "==", categoryName)));
-          const categoryId = categoryDocs.docs[0].data().categoryId;
+        for (const categoryId of saleCategoryIds) {
+          const categoryName = (await getDoc(doc(db, "category", categoryId))).data().categoryName || "";
           const saleSnap = await getDocs(query(
             collection(db, "product"),
+            where("isActive", "==", true),
             where("productCategory", "array-contains", categoryId),
-            orderBy("productLikeCount", "desc"),
+            orderBy("popularScore", "desc"),
             orderBy("createdAt", "desc"),
-            limit(6)
+            limit(5)
           ));
 
           // 각 카테고리 ID를 키로 하여 데이터 저장

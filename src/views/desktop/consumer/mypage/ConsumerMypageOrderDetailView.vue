@@ -177,28 +177,22 @@
 </template>
 
 <script setup lang="js">
-import { db, auth } from '@/lib/firebase';
+import { getUserId, logoutProcess } from '@/lib/auth';
+import { db } from '@/lib/firebase';
 import { generateOrderStatusLabel } from '@/lib/utils';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import router from '@/router';
 import { doc, getDoc  } from 'firebase/firestore';
 import { onMounted, ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 
 const userData = ref(null);
 const orderData = ref(null);
 const orderStatusFilter = ref("");
 
-const router = useRouter();
 const route = useRoute();
 
 const resetPassword = async () => {
-  try {
-    await sendPasswordResetEmail(auth, userData.value.userEmail);
-    alert('비밀번호 초기화 링크를 전송하였습니다.\n메일보관함을 확인하세요!');
-  } catch (error) {
-    console.error('Error sending password reset email:', error);
-    alert('비밀번호 초기화 실패하였습니다.\n관리자에게 문의해주세요!');
-  }
+  router.push("/mypage/reset-password");
 }
 
 const formatDate = (date) => {
@@ -214,12 +208,13 @@ const formatDate = (date) => {
 }
 
 const logout = async () => {
-  await auth.signOut();
-  router.push('/');
+  await logoutProcess();
+  window.location.href = "/";
 }
 
 onMounted(async () => {
-  const userDataRef = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+  const uid = getUserId();
+  const userDataRef = (await getDoc(doc(db, "users", uid))).data();
   userData.value = userDataRef;
 
   const orderSnap = await getDoc(doc(db, "order", route.query.id));

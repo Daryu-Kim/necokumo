@@ -36,9 +36,9 @@
         </div>
         <div class="description-container">
           <div v-if="deliveryWay === 'domestic'">
-            <p>로젠택배를 통해 발송되는 배송방법입니다.</p>
+            <p>CJ대한통운을 통해 발송되는 배송방법입니다.</p>
             <p>
-              기본 배송료는 4,000원이며 원화 기준 7만원 이상 주문 시
+              기본 배송료는 4,000원이며 원화 기준 5만원 이상 주문 시
               무료배송됩니다.
             </p>
             <p>제주 / 도서산간 지역은 구매 금액 상관없이 5,000원 추가됩니다.</p>
@@ -99,15 +99,23 @@
             <p>휴대전화<span style="color: #007bff">*</span></p>
             <input type="tel" v-model="consumerPhone" />
           </div>
-          <div>
-            <p>이메일<span style="color: #007bff">*</span></p>
-            <input type="email" v-model="consumerEmail" />
-          </div>
           <input
             type="text"
             placeholder="배송 메시지를 입력해주세요."
             v-model="consumerDeliveryMessage"
           />
+          <div>
+            <div class="save-container">
+              <input
+                type="checkbox"
+                id="addressSave"
+                v-model="consumerAddressSave"
+              />
+              <label for="addressSave">
+                이 주소를 저장하고 다음 주문에도 사용합니다.
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -125,9 +133,7 @@
               {{
                 paymentMethod === "bank"
                   ? `${(
-                      item.productSellPrice *
-                      item.count *
-                      0.95
+                      item.productBankSellPrice * item.count
                     ).toLocaleString()}원`
                   : `${(item.productSellPrice * item.count).toLocaleString()}원`
               }}
@@ -137,16 +143,7 @@
       </div>
       <div class="fee-container">
         <p class="title">배송비</p>
-        <p class="content">
-          {{ deliveryFee.toLocaleString()
-          }}{{
-            deliveryWay === "domestic" ||
-            deliveryWay === "convenience" ||
-            deliveryWay === "manual"
-              ? "원"
-              : ""
-          }}
-        </p>
+        <p class="content">{{ deliveryFee.toLocaleString() }}원</p>
       </div>
     </div>
     <hr />
@@ -226,6 +223,22 @@
       </div>
     </div>
     <hr />
+    <h3>적립금</h3>
+    <div class="point-container">
+      <div v-if="userData">
+        <p class="title">예상 적립금</p>
+        <input
+          type="text"
+          disabled
+          :value="`${convertUserGradeCodeToPoint(
+            userData.userGrade,
+            paymentMethod.value === 'bank' ? totalBankPrice : totalCardPrice
+          ).toLocaleString()} 냥코인`"
+        />
+      </div>
+    </div>
+    <p>적립금으로는 쇼핑몰 내에 판매중인 굿즈를 구매할 수 있습니다.</p>
+    <hr />
     <button @click="checkout" v-if="paymentMethod === 'bank'">
       {{
         `${(
@@ -247,12 +260,16 @@
 
 <script setup lang="js">
 import { computed, nextTick, onMounted, ref } from 'vue';
-import { auth, db } from "@/lib/firebase";
-import { getDoc, doc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { getDoc, doc, setDoc, Timestamp, updateDoc, getDocs, query, collection, where, orderBy, limit } from "firebase/firestore";
 import { sendPpurioMessage } from "@/lib/ppurio";
 import router from '@/router';
+import { getUserId } from '@/lib/auth';
+import { convertUserGradeCodeToPoint } from '@/lib/utils';
 
 const orderItemDatas = ref([]);
+const recentPointData = ref(null);
+const userData = ref(null);
 const deliveryWay = ref('domestic');
 const paymentMethod = ref('bank');
 const consumerName = ref("");
@@ -260,41 +277,46 @@ const consumerPostCode = ref("");
 const consumerAddress1 = ref("");
 const consumerAddress2 = ref("");
 const consumerPhone = ref("");
-const consumerEmail = ref("");
 const consumerDeliveryMessage = ref("");
+const consumerAddressSave = ref(false);
 const consumerCardNumber = ref("");
 const consumerCardValidDate = ref("");
 const consumercardSave = ref(false);
 const bankName = ref("");
 
 const deliveryFee = computed(() => {
-  switch (deliveryWay.value) {
-    case "domestic":
-      if (totalBankPrice.value < 70000) {
-        return 4000;
-      } else {
+  if (deliveryWay.value === "domestic") {
+    switch (paymentMethod.value) {
+      case "bank":
+        if (totalBankPrice.value < 50000) {
+          return 4000;
+        } else {
+          return 0;
+        }
+
+      case "card":
+        if (totalCardPrice.value < 50000) {
+          return 4000;
+        } else {
+          return 0;
+        }
+
+      default:
         return 0;
-      }
-
-    case "quick":
-      return 0;
-
-    case "manual":
-      return 0;
-
-    default:
-      return 0;
+    }
+  } else {
+    return 0;
   }
 });
 
 const totalBankPrice = computed(() =>
   orderItemDatas.value.reduce(
-    (sum, item) => sum + item.productSellPrice * item.count * 0.95,
+    (sum, item) => sum + item.productBankSellPrice * item.count,
     0
   )
 );
 
-const totalCardDollar = computed(() => {
+const totalCardPrice = computed(() => {
   const total = orderItemDatas.value.reduce(
     (sum, item) => sum + item.productSellPrice * item.count,
     0
@@ -333,8 +355,7 @@ async function checkout() {
       consumerName.value === "" ||
       consumerPostCode.value === "" ||
       consumerAddress1.value === "" ||
-      consumerPhone.value === "" ||
-      consumerEmail.value === ""
+      consumerPhone.value === ""
     ) {
       alert("필수 정보를 입력해주세요!");
       return;
@@ -345,6 +366,7 @@ async function checkout() {
       return;
     }
 
+    const uid = getUserId();
     const date = new Date();
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -359,6 +381,8 @@ async function checkout() {
     const orderId = `${year}${month}${day}_${hour}${minute}${seconds}_${randomPart}`;
     const productOrders = [];
 
+    const tempUserData = await (await getDoc(doc(db, "users", uid))).data();
+
     orderItemDatas.value.forEach(async (item, index) => {
       const padIndex = index.toString().padStart(2, "0");
       const padOrderId = `${orderId}_${padIndex}`;
@@ -370,17 +394,14 @@ async function checkout() {
         productName: item.productName,
         optionName: item.optionName,
         count: item.count,
-        productPrice: item.productSellPrice *
-                  item.count *
-                  0.95,
-        userId: auth.currentUser.uid,
+        productPrice: item.productBankSellPrice *
+                  item.count,
+        userId: uid,
         createdAt: Timestamp.fromDate(date),
         deliveryTrackingNumber: "",
         deliveryTrackingLink: "",
         deliveryCompany: "",
-        pointAmount: item.productSellPrice *
-                    item.count *
-                    0.95 * 0.03,
+        pointAmount: convertUserGradeCodeToPoint(tempUserData.userGrade, item.productBankSellPrice * item.count),
         pointGived: false,
         claimType: "",
         claimReason: "",
@@ -392,6 +413,9 @@ async function checkout() {
         returnCompany: "",
         returnStatus: "",
         returnReceivedAt: null,
+        status: "BEFORE_PAYMENT",
+        orderChannel: "NECOKUMO",
+        salespersonId: tempUserData.userSalespersonCode || "",
       });
     });
     await setDoc(doc(db, "order", orderId), {
@@ -405,20 +429,35 @@ async function checkout() {
       address1: consumerAddress1.value,
       address2: consumerAddress2.value,
       phone: consumerPhone.value,
-      email: consumerEmail.value,
       deliveryMessage: consumerDeliveryMessage.value,
       productsPrice: totalBankPrice.value,
       totalPrice: totalBankPrice.value + deliveryFee.value,
       name: consumerName.value,
       deliveryWay: deliveryWay.value,
-      userId: auth.currentUser.uid,
+      userId: uid,
       orderChannel: "NECOKUMO",
       updatedAt: null,
       memoContent: "",
       cashReceiptNumber: "",
       cardReceiptNumber: "",
-      status: "BEFORE_DEPOSIT",
+      salespersonId: tempUserData.userSalespersonCode || "",
     });
+
+    if (consumerAddressSave.value) {
+      await updateDoc(doc(db, "users", uid), {
+        userPostCode: consumerPostCode.value,
+        userAddress1: consumerAddress1.value,
+        userAddress2: consumerAddress2.value,
+      });
+    }
+
+    if (consumercardSave.value) {
+      await updateDoc(doc(db, "users", uid), {
+        userCardNumber: consumerCardNumber.value,
+        userCardValidDate: consumerCardValidDate.value,
+      });
+    }
+
     await sendPpurioMessage({
       targets: [
         {
@@ -426,7 +465,7 @@ async function checkout() {
         }
       ],
       targetCount: 1,
-      content: `[네코쿠모] 주문이 완료되었습니다.\n아래 계좌로 입금해 주세요.\n\n주문번호: ${orderId}\n입금은행: 케이뱅크\n계좌번호: 100-151-009519\n예금주: 김원재\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원\n\n입금 확인 후 발송됩니다. 감사합니다!`,
+      content: `[네코쿠모] 주문이 완료되었습니다.\n아래 계좌로 입금해 주세요.\n\n주문번호: ${orderId}\n입금은행: 토스뱅크\n계좌번호: 1002-2582-0340\n예금주: 김원재\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원\n\n입금 확인 후 발송됩니다. 감사합니다!`,
       refKey: `ORDER_${orderId}`,
     });
     await sendPpurioMessage({
@@ -440,10 +479,11 @@ async function checkout() {
       refKey: `ORDER_ADMIN_${orderId}`,
     });
     if (history.state?.query === "cart") {
-      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+      await updateDoc(doc(db, "users", uid), {
         userProductCartList: [],
       });
     }
+
     router.push({
       path: "/order-complete",
       state: { orderId },
@@ -460,13 +500,13 @@ async function checkoutCard() {
       consumerName.value === "" ||
       consumerPostCode.value === "" ||
       consumerAddress1.value === "" ||
-      consumerPhone.value === "" ||
-      consumerEmail.value === ""
+      consumerPhone.value === ""
     ) {
       alert("필수 정보를 입력해주세요!");
       return;
     }
 
+    const uid = getUserId();
     const date = new Date();
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -481,6 +521,8 @@ async function checkoutCard() {
     const orderId = `${year}${month}${day}_${hour}${minute}${seconds}_${randomPart}`;
     const productOrders = [];
 
+    const tempUserData = await (await getDoc(doc(db, "users", uid))).data();
+
     orderItemDatas.value.forEach(async (item, index) => {
       const padIndex = index.toString().padStart(2, "0");
       const padOrderId = `${orderId}_${padIndex}`;
@@ -494,14 +536,12 @@ async function checkoutCard() {
         count: item.count,
         productPrice: item.productSellPrice *
                   item.count,
-        userId: auth.currentUser.uid,
+        userId: uid,
         createdAt: Timestamp.fromDate(date),
         deliveryTrackingNumber: "",
         deliveryTrackingLink: "",
         deliveryCompany: "",
-        pointAmount: item.productSellPrice *
-                    item.count *
-                    0.03,
+        pointAmount: convertUserGradeCodeToPoint(tempUserData.userGrade, item.productSellPrice * item.count),
         pointGived: false,
         claimType: "",
         claimReason: "",
@@ -513,6 +553,9 @@ async function checkoutCard() {
         returnCompany: "",
         returnStatus: "",
         returnReceivedAt: null,
+        status: "BEFORE_PAYMENT",
+        orderChannel: "NECOKUMO",
+        salespersonId: tempUserData.userSalespersonCode || "",
       });
     });
     await setDoc(doc(db, "order", orderId), {
@@ -526,19 +569,18 @@ async function checkoutCard() {
       address1: consumerAddress1.value,
       address2: consumerAddress2.value,
       phone: consumerPhone.value,
-      email: consumerEmail.value,
       deliveryMessage: consumerDeliveryMessage.value,
-      productsPrice: totalCardDollar.value,
-      totalPrice: totalCardDollar.value + deliveryFee.value,
+      productsPrice: totalCardPrice.value,
+      totalPrice: totalCardPrice.value + deliveryFee.value,
       name: consumerName.value,
       deliveryWay: deliveryWay.value,
-      userId: auth.currentUser.uid,
+      userId: uid,
       orderChannel: "NECOKUMO",
       updatedAt: null,
       memoContent: "",
       cashReceiptNumber: "",
       cardReceiptNumber: "",
-      status: "BEFORE_PAYMENT",
+      salespersonId: tempUserData.userSalespersonCode || "",
     });
     await sendPpurioMessage({
       targets: [
@@ -547,29 +589,27 @@ async function checkoutCard() {
         }
       ],
       targetCount: 1,
-      content: `[네코쿠모] 주문이 완료되었습니다.\n문자로 결제요청이 도착하면 결제 부탁드리겠습니다.\n\n주문번호: ${orderId}\n결제금액: ${(totalCardDollar.value + deliveryFee.value).toLocaleString()}원\n\n결제 확인 후 발송됩니다. 감사합니다!`,
+      content: `[네코쿠모] 주문이 완료되었습니다.\n문자로 결제요청이 도착하면 결제 부탁드리겠습니다.\n\n주문번호: ${orderId}\n결제금액: ${(totalCardPrice.value + deliveryFee.value).toLocaleString()}원\n\n결제 확인 후 발송됩니다. 감사합니다!`,
       refKey: `ORDER_${orderId}`,
     });
-    await sendPpurioMessage({
-      targets: [
-        {
-          to: "01055779069"
-        }
-      ],
-      targetCount: 1,
-      content: `[네코쿠모] 신규 주문 건이 있습니다.\n관리자 페이지에서 확인 부탁드립니다.\n\n주문번호: ${orderId}\n결제수단: ${paymentMethod.value === "bank" ? "무통장입금" : "신용카드"}\n결제금액: ${(totalBankPrice.value + deliveryFee.value).toLocaleString()}원`,
-      refKey: `ORDER_ADMIN_${orderId}`,
-    });
     if (history.state?.query === "cart") {
-      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+      await updateDoc(doc(db, "users", uid), {
         userProductCartList: [],
       });
     }
 
+    if (consumerAddressSave.value) {
+      await updateDoc(doc(db, "users", uid), {
+        userPostCode: consumerPostCode.value,
+        userAddress1: consumerAddress1.value,
+        userAddress2: consumerAddress2.value,
+      });
+    }
+
     if (consumercardSave.value) {
-      await updateDoc(doc(db, "users", auth.currentUser.uid), {
-        cardNumber: consumerCardNumber.value,
-        cardValidDate: consumerCardValidDate.value,
+      await updateDoc(doc(db, "users", uid), {
+        userCardNumber: consumerCardNumber.value,
+        userCardValidDate: consumerCardValidDate.value,
       })
     }
 
@@ -600,6 +640,30 @@ async function fetchOrderItemDatas(orderItems) {
   }
 }
 
+async function fetchRecentPointData() {
+  try {
+    console.log("Fetching User Point Data...");
+    const userId = await getUserId();
+    const data = (await getDocs(query(collection(db, "userPoints"), where("userId", "==", userId), orderBy("createdAt", "desc"), limit(1)))).docs[0]?.data() ?? null;
+    recentPointData.value = data;
+    console.log("User Point Data Fetched Successfully!: ", recentPointData.value);
+  } catch (error) {
+    console.error("Failed to fetch data:", error);
+  }
+}
+
+async function fetchUserData() {
+  try {
+    console.log("Fetching User Data...");
+    const userId = await getUserId();
+    const data = (await getDoc(doc(db, "users", userId))).data();
+    userData.value = data;
+    console.log("User Data Fetched Successfully");
+  } catch (error) {
+    console.error("Failed to fetch data: ", error);
+  }
+}
+
 onMounted(async () => {
   try {
     const orderItems = history.state?.orderItems;
@@ -608,14 +672,18 @@ onMounted(async () => {
       router.replace("/");
     } else {
       console.log("받은 주문 데이터: ", orderItems);
+      await fetchUserData();
       await fetchOrderItemDatas(orderItems);
-      const userData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+      await fetchRecentPointData();
+      const uid = getUserId();
+      const userData = (await getDoc(doc(db, "users", uid))).data();
       consumerName.value = userData.userName;
       consumerPostCode.value = userData.userPostCode;
       consumerAddress1.value = userData.userAddress1;
       consumerAddress2.value = userData.userAddress2;
       consumerPhone.value = userData.userPhone;
-      consumerEmail.value = userData.userEmail;
+      consumerCardNumber.value = userData.cardNumber || "";
+      consumerCardValidDate.value = userData.cardValidDate || { month: "", year: "" };
     }
   } catch (error) {
     console.error('Failed to fetch data:', error);
@@ -752,6 +820,16 @@ onMounted(async () => {
               &:not(:first-child) {
                 margin-top: 16px;
               }
+            }
+          }
+
+          > .save-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            > input {
+              width: fit-content;
             }
           }
 
@@ -914,6 +992,39 @@ onMounted(async () => {
           color: #007bff;
           font-weight: 700;
         }
+      }
+    }
+  }
+
+  > .point-container {
+    padding: 12px 16px;
+    background-color: #efefef;
+    margin-top: 24px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    > div {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      > .title {
+        width: 96px;
+        line-height: 38px;
+      }
+
+      > input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid black;
+        font-size: 16px;
+        border-radius: 4px;
+      }
+
+      > div {
+        flex: 1;
       }
     }
   }

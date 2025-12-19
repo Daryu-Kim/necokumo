@@ -7,7 +7,7 @@
       </button>
       <button
         class="blue"
-        @click="convertToStatus('BEFORE_DEPOSIT', 'PAYMENT_COMPLETED')"
+        @click="convertToStatus('BEFORE_PAYMENT', 'PAYMENT_COMPLETED')"
         :disabled="isBusy"
       >
         결제완료 처리

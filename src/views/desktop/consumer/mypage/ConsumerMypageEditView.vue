@@ -9,7 +9,8 @@
             <h2>안녕하세요. {{ userData.userName }} 님!</h2>
             <p class="grade">
               고객님의 회원 등급은
-              <span>{{ userData.userGrade }}</span> 입니다.
+              <span>{{ convertUserGradeCodeToLabel(userData.userGrade) }}</span>
+              입니다.
             </p>
             <p style="margin-top: 4px">
               오늘도 구름 위를 걷는 듯한 쇼핑을 즐겨보세요 ☁️
@@ -28,16 +29,19 @@
       </div>
       <div class="input-container">
         <div>
-          <p><span>*</span>아이디</p>
+          <p><span>*</span>휴대전화</p>
           <div>
-            <input type="text" v-model="userData.userId" disabled />
-            <p>(영문 소문자 / 숫자, 4 ~ 16자)</p>
-          </div>
-        </div>
-        <div>
-          <p><span>*</span>이메일</p>
-          <div>
-            <input type="text" v-model="userData.userEmail" disabled />
+            <input
+              type="text"
+              v-model="userData.userPhone"
+              disabled
+              @input="
+                (e) =>
+                  (userData.userPhone = e.target.value
+                    .replace(/[^0-9]/g, '')
+                    .slice(0, 11))
+              "
+            />
           </div>
         </div>
         <div>
@@ -63,59 +67,15 @@
             </div>
           </div>
         </div>
-        <div>
-          <p><span>*</span>휴대전화</p>
-          <div>
-            <input
-              type="text"
-              v-model="userData.userPhone"
-              @input="
-                (e) =>
-                  (userData.userPhone = e.target.value
-                    .replace(/[^0-9]/g, '')
-                    .slice(0, 11))
-              "
-            />
-            <p>(숫자만, "-" 없이 10 ~ 11자)</p>
-          </div>
-        </div>
       </div>
     </div>
     <div class="edit-container">
       <div class="title-container">
         <strong>추가정보</strong>
-        <p><span>*</span> 필수 입력사항</p>
       </div>
       <div class="input-container">
         <div>
-          <p><span>*</span>성별</p>
-          <div>
-            <div class="radio-container">
-              <div>
-                <input
-                  type="radio"
-                  v-model="userData.userGender"
-                  value="남"
-                  disabled
-                  id="male"
-                />
-                <label for="male">남자</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  v-model="userData.userGender"
-                  value="여"
-                  disabled
-                  id="female"
-                />
-                <label for="female">여자</label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <p><span>*</span>생년월일</p>
+          <p>생년월일</p>
           <div>
             <div class="birthday-container">
               <input type="text" v-model="userBirthday[0]" disabled />
@@ -128,72 +88,11 @@
           </div>
         </div>
         <div>
-          <p><span>*</span>이용중인 통신사</p>
-          <div>
-            <div class="radio-container">
-              <div>
-                <input
-                  type="radio"
-                  v-model="userData.userCarrier"
-                  value="SKT"
-                  id="SKT"
-                />
-                <label for="SKT">SKT</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  v-model="userData.userCarrier"
-                  value="KT"
-                  id="KT"
-                />
-                <label for="KT">KT</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  v-model="userData.userCarrier"
-                  value="LG U+"
-                  id="LGU"
-                />
-                <label for="LGU">LG U+</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  v-model="userData.userCarrier"
-                  value="SKT 알뜰폰"
-                  id="SKT2"
-                />
-                <label for="SKT2">SKT 알뜰폰</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  v-model="userData.userCarrier"
-                  value="KT 알뜰폰"
-                  id="KT2"
-                />
-                <label for="KT2">KT 알뜰폰</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  v-model="userData.userCarrier"
-                  value="LG U+ 알뜰폰"
-                  id="LGU2"
-                />
-                <label for="LGU2">LG U+ 알뜰폰</label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <p><span>*</span>환불계좌</p>
+          <p>환불계좌</p>
           <div>
             <div class="refund-container">
-              <select v-model="userRefundAccount[0]">
-                <option value="">선택</option>
+              <select v-model="userData.userBankName">
+                <option value="">== 은행명 선택 ==</option>
                 <option
                   v-for="(item, index) in bankNames"
                   :key="index"
@@ -205,10 +104,10 @@
               <input
                 type="text"
                 placeholder="계좌번호 입력"
-                v-model="userRefundAccount[1]"
+                v-model="userData.userBankAccountNumber"
                 @input="
                   (e) =>
-                    (userRefundAccount[1] = e.target.value.replace(
+                    (userData.userBankAccountNumber = e.target.value.replace(
                       /[^0-9]/g,
                       ''
                     ))
@@ -217,7 +116,7 @@
               <input
                 type="text"
                 placeholder="예금주명"
-                v-model="userRefundAccount[2]"
+                v-model="userData.userBankDepositorName"
               />
             </div>
           </div>
@@ -233,88 +132,51 @@
 
 <script setup lang="js">
 import { onMounted, ref, nextTick } from 'vue';
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { getDoc, doc, updateDoc } from "firebase/firestore";
 import router from '@/router';
+import { getUserId } from '@/lib/auth';
+import { convertUserGradeCodeToLabel } from '@/lib/utils';
 
 const userData = ref(null);
 const userBirthday = ref([]);
 const userRefundAccount = ref([]);
 const bankNames = [
+  "NH농협은행",
+  "카카오뱅크",
+  "KB국민은행",
+  "토스뱅크",
+  "신한은행",
+  "우리은행",
+  "IBK기업은행",
+  "하나은행",
+  "새마을금고",
+  "부산은행",
+  "iM뱅크",
+  "케이뱅크",
+  "신협",
+  "우체국",
+  "SC제일은행",
   "경남은행",
   "광주은행",
-  "단위농협(지역농축협)",
-  "부산은행",
-  "새마을금고",
-  "산림조합",
-  "신한은행",
-  "신협",
-  "씨티은행",
-  "우리은행",
-  "우체국예금보험",
-  "저축은행중앙회",
+  "수협",
   "전북은행",
+  "저축은행",
   "제주은행",
-  "카카오뱅크",
-  "케이뱅크",
-  "토스뱅크",
-  "하나은행",
-  "홍콩상하이은행",
-  "IBK기업은행",
-  "KB국민은행",
-  "iM뱅크(대구)",
-  "한국산업은행",
-  "NH농협은행",
-  "SC제일은행",
-  "Sh수협은행",
-  "교보증권",
-  "대신증권",
-  "메리츠증권",
-  "미래에셋증권",
-  "부국증권",
-  "삼성증권",
-  "신영증권",
-  "신한금융투자",
-  "유안타증권",
-  "유진투자증권",
-  "카카오페이증권",
-  "키움증권",
-  "토스머니",
-  "토스증권",
-  "펀드온라인코리아(한국포스증권)",
-  "하나금융투자",
-  "아이엠증권",
-  "한국투자증권",
-  "한화투자증권",
-  "현대차증권",
-  "DB금융투자",
-  "KB증권",
-  "KTB투자증권(다올투자증권)",
-  "LIG투자증권",
-  "NH투자증권",
-  "SK증권"
+  "씨티은행",
+  "KDB산업은행",
+  "산림조합은행",
+  "SBI저축은행"
 ];
 
 async function updateUserData() {
   try {
-    if (userData.value.userPhone === "") {
-      alert("전화번호를 입력해주세요.");
-      return;
-    }
-    if (userRefundAccount.value[0] === "" || userRefundAccount.value[1] === "" || userRefundAccount.value[2] === "") {
-      alert("환불 계좌를 등록해주세요.");
-      return;
-    }
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    userData.value.userRefundAccount = [
-      userRefundAccount.value[0],                              // 은행명
-      userRefundAccount.value[1].replace(/-/g, ''),            // 계좌번호에서 '-' 제거
-      userRefundAccount.value[2]                               // 예금주명
-    ].join('/');
+    const uid = getUserId();
+    const userRef = doc(db, "users", uid);
     await updateDoc(userRef, userData.value);
 
     alert("변경내용이 저장되었습니다!");
-    router.replace("/mypage");
+    window.location.href = "/mypage";
   } catch (error) {
     console.error("Error updating user data: ", error);
   }
@@ -358,7 +220,8 @@ async function openAddressPopup() {
 
 async function fetchUserData() {
   try {
-    const user = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    const uid = getUserId();
+    const user = await getDoc(doc(db, 'users', uid));
     userData.value = user.data();
     userBirthday.value = userData.value.userBirthday.split('-');
     userRefundAccount.value = userData.value.userRefundAccount.split('/');
@@ -495,25 +358,6 @@ onMounted(async () => {
             margin-top: 8px;
             font-size: 14px;
             color: #666;
-          }
-
-          > .radio-container {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            > div {
-              display: flex;
-              align-items: center;
-              gap: 4px;
-              > input {
-                width: 24px;
-                height: 24px;
-              }
-
-              > label {
-                margin-left: 4px;
-              }
-            }
           }
 
           > .birthday-container {

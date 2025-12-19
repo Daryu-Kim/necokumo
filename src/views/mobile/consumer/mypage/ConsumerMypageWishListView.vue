@@ -70,7 +70,7 @@
             <div class="price-container">
               <div class="sell-price-container">
                 <router-link :to="`/product?id=${item.id}`" class="sell-price">
-                  {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+                  {{ item.productBankSellPrice.toLocaleString() }}원 ({{
                     item.productSellPrice.toLocaleString()
                   }}원)
                 </router-link>
@@ -95,6 +95,11 @@
             </div>
           </div>
         </div>
+        <div ref="observerTarget" class="observer-target"></div>
+
+        <div v-if="isEnd" class="end-text">
+          <p>더 이상 상품이 없습니다.</p>
+        </div>
       </div>
       <div class="order-empty-container" v-else>
         <span class="material-icons-outlined"> error_outline </span>
@@ -105,14 +110,29 @@
 </template>
 
 <script setup lang="js">
-import { onMounted, ref, watch } from 'vue';
-import { db, auth } from "@/lib/firebase";
-import { getDocs, query, collection, where, orderBy, getDoc, doc } from "firebase/firestore";
+import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { db } from "@/lib/firebase";
+import { getDocs, query, collection, where, orderBy, getDoc, doc, limit, startAfter } from "firebase/firestore";
+import { getUserId } from '@/lib/auth';
+import { useRoute } from 'vue-router';
+import router from '@/router';
+import { nextTick } from 'vue';
 
 const productDatas = ref([]);
 const orderFilterData = ref("popular");
 const viewFilterData = ref("list");
 const userData = ref(null);
+
+const lastDoc = ref(null);
+const isLoading = ref(false);
+const isEnd = ref(false);
+
+const PAGE_LIMIT = 12;
+
+const observerTarget = ref(null);
+let observer = null;
+
+const route = useRoute();
 
 function formatTimestampToYearMonth(timestamp) {
   const date = timestamp.toDate(); // Firestore Timestamp → JS Date
@@ -121,84 +141,131 @@ function formatTimestampToYearMonth(timestamp) {
   return `${year}.${month}`;
 }
 
-async function fetchFilteredData() {
+async function fetchProducts({ reset = false } = {}) {
+  if (isLoading.value) return;
+
+  if (reset) {
+    productDatas.value = [];
+    lastDoc.value = null;
+    isEnd.value = false;
+  }
+
+  if (isEnd.value) return;
+
+  isLoading.value = true;
+
   try {
-    console.log("Fetching Popular Data...");
+    const [field, dir] = ["popularScore", "desc"];
 
-    // 1️⃣ 각 product에 구매수 조회 후 score 계산
-    const productsWithScore = await Promise.all(
-      productDatas.value.map(async (product) => {
-        // productOrder 컬렉션에서 productId 일치하는 문서 수
-        const ordersSnap = await getDocs(
-          query(collection(db, "productOrder"), where("productId", "==", product.productId))
-        );
-        const purchaseCount = ordersSnap.size;
+    const uid = await getUserId();
+    const tempUserData = (await getDoc(doc(db, "users", uid))).data();
 
-        // score 계산
-        const score =
-          (product.productLikeCount || 0) * 5 +
-          purchaseCount * 10 +
-          (product.productViewCount || 0) * 2;
-
-        return {
-          ...product,
-          score,
-        };
-      })
+    let q = query(
+      collection(db, "product"),
+      where("isActive", "==", true),
+      where("productId", "in", tempUserData.userProductWishList),
+      orderBy(field, dir),
+      limit(PAGE_LIMIT)
     );
 
-    // 2️⃣ score 내림차순 정렬 + score 같으면 createdAt 최신순
-    productsWithScore.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return b.createdAt - a.createdAt;
-    });
-
-    // 3️⃣ productDatas.value에 반영
-    productDatas.value = productsWithScore;
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
-}
-
-async function fetchProductData() {
-  try {
-    console.log("Fetching Product Data...");
-    const userData = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
-    console.log("User Data: ", userData);
-    if (userData && userData.userProductWishList && userData.userProductWishList.length > 0) {
-      const product = await getDocs(query(collection(db, "product"), where("isActive", "==", true), where("productId", "in", userData.userProductWishList), orderBy("productLikeCount", "desc")));
-      productDatas.value = product.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } else {
-      productDatas.value = [];
+    if (lastDoc.value) {
+      q = query(q, startAfter(lastDoc.value));
     }
-    console.log("Product Data Fetched Successfully!: ", productDatas.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      isEnd.value = true;
+      return;
+    }
+
+    productDatas.value.push(
+      ...snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    );
+
+    lastDoc.value = snap.docs[snap.docs.length - 1];
+  } catch (e) {
+    console.error(e);
+  } finally {
+    isLoading.value = false;
   }
 }
+
+function initObserver() {
+  if (observer) observer.disconnect();
+
+  observer = new IntersectionObserver(
+    entries => {
+      const entry = entries[0];
+      if (!entry.isIntersecting) return;
+      if (isLoading.value || isEnd.value) return;
+
+      fetchProducts();
+    },
+    { rootMargin: "200px" } // 미리 로딩
+  );
+
+  if (observerTarget.value) {
+    observer.observe(observerTarget.value);
+  }
+}
+
+watch(orderFilterData, val => {
+  router.push({
+    query: {
+      ...route.query,
+      filter: val
+    }
+  });
+});
+
+watch(
+  () => [route.query.filter],
+  async () => {
+    orderFilterData.value = route.query.filter || "popular";
+
+    if (observer) observer.disconnect();
+
+    await fetchProducts({ reset: true });
+
+    await nextTick();
+    initObserver();
+  },
+  { immediate: true }
+);
+
+onMounted(() => {
+  initObserver();
+});
+
+onUnmounted(() => {
+  if (observer) observer.disconnect();
+});
 
 onMounted(async () => {
     try {
-        await fetchProductData();
-        await fetchFilteredData();
-
         console.log("Fetch User Data...");
-        const data = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+        const uid = getUserId();
+        const data = (await getDoc(doc(db, "users", uid))).data();
         userData.value = data;
         console.log("User Data Fetched Successfully!: ", userData.value);
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
 });
-
-watch(() => orderFilterData.value, async (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    await fetchFilteredData();
-  }
-});
 </script>
 
 <style lang="scss" scoped>
+.observer-target {
+  height: 1px;
+}
+
+.end-text {
+  text-align: center;
+  padding: 16px;
+  color: #999;
+}
+
 .consumer-mypage-wishlist {
   padding: 16px 24px;
 

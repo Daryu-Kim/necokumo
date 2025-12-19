@@ -1,10 +1,10 @@
 <template>
   <div class="admin-product-list">
-    <h2>입금전 관리하기</h2>
+    <h2>결제전 관리하기</h2>
     <div class="button-box">
       <button
         class="blue"
-        @click="convertToStatus('BEFORE_DEPOSIT', 'PAYMENT_COMPLETED')"
+        @click="convertToStatus('BEFORE_PAYMENT', 'PAYMENT_COMPLETED')"
         :disabled="isBusy"
       >
         결제완료 처리
@@ -17,7 +17,7 @@
       </button>
     </div>
     <div class="table-box">
-      <h3>입금전 주문 목록 테이블</h3>
+      <h3>결제전 주문 목록 테이블</h3>
       <div ref="tableRef"></div>
     </div>
   </div>
@@ -267,7 +267,7 @@ onMounted(async () => {
   // 1. Firebase에서 데이터 가져오기
   const q = query(
     collection(db, "productOrder"),
-    where("status", "==", "BEFORE_DEPOSIT"),
+    where("status", "==", "BEFORE_PAYMENT"),
     orderBy("createdAt", "desc")
   );
   const querySnapshot = await getDocs(q);

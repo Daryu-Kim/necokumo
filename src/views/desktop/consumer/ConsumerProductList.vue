@@ -86,6 +86,68 @@
               }}</label
             >
           </div>
+          <hr />
+          <div>
+            <input
+              type="radio"
+              name="orderFilter"
+              id="descView"
+              value="descView"
+              style="display: none"
+              v-model="orderFilterData"
+            />
+            <label
+              for="descView"
+              :style="`color: ${
+                orderFilterData == 'descView' ? '#000000' : '#999'
+              }`"
+              >{{
+                orderFilterData == "descView" ? "✅조회순" : "조회순"
+              }}</label
+            >
+          </div>
+          <hr />
+          <div>
+            <input
+              type="radio"
+              name="orderFilter"
+              id="descLike"
+              value="descLike"
+              style="display: none"
+              v-model="orderFilterData"
+            />
+            <label
+              for="descLike"
+              :style="`color: ${
+                orderFilterData == 'descLike' ? '#000000' : '#999'
+              }`"
+              >{{
+                orderFilterData == "descLike" ? "✅좋아요순" : "좋아요순"
+              }}</label
+            >
+          </div>
+          <hr />
+          <div>
+            <input
+              type="radio"
+              name="orderFilter"
+              id="descPurchase"
+              value="descPurchase"
+              style="display: none"
+              v-model="orderFilterData"
+            />
+            <label
+              for="descPurchase"
+              :style="`color: ${
+                orderFilterData == 'descPurchase' ? '#000000' : '#999'
+              }`"
+              >{{
+                orderFilterData == "descPurchase"
+                  ? "✅최다구매순"
+                  : "최다구매순"
+              }}</label
+            >
+          </div>
         </div>
         <div class="view-filter-container">
           <div class="view-container">
@@ -149,7 +211,7 @@
             </div>
             <div class="description-container">
               <p class="option">
-                {{ item.option2List.join(" / ") }}
+                {{ item.optionList.map((opt) => opt.optionName).join(" / ") }}
               </p>
             </div>
             <div class="footer-container">
@@ -172,12 +234,12 @@
           </div>
           <div class="price-container">
             <p class="origin-price">
-              {{ item.productSellPrice.toLocaleString() }}원
+              {{ item.productOriginPrice.toLocaleString() }}원
             </p>
             <div class="sell-price-container">
               <router-link :to="`/product?id=${item.id}`" class="sell-price">
                 <span>계좌이체가</span>
-                {{ (item.productSellPrice * 0.95).toLocaleString() }}원
+                {{ item.productBankSellPrice.toLocaleString() }}원
               </router-link>
               <router-link :to="`/product?id=${item.id}`" class="sell-price">
                 <span>카드결제가</span>
@@ -186,23 +248,43 @@
             </div>
           </div>
         </div>
+        <div ref="observerTarget" class="observer-target"></div>
+
+        <div v-if="isEnd" class="end-text">
+          <p>더 이상 상품이 없습니다.</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="js">
-import { onMounted, ref, watch } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import { db } from "@/lib/firebase";
-import { getDocs, query, collection, where, orderBy, getDoc, doc } from "firebase/firestore";
-import { useRoute } from 'vue-router';
-const categoryDatas = ref([]);
+import { getDocs, query, collection, where, orderBy, getDoc, doc, startAfter, limit } from "firebase/firestore";
+import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
+import { getUserId } from '@/lib/auth';
+import { onUnmounted } from 'vue';
+
 const productDatas = ref([]);
 const orderFilterData = ref("popular");
 const viewFilterData = ref("list");
 const currentCategoryData = ref(null);
 
+const lastDoc = ref(null);
+const isLoading = ref(false);
+const isEnd = ref(false);
+
+const PAGE_LIMIT = 30;
+
+const observerTarget = ref(null);
+let observer = null;
+
 const route = useRoute();
+const router = useRouter();
+
+const allowedGrades = ["N5", "N6", "N7", "N8", "N9", "N10"];
+const restrictedCategories = Array.from({ length: 17 }, (_, i) => 200 + i);
 
 function formatTimestampToYearMonth(timestamp) {
   const date = timestamp.toDate(); // Firestore Timestamp → JS Date
@@ -211,118 +293,173 @@ function formatTimestampToYearMonth(timestamp) {
   return `${year}.${month}`;
 }
 
-async function fetchFilteredData() {
-  try {
-    switch (orderFilterData.value) {
-      case "popular": {
-        console.log("Fetching Popular Data...");
-
-        // 1️⃣ 각 product에 구매수 조회 후 score 계산
-        const productsWithScore = await Promise.all(
-          productDatas.value.map(async (product) => {
-            // productOrder 컬렉션에서 productId 일치하는 문서 수
-            const ordersSnap = await getDocs(
-              query(collection(db, "productOrder"), where("productId", "==", product.productId))
-            );
-            const purchaseCount = ordersSnap.size;
-
-            // score 계산
-            const score =
-              (product.productLikeCount || 0) * 5 +
-              purchaseCount * 10 +
-              (product.productViewCount || 0) * 2;
-
-            return {
-              ...product,
-              score,
-            };
-          })
-        );
-
-        // 2️⃣ score 내림차순 정렬 + score 같으면 createdAt 최신순
-        productsWithScore.sort((a, b) => {
-          if (b.score !== a.score) return b.score - a.score;
-          return b.createdAt - a.createdAt;
-        });
-
-        // 3️⃣ productDatas.value에 반영
-        productDatas.value = productsWithScore;
-
-        break;
-      }
-      case "ascPrice":
-        console.log("Fetching Ascending Price Data...");
-        productDatas.value.sort((a, b) => a.productSellPrice - b.productSellPrice);
-        break;
-      case "descPrice":
-        console.log("Fetching Descending Price Data...");
-        productDatas.value.sort((a, b) => b.productSellPrice - a.productSellPrice);
-        break;
-      case "newest":
-        console.log("Fetching Newest Data...");
-        productDatas.value.sort((a, b) => b.createdAt - a.createdAt);
-        break;
-      default:
-        break;
-    }
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
+function getOrderByByFilter(filter) {
+  switch (filter) {
+    case "popular":
+      return ["popularScore", "desc"];
+    case "ascPrice":
+      return ["productSellPrice", "asc"];
+    case "descPrice":
+      return ["productSellPrice", "desc"];
+    case "newest":
+      return ["createdAt", "desc"];
+    case "descView":
+      return ["productViewCount", "desc"];
+    case "descLike":
+      return ["productLikeCount", "desc"];
+    case "descPurchase":
+      return ["purchaseCount", "desc"];
+    default:
+      return ["popularScore", "desc"];
   }
 }
 
-async function fetchProductData() {
+async function fetchProducts({ reset = false } = {}) {
+  if (isLoading.value) return;
+
+  if (reset) {
+    productDatas.value = [];
+    lastDoc.value = null;
+    isEnd.value = false;
+  }
+
+  if (isEnd.value) return;
+
+  isLoading.value = true;
+
   try {
-    console.log("Fetching Product Data...");
-    const product = await getDocs(query(collection(db, "product"), where("isActive", "==", true), where("productCategory", "array-contains-any", [route.query.category]), orderBy("productLikeCount", "desc")));
-    productDatas.value = product.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log("Product Data Fetched Successfully!: ", productDatas.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
+    const [field, dir] =
+      getOrderByByFilter(route.query.filter || "popular");
+
+    let q = query(
+      collection(db, "product"),
+      where("isActive", "==", true),
+      where(
+        "productCategory",
+        "array-contains-any",
+        [route.query.category]
+      ),
+      orderBy(field, dir),
+      limit(PAGE_LIMIT)
+    );
+
+    if (lastDoc.value) {
+      q = query(q, startAfter(lastDoc.value));
+    }
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      isEnd.value = true;
+      return;
+    }
+
+    productDatas.value.push(
+      ...snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    );
+
+    lastDoc.value = snap.docs[snap.docs.length - 1];
+  } catch (e) {
+    console.error(e);
+  } finally {
+    isLoading.value = false;
   }
 }
 
 async function fetchCurrentCategoryData() {
-  try {
-    console.log("Fetching Current Category Data...");
-    const currentCategory = await getDoc(doc(db, "category", route.query.category));
-    currentCategoryData.value = currentCategory.data();
-    console.log("Current Category Data Fetched Successfully!: ", currentCategory.docs[0].id);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
+  const snap = await getDoc(
+    doc(db, "category", route.query.category)
+  );
+  currentCategoryData.value = snap.data();
+}
+
+function initObserver() {
+  if (observer) observer.disconnect();
+
+  observer = new IntersectionObserver(
+    entries => {
+      const entry = entries[0];
+      if (!entry.isIntersecting) return;
+      if (isLoading.value || isEnd.value) return;
+
+      fetchProducts();
+    },
+    { rootMargin: "200px" } // 미리 로딩
+  );
+
+  if (observerTarget.value) {
+    observer.observe(observerTarget.value);
   }
 }
 
-onMounted(async () => {
-    try {
-        console.log("Fetching Category Data...");
-        const category = await getDocs(query(collection(db, "category"), where("categoryGrade", "==", 0), orderBy("categoryOrder", "asc")));
-        categoryDatas.value = category.docs.filter(doc => doc.id !== '1').map(doc => ({ id: doc.id,title: doc.data().categoryName }));
-        console.log("Category Data Fetched Successfully!: ", categoryDatas.value);
-
-        await fetchProductData();
-        await fetchFilteredData();
-        await fetchCurrentCategoryData();
-    } catch (error) {
-        console.error('Failed to fetch data:', error);
+watch(orderFilterData, val => {
+  router.push({
+    query: {
+      ...route.query,
+      filter: val
     }
+  });
 });
 
-watch(() => route.query.category, async (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    await fetchProductData();
-    await fetchFilteredData();
+watch(
+  () => [route.query.category, route.query.filter],
+  async () => {
+    orderFilterData.value = route.query.filter || "popular";
+
+    if (observer) observer.disconnect();
+
+    await fetchProducts({ reset: true });
     await fetchCurrentCategoryData();
-  }
+
+    await nextTick();
+    initObserver();
+  },
+  { immediate: true }
+);
+
+onMounted(() => {
+  initObserver();
 });
 
-watch(() => orderFilterData.value, async (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    await fetchFilteredData();
+onUnmounted(() => {
+  if (observer) observer.disconnect();
+});
+
+onBeforeRouteUpdate(async (to, from, next) => {
+  const category = Number(to.query.category);
+  const uid = await getUserId();
+
+  if (!uid) {
+    alert("로그인 후 이용 가능합니다!");
+    return next("/login");
   }
+
+  const userSnap = await getDoc(doc(db, "users", uid));
+  const userGrade = userSnap.data()?.userGrade;
+
+  if (
+    restrictedCategories.includes(category) &&
+    !allowedGrades.includes(userGrade)
+  ) {
+    alert("접근할 수 없는 등급입니다.");
+    return next(false);
+  }
+
+  next();
 });
 </script>
 
 <style lang="scss" scoped>
+.observer-target {
+  height: 1px;
+}
+
+.end-text {
+  text-align: center;
+  padding: 24px;
+  color: #999;
+}
+
 .consumer-product-list {
   padding: 16px 24px;
   margin: auto;

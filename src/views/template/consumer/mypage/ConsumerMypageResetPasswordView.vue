@@ -4,8 +4,8 @@
 </template>
 
 <script setup lang="js">
-import DesktopView from "@/views/desktop/member/MemberAgreementView.vue";
-import MobileView from "@/views/mobile/member/MemberAgreementView.vue";
+import DesktopView from "@/views/desktop/consumer/mypage/ConsumerMypageResetPasswordView.vue";
+import MobileView from "@/views/mobile/consumer/mypage/ConsumerMypageResetPasswordView.vue";
 import { useMediaQuery } from "@vueuse/core";
 
 const isDesktop = useMediaQuery('(min-width: 1200px)');

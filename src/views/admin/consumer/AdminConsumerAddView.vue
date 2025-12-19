@@ -1,50 +1,91 @@
 <template>
   <div class="admin-consumer-add">
-    <h2>{{ isReplace ? "회원 정보 수정하기" : "회원 정보 등록하기" }}</h2>
+    <h2>회원 정보 등록하기</h2>
     <div class="add-box">
       <h3>기본 정보</h3>
       <div>
-        <h4>유저 ID</h4>
-        <input
-          type="text"
-          v-model="userData.userId"
-          maxlength="16"
-          placeholder="8 ~ 16자의 영문, 숫자, 특수문자 중 1가지 이상"
-          :disabled="isReplace"
-        />
-      </div>
-      <div>
-        <h4>유저 E-Mail</h4>
-        <input
-          type="email"
-          v-model="userData.userEmail"
-          placeholder="실제 사용중인 유저의 E-Mail 주소"
-          :disabled="isReplace"
-        />
-      </div>
-      <div v-if="!isReplace">
-        <h4>유저 비밀번호</h4>
-        <input
-          type="password"
-          v-model="userPassword"
-          placeholder="8 ~ 20자의 영문, 숫자, 특수문자 중 2가지 이상 (설정하지 않을 시 휴대폰 번호로 설정)"
-        />
-      </div>
-      <div v-if="!isReplace">
-        <h4>유저 비밀번호 재입력</h4>
-        <input
-          type="password"
-          v-model="userRePassword"
-          placeholder="사용할 비밀번호 재입력"
-        />
+        <h4>유저 휴대폰번호</h4>
+        <div class="rrn">
+          <input
+            type="text"
+            v-model="phone1Text"
+            inputmode="numeric"
+            maxlength="3"
+            placeholder="010"
+            :disabled="isNotPhoneDuplicated"
+            @input="(e) => onlyNumber(e, 'phone1Text')"
+          />
+          <p>-</p>
+          <input
+            type="text"
+            v-model="phone2Text"
+            inputmode="numeric"
+            maxlength="4"
+            placeholder="1234"
+            :disabled="isNotPhoneDuplicated"
+            @input="(e) => onlyNumber(e, 'phone2Text')"
+          />
+          <p>-</p>
+          <input
+            type="text"
+            v-model="phone3Text"
+            inputmode="numeric"
+            maxlength="4"
+            placeholder="5678"
+            :disabled="isNotPhoneDuplicated"
+            @input="(e) => onlyNumber(e, 'phone3Text')"
+          />
+          <button
+            class="side-button"
+            @click="handleCheckPhoneNumber"
+            :disabled="isNotPhoneDuplicated"
+          >
+            중복확인
+          </button>
+        </div>
       </div>
       <div>
         <h4>유저 이름</h4>
         <input
           type="text"
-          v-model="userData.userName"
+          v-model="nameText"
           placeholder="신분증 기재 상 이름 입력"
         />
+      </div>
+      <div>
+        <h4>유저 생년월일</h4>
+        <input type="date" v-model="birthdayText" />
+      </div>
+      <div>
+        <h4>유저 등급</h4>
+        <div class="grade-container">
+          <select v-model="minGradeText">
+            <option value="">== 최소 등급 선택 ==</option>
+            <option value="N1">N1 - 아이언</option>
+            <option value="N2">N2 - 브론즈</option>
+            <option value="N3">N3 - 실버</option>
+            <option value="N4">N4 - 골드</option>
+            <option value="N5">N5 - 플래티넘</option>
+            <option value="N6">N6 - 에메랄드</option>
+            <option value="N7">N7 - 다이아몬드</option>
+            <option value="N8">N8 - 마스터</option>
+            <option value="N9">N9 - 그랜드마스터</option>
+            <option value="N10">N10 - 챌린저</option>
+          </select>
+          <select v-model="gradeText">
+            <option value="">== 초기 등급 선택 ==</option>
+            <option value="N1">N1 - 아이언</option>
+            <option value="N2">N2 - 브론즈</option>
+            <option value="N3">N3 - 실버</option>
+            <option value="N4">N4 - 골드</option>
+            <option value="N5">N5 - 플래티넘</option>
+            <option value="N6">N6 - 에메랄드</option>
+            <option value="N7">N7 - 다이아몬드</option>
+            <option value="N8">N8 - 마스터</option>
+            <option value="N9">N9 - 그랜드마스터</option>
+            <option value="N10">N10 - 챌린저</option>
+          </select>
+        </div>
       </div>
       <div>
         <h4>유저 주소</h4>
@@ -52,202 +93,83 @@
           <div>
             <input
               type="text"
-              v-model="userData.userPostCode"
+              v-model="postCodeText"
               disabled
               placeholder="00000"
             />
-            <button @click="openAddressPopup()">주소검색</button>
+            <button @click="openDaumPostcode()">주소검색</button>
           </div>
           <input
             type="text"
-            v-model="userData.userAddress1"
+            v-model="address1Text"
             disabled
             placeholder="주소 검색을 사용하세요."
           />
           <input
             type="text"
-            v-model="userData.userAddress2"
+            v-model="address2Text"
             placeholder="상세 주소를 입력하세요 (예: 아파트, 동/호수 등)"
           />
         </div>
       </div>
-    </div>
-    <div class="add-box">
-      <h3>추가 정보</h3>
       <div>
-        <h4>유저 성별</h4>
-        <div class="radio-box">
+        <h4>기존 결제금액</h4>
+        <div class="address-container">
           <div>
             <input
-              name="gender"
-              id="male"
-              type="radio"
-              value="남"
-              v-model="userData.userGender"
-              :disabled="isReplace"
+              type="text"
+              v-model="recentPriceText"
+              :disabled="isBusy"
+              maxlength="8"
+              placeholder="예) 100,000"
+              @input="(e) => onlyNumber(e, 'recentPriceText')"
             />
-            <label for="male">남자</label>
-          </div>
-          <div>
-            <input
-              name="gender"
-              id="female"
-              type="radio"
-              value="여"
-              v-model="userData.userGender"
-              :disabled="isReplace"
-            />
-            <label for="female">여자</label>
           </div>
         </div>
       </div>
       <div>
-        <h4>유저 생년월일</h4>
-        <input
-          type="date"
-          v-model="userData.userBirthday"
-          :disabled="isReplace"
-        />
-      </div>
-      <div>
-        <h4>유저 통신사</h4>
-        <div class="radio-box">
+        <h4>영업자 정보</h4>
+        <div class="address-container">
           <div>
             <input
-              name="carrier"
-              id="SKT"
-              type="radio"
-              value="SKT"
-              v-model="userData.userCarrier"
+              type="text"
+              v-model="salespersonCodeText"
+              :disabled="isCheckedSalespersonCode || isBusy"
+              maxlength="8"
+              placeholder="예) NKS00000"
+              @input="(e) => onlyNumberAndUpper(e, 'salespersonCodeText')"
             />
-            <label for="SKT">SKT</label>
-          </div>
-          <div>
-            <input
-              name="carrier"
-              id="KT"
-              type="radio"
-              value="KT"
-              v-model="userData.userCarrier"
-            />
-            <label for="KT">KT</label>
-          </div>
-          <div>
-            <input
-              name="carrier"
-              id="LGU"
-              type="radio"
-              value="LG U+"
-              v-model="userData.userCarrier"
-            />
-            <label for="LGU">LG U+</label>
-          </div>
-          <div>
-            <input
-              name="carrier"
-              id="SKT2"
-              type="radio"
-              value="SKT 알뜰폰"
-              v-model="userData.userCarrier"
-            />
-            <label for="SKT2">SKT 알뜰폰</label>
-          </div>
-          <div>
-            <input
-              name="carrier"
-              id="KT2"
-              type="radio"
-              value="KT 알뜰폰"
-              v-model="userData.userCarrier"
-            />
-            <label for="KT2">KT 알뜰폰</label>
-          </div>
-          <div>
-            <input
-              name="carrier"
-              id="LGU2"
-              type="radio"
-              value="LG U+ 알뜰폰"
-              v-model="userData.userCarrier"
-            />
-            <label for="LGU2">LG U+ 알뜰폰</label>
-          </div>
-        </div>
-      </div>
-      <div>
-        <h4>유저 휴대폰번호</h4>
-        <input
-          type="phone"
-          v-model="userData.userPhone"
-          placeholder="'-' 없이 숫자만 입력"
-          @input="
-            (e) =>
-              (userData.userPhone = e.target.value
-                .replace(/[^0-9]/g, '')
-                .slice(0, 11))
-          "
-        />
-      </div>
-      <div>
-        <h4>유저 환불계좌</h4>
-        <div class="refund-container">
-          <select v-model="userRefundAccount[0]">
-            <option value="">선택</option>
-            <option
-              v-for="(item, index) in bankNames"
-              :key="index"
-              :value="item"
+            <button
+              class="side-button"
+              @click="checkSalesPersonCode"
+              :disabled="isCheckedSalespersonCode || isBusy"
             >
-              {{ item }}
-            </option>
-          </select>
-          <input
-            type="text"
-            placeholder="계좌번호 입력"
-            v-model="userRefundAccount[1]"
-            @input="
-              (e) =>
-                (userRefundAccount[1] = e.target.value.replace(/[^0-9]/g, ''))
-            "
-          />
-          <input
-            type="text"
-            placeholder="예금주명"
-            v-model="userRefundAccount[2]"
-          />
+              영업자 확인
+            </button>
+          </div>
         </div>
-      </div>
-      <div>
-        <h4>유저 추천인 아이디</h4>
-        <input
-          type="text"
-          v-model="userData.userReferralId"
-          placeholder="추천인 아이디 입력 (영문, 숫자만 입력)"
-        />
       </div>
     </div>
     <div class="button-box">
-      <button @click="confirmUserData" :disabled="isBusy">
-        {{ isReplace ? "회원 정보 수정하기" : "회원 정보 등록하기" }}
-      </button>
+      <button @click="nextStep" :disabled="isBusy">회원 정보 등록하기</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { auth, db } from "@/lib/firebase";
+import { encrypt } from "@/lib/crypto";
+import { db } from "@/lib/firebase";
 import { sendPpurioMessage } from "@/lib/ppurio";
-import router from "@/router";
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
+  convertUserGradeCodeToPoint,
+  generateTempPasswordCryptoJS,
+  generateUUIDFromSeed,
+} from "@/lib/utils";
 import {
+  addDoc,
   arrayUnion,
   collection,
   doc,
-  getDoc,
   getDocs,
   query,
   setDoc,
@@ -255,292 +177,290 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { nextTick, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { computed } from "vue";
+import { nextTick, ref } from "vue";
 
 const isBusy = ref(false);
-const isReplace = ref(false);
-const userData = ref({});
-const route = useRoute();
 
-const userPassword = ref("");
-const userRePassword = ref("");
-const userRefundAccount = ref([""]);
+const phone1Text = ref("");
+const phone2Text = ref("");
+const phone3Text = ref("");
+const isNotPhoneDuplicated = ref(false);
 
-const bankNames = [
-  "경남은행",
-  "광주은행",
-  "단위농협(지역농축협)",
-  "부산은행",
-  "새마을금고",
-  "산림조합",
-  "신한은행",
-  "신협",
-  "씨티은행",
-  "우리은행",
-  "우체국예금보험",
-  "저축은행중앙회",
-  "전북은행",
-  "제주은행",
-  "카카오뱅크",
-  "케이뱅크",
-  "토스뱅크",
-  "하나은행",
-  "홍콩상하이은행",
-  "IBK기업은행",
-  "KB국민은행",
-  "iM뱅크(대구)",
-  "한국산업은행",
-  "NH농협은행",
-  "SC제일은행",
-  "Sh수협은행",
-  "교보증권",
-  "대신증권",
-  "메리츠증권",
-  "미래에셋증권",
-  "부국증권",
-  "삼성증권",
-  "신영증권",
-  "신한금융투자",
-  "유안타증권",
-  "유진투자증권",
-  "카카오페이증권",
-  "키움증권",
-  "토스머니",
-  "토스증권",
-  "펀드온라인코리아(한국포스증권)",
-  "하나금융투자",
-  "아이엠증권",
-  "한국투자증권",
-  "한화투자증권",
-  "현대차증권",
-  "DB금융투자",
-  "KB증권",
-  "KTB투자증권(다올투자증권)",
-  "LIG투자증권",
-  "NH투자증권",
-  "SK증권",
-];
+const nameText = ref("");
 
-async function confirmUserData() {
+const birthdayText = ref("");
+
+const minGradeText = ref("");
+const gradeText = ref("");
+
+const postCodeText = ref("");
+const address1Text = ref("");
+const address2Text = ref("");
+
+const bankNameText = ref("");
+const bankAccountNumberText = ref("");
+const bankDepositorNameText = ref("");
+
+const recentPriceText = ref("0");
+
+const salespersonCodeText = ref("");
+const isCheckedSalespersonCode = ref(false);
+
+const phoneText = computed(() => {
+  return `${phone1Text.value}${phone2Text.value}${phone3Text.value}`;
+});
+
+const onlyNumber = (e, refName) => {
+  const targetRef = {
+    phone1Text,
+    phone2Text,
+    phone3Text,
+    recentPriceText,
+    bankAccountNumberText,
+  }[refName];
+
+  const value = e.target.value.replace(/\D/g, "");
+  targetRef.value = value;
+  e.target.value = value;
+};
+
+const onlyNumberAndUpper = (e, refName) => {
+  const targetRef = {
+    salespersonCodeText,
+  }[refName];
+
+  // 1. 입력값 가져오기
+  let value = e.target.value;
+
+  // 2. 소문자를 대문자로 변환
+  value = value.toUpperCase();
+
+  // 3. 영문 대문자와 숫자만 남기기
+  value = value.replace(/[^A-Z0-9]/g, "");
+
+  // 4. ref와 input에 값 반영
+  targetRef.value = value;
+  e.target.value = value;
+};
+
+const handleCheckPhoneNumber = async () => {
   try {
+    isBusy.value = true;
     if (
-      userData.value.userId === "" ||
-      userData.value.userEmail === "" ||
-      userData.value.userName === "" ||
-      userData.value.userPostCode === "" ||
-      userData.value.userAddress1 === "" ||
-      userData.value.userGender === "" ||
-      userData.value.userBirthday === "" ||
-      userData.value.userCarrier === "" ||
-      userData.value.userPhone === "" ||
-      userRefundAccount.value[0] === "" ||
-      userRefundAccount.value[1] === "" ||
-      userRefundAccount.value[2] === ""
+      !phone1Text.value ||
+      phone1Text.value.length !== 3 ||
+      !phone2Text.value ||
+      phone2Text.value.length !== 4 ||
+      !phone3Text.value ||
+      phone3Text.value.length !== 4
     ) {
-      alert("누락된 내용을 입력해주세요.");
+      alert("휴대폰 번호를 정확하게 입력해주시기 바랍니다!");
+      isBusy.value = false;
       return;
     }
 
-    if (!isReplace.value) {
-      if (userPassword.value !== userRePassword.value) {
-        alert("비밀번호가 일치하지 않습니다!");
-        return;
-      }
+    const docsSnap = await getDocs(
+      query(collection(db, "users"), where("userPhone", "==", phoneText.value))
+    );
 
-      const duplicatedUserId = await getDocs(
-        query(
-          collection(db, "users"),
-          where("userId", "==", userData.value.userId)
-        )
-      );
-
-      if (duplicatedUserId.docs.length > 0) {
-        alert("중복된 아이디가 있습니다!");
-        return;
-      }
-
-      const duplicatedUserEmail = await getDocs(
-        query(
-          collection(db, "users"),
-          where("userEmail", "==", userData.value.userEmail)
-        )
-      );
-
-      if (duplicatedUserEmail.docs.length > 0) {
-        alert("중복된 이메일이 있습니다!");
-        return;
-      }
-
-      if (userData.value.userReferralId.length > 0) {
-        const existReferralUserId = await getDocs(
-          query(
-            collection(db, "users"),
-            where("userId", "==", userData.value.userReferralId)
-          )
-        );
-
-        if (existReferralUserId.docs.length === 0) {
-          alert("입력하신 추천인이 존재하지 않습니다!");
-          return;
-        }
-      }
-
-      if (userPassword.value.length === 0) {
-        userPassword.value = userData.value.userPhone;
-      }
+    if (!docsSnap.empty) {
+      alert("이미 등록된 전화번호입니다!");
+      isBusy.value = false;
+      return;
     }
 
-    if (!isReplace.value) {
-      const originalUserUid = auth.currentUser.uid;
-      await signOut(auth);
+    alert("사용 가능한 전화번호입니다.");
+    isNotPhoneDuplicated.value = true;
+    isBusy.value = false;
+  } catch (e) {
+    console.error(e);
+    isBusy.value = false;
+  }
+};
 
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        userData.value.userEmail,
-        userPassword.value
+const nextStep = async () => {
+  try {
+    isBusy.value = true;
+
+    if (!isNotPhoneDuplicated.value) {
+      alert("휴대폰 번호 중복체크를 진행해주세요!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (birthdayText.value === "") {
+      alert("생년월일을 입력해주세요!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (minGradeText.value === "") {
+      alert("최소 유저 등급을 선택해주세요!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (gradeText.value === "") {
+      alert("초기 유저 등급을 선택해주세요!");
+      isBusy.value = false;
+      return;
+    }
+
+    if (!isCheckedSalespersonCode.value) {
+      salespersonCodeText.value = "";
+    }
+
+    const uuid = await generateUUIDFromSeed(phoneText.value);
+    const tempPassword = generateTempPasswordCryptoJS(phoneText.value);
+
+    await setDoc(doc(db, "users", uuid), {
+      userId: uuid,
+      userName: nameText.value,
+      userPhone: phoneText.value,
+      userPassword: encrypt(tempPassword),
+      userVerifiedInfo: encrypt(
+        JSON.stringify({
+          isAdminVerified: true,
+        })
+      ),
+      userGrade: gradeText.value,
+      userMinGrade: minGradeText.value,
+      userBirthday: birthdayText.value,
+      userPostCode: postCodeText.value,
+      userAddress1: address1Text.value,
+      userAddress2: address2Text.value,
+      userBankName: bankNameText.value,
+      userBankAccountNumber: bankAccountNumberText.value,
+      userBankDepositorName: bankDepositorNameText.value,
+      userCardNumber: "",
+      userCardValidDate: null,
+      userSalespersonCode: salespersonCodeText.value,
+      userProductCartList: [],
+      userProductWishList: [],
+      isAdmin: false,
+      termsAcceptedAt: Timestamp.fromDate(new Date()),
+      privacyAcceptedAt: Timestamp.fromDate(new Date()),
+      gpsAcceptedAt: Timestamp.fromDate(new Date()),
+      marketingAcceptedAt: Timestamp.fromDate(new Date()),
+      smsAcceptedAt: Timestamp.fromDate(new Date()),
+      visitedAt: Timestamp.fromDate(new Date()),
+      createdAt: Timestamp.fromDate(new Date()),
+    });
+
+    await addDoc(collection(db, "userPoints"), {
+      actionType: "ADD",
+      afterPoint: 3000,
+      amount: 3000,
+      beforePoint: 0,
+      createdAt: Timestamp.fromDate(new Date()),
+      description: "회원가입으로 인한 가입 축하 적립금 3,000 냥코인 적립",
+      sourceType: "JOIN_REWARD",
+      userId: uuid,
+    });
+
+    if (Number(recentPriceText.value) > 0) {
+      const point = convertUserGradeCodeToPoint(
+        gradeText.value,
+        Number(recentPriceText.value)
       );
 
-      userData.value.userAge =
-        new Date().getFullYear() -
-        parseInt(userData.value.userBirthday.slice(0, 4)) +
-        1;
-      userData.value.userGrade = "🌱 솜털냥이";
-      userData.value.userActualPaymentAmount = 0;
-      userData.value.userTotalActualOrderCount = 0;
-      userData.value.userAvailablePoint = 0;
-      userData.value.userTotalUsedPoint = 0;
-      userData.value.userTotalPoint = 0;
-      userData.value.userRefundAccount = userRefundAccount.value.join("/");
-      userData.value.createdAt = Timestamp.fromDate(new Date());
-      userData.value.isAdmin = false;
-
-      await setDoc(doc(db, "users", userCredential.user.uid), userData.value);
-
-      if (userData.value.userReferralId.length > 0) {
-        const referralUserDoc = (
-          await getDocs(
-            query(
-              collection(db, "users"),
-              where("userId", "==", userData.value.userReferralId)
-            )
-          )
-        ).docs[0];
-        const referralUserData = await referralUserDoc.data();
-        await updateDoc(doc(db, "users", referralUserDoc.id), {
-          userReferralList: arrayUnion(userData.value.userId),
-        });
-
-        await sendPpurioMessage({
-          targets: [
-            {
-              to: referralUserData.userPhone,
-            },
-          ],
-          targetCount: 1,
-          content: `[네코쿠모] 신규 고객님께서 고객님을 추천인으로 등록했습니다!\n\n추천인 성함: ${userData.value.userName}\n추천인 아이디: ${userData.value.userId}\n\n추천해주신 고객님께서 상품을 구매하면 구매 포인트의 10%를 적립받게 됩니다!\n오늘도 즐거운 쇼핑 되시길 바랍니다 :)`,
-          refKey: `REFERRAL_${Timestamp.now().seconds}_${
-            referralUserData.userId
-          }`,
-        });
-      }
-
-      await sendPpurioMessage({
-        targets: [
-          {
-            to: userData.value.userPhone,
-          },
-        ],
-        targetCount: 1,
-        content: `[네코쿠모] 계정 생성이 완료되었습니다!\n\n아이디: ${userData.value.userId}\n이메일: ${userData.value.userEmail}\n비밀번호: 가입자 전화번호 ("-" 제외)\n\n아래 링크에 접속하여 로그인해주세요!\nhttps://www.xn--o39akkkwy1i9is75bsxx.shop/login`,
-        refKey: `JOIN_${Timestamp.now().seconds}_${userData.value.userId}`,
-      });
-
-      await signOut(auth);
-
-      const originalUser = (
-        await getDoc(doc(db, "users", originalUserUid))
-      ).data();
-      await signInWithEmailAndPassword(
-        auth,
-        originalUser.userEmail,
-        originalUser.userPassword
-      );
-    } else {
-      const userRef = doc(db, "users", route.query.id);
-      userData.value.userRefundAccount = [
-        userRefundAccount.value[0], // 은행명
-        userRefundAccount.value[1].replace(/-/g, ""), // 계좌번호에서 '-' 제거
-        userRefundAccount.value[2], // 예금주명
-      ].join("/");
-      await updateDoc(userRef, userData.value);
-
-      const referralUserDoc = (
-        await getDocs(
-          query(
-            collection(db, "users"),
-            where("userId", "==", userData.value.userReferralId)
-          )
-        )
-      ).docs[0];
-      await updateDoc(doc(db, "users", referralUserDoc.id), {
-        userReferralList: arrayUnion(userData.value.userId),
+      await addDoc(collection(db, "userPoints"), {
+        actionType: "ADD",
+        afterPoint: point + 3000,
+        amount: point,
+        beforePoint: 3000,
+        createdAt: Timestamp.fromDate(new Date()),
+        description: "기존 결제금액에 대한 포인트 지급",
+        sourceType: "MANUAL_ADMIN",
+        userId: uuid,
       });
     }
+
+    if (isCheckedSalespersonCode.value) {
+      await updateDoc(doc(db, "salespersons", salespersonCodeText.value), {
+        userIds: arrayUnion(uuid),
+      });
+    }
+
+    await sendPpurioMessage({
+      targets: [
+        {
+          to: phoneText.value,
+        },
+      ],
+      targetCount: 1,
+      content: `[네코쿠모] 회원가입이 완료되었습니다!\n\n아이디: ${phoneText.value}\n비밀번호: ${tempPassword}\n\n아래 링크에 접속하여 로그인해주세요!\nhttps://www.necokumo.co.kr/login`,
+      refKey: `JOIN_${Timestamp.now().seconds}_${phoneText.value}`,
+    });
 
     alert("변경내용이 저장되었습니다!");
-    router.replace("/admin/consumer/list");
-  } catch (error) {
-    console.error("Error updating user data: ", error);
+    window.location.href = "/admin/consumer/list";
+  } catch (e) {
+    console.error(e);
+    alert("회원가입 중 오류가 발생했습니다!");
+    isBusy.value = false;
   }
-}
+};
 
-async function openAddressPopup() {
+const openDaumPostcode = () => {
   new window.daum.Postcode({
-    oncomplete: function (data) {
-      let fullAddress = data.address; // 도로명 or 지번 주소
-      let extraAddress = ""; // 건물명, 법정동 등
-      let defaultDetail = ""; // address2에 넣을 기본값
+    oncomplete: (data) => {
+      // 기본 주소
+      let extraAddr = "";
 
-      // 도로명 주소일 경우 부가정보 조합
+      // 참고항목이 있을 경우
       if (data.addressType === "R") {
-        if (data.bname) extraAddress += data.bname;
-        if (data.buildingName) {
-          extraAddress += (extraAddress ? ", " : "") + data.buildingName;
+        if (data.bname !== "") extraAddr += data.bname;
+        if (data.buildingName !== "") {
+          extraAddr +=
+            extraAddr !== "" ? `, ${data.buildingName}` : data.buildingName;
         }
       }
 
-      if (extraAddress) {
-        defaultDetail = `(${extraAddress})`; // 예: "역삼동, 삼성빌딩"
-      }
-
-      // Vue 데이터에 반영
-      userData.value.userPostCode = data.zonecode;
-      userData.value.userAddress1 = fullAddress;
-      userData.value.userAddress2 = defaultDetail; // 여기에 자동 기본값 입력!
-
-      // 상세 주소 input 포커싱
+      postCodeText.value = data.zonecode;
+      address1Text.value = data.address;
+      address2Text.value = `(${extraAddr}) `;
+      // 포커스를 상세 주소로 옮김
       nextTick(() => {
-        document.getElementById("address2")?.focus();
+        document.querySelector('input[placeholder="상세 주소 입력"]')?.focus();
       });
     },
   }).open();
-}
+};
 
-onMounted(async () => {
+const checkSalesPersonCode = async () => {
   try {
-    const query = route.query.id || null;
-    if (query) {
-      const data = await (await getDoc(doc(db, "users", query))).data();
-      userData.value = data;
-      userRefundAccount.value = data.userRefundAccount.split("/");
-      isReplace.value = true;
+    isBusy.value = true;
+
+    if (salespersonCodeText.value.length === 0) {
+      alert("영업자 코드를 입력해주세요!");
+      isBusy.value = false;
+      return;
     }
-  } catch (error) {
-    console.error(error);
+
+    const salespersonDocs = await getDocs(
+      query(
+        collection(db, "salespersons"),
+        where("salespersonId", "==", salespersonCodeText.value)
+      )
+    );
+
+    if (salespersonDocs.empty) {
+      alert("해당하는 영업자가 없습니다!");
+      isBusy.value = false;
+      return;
+    }
+
+    alert("영업자가 확인되었습니다!");
+    isCheckedSalespersonCode.value = true;
+    isBusy.value = false;
+  } catch (e) {
+    console.error(e);
+    alert("영업자 코드 확인 중 오류가 발생했습니다!");
     isBusy.value = false;
   }
-});
+};
 </script>
 
 <style scoped lang="scss">
@@ -562,6 +482,41 @@ onMounted(async () => {
       > h4 {
         width: 160px;
         border-right: 1px solid rgba(0, 0, 0, 0.25);
+      }
+
+      > div {
+        &.rrn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        > button {
+          padding: 8px 12px;
+          border: none;
+          border-radius: 4px;
+          background-color: #007bff;
+          color: #fff;
+          font-size: 14px;
+          cursor: pointer;
+          width: 100%;
+
+          &:hover {
+            background-color: #0069d9;
+          }
+
+          &:disabled {
+            cursor: not-allowed;
+            background-color: #efefef;
+            color: rgba($color: #000000, $alpha: 0.5);
+          }
+        }
+
+        &.grade-container {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
       }
 
       > input,
@@ -666,7 +621,8 @@ onMounted(async () => {
       > div {
         flex: 1;
         > input,
-        textarea {
+        textarea,
+        select {
           width: 100%;
           padding: 8px 12px;
           border: none;

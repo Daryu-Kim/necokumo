@@ -45,16 +45,6 @@
       </div>
     </div>
     <hr />
-    <div class="order-email-container">
-      <h2>결제정보 수신 이메일 주소</h2>
-      <p>{{ orderData.email }}</p>
-    </div>
-    <hr />
-    <div class="order-price-container">
-      <h2>결제금액</h2>
-      <h2>{{ orderData.totalPrice.toLocaleString() }}<span>원</span></h2>
-    </div>
-    <hr />
     <div class="payment-info-container">
       <h2>결제수단</h2>
       <div>
@@ -65,6 +55,11 @@
           {{ orderData.totalPrice.toLocaleString() }}<span>원</span>
         </span>
       </div>
+    </div>
+    <hr />
+    <div class="order-price-container">
+      <h2>결제금액</h2>
+      <h2>{{ orderData.totalPrice.toLocaleString() }}<span>원</span></h2>
     </div>
   </div>
 </template>
@@ -153,16 +148,11 @@ onMounted(async () => {
     }
   }
 
-  > .order-email-container {
-    > p {
-      margin-top: 24px;
-    }
-  }
-
   > .order-price-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 48px;
 
     > h2 {
       color: #007bff;

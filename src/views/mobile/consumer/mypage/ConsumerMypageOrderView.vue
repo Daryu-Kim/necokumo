@@ -7,7 +7,7 @@
           <div class="order-filter-container">
             <select v-model="orderStatusFilter">
               <option value="">전체 주문처리상태</option>
-              <option value="BEFORE_DEPOSIT">입금전</option>
+              <option value="BEFORE_PAYMENT">결제전</option>
               <option value="PAYMENT_COMPLETED">결제완료</option>
               <option value="PREPARING_PRODUCT">상품준비중</option>
               <option value="PREPARING_DELIVERY">배송준비중</option>
@@ -142,7 +142,8 @@
 </template>
 
 <script setup lang="js">
-import { db, auth } from '@/lib/firebase';
+import { getUserId } from '@/lib/auth';
+import { db } from '@/lib/firebase';
 import { generateOrderStatusLabel } from '@/lib/utils';
 import { doc, getDoc, getDocs, query, collection, where, orderBy, Timestamp } from 'firebase/firestore';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -182,9 +183,10 @@ const applyFilters = async () => {
 };
 
 const fetchOrders = async () => {
+  const uid = getUserId();
   const filters = [];
   filters.push(where("orderChannel", "==", "NECOKUMO"));
-  filters.push(where("userId", "==", auth.currentUser.uid));
+  filters.push(where("userId", "==", uid));
 
   let start = new Date(startDate.value);
   start.setHours(0, 0, 0, 0);
@@ -224,6 +226,7 @@ const fetchOrders = async () => {
 };
 
 onMounted(async () => {
+  const uid = getUserId();
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
@@ -240,7 +243,7 @@ onMounted(async () => {
 
   orderStatusFilter.value = queryFilter || "";
 
-  const userDataRef = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+  const userDataRef = (await getDoc(doc(db, "users", uid))).data();
   userData.value = userDataRef;
 
   await fetchOrders();

@@ -4,7 +4,7 @@
       <div class="admin-summary-overlay primary"></div>
       <div class="admin-summary-content">
         <div>
-          <p class="admin-summary-title primary">입금전</p>
+          <p class="admin-summary-title primary">결제전</p>
           <p class="admin-summary-value">
             {{ beforeDepositCount.toLocaleString() }} 개
           </p>
@@ -320,7 +320,7 @@ onMounted(async () => {
   const productOrderDatas = productOrderRefs.docs.map((doc) => doc.data());
 
   beforeDepositCount.value = productOrderDatas.filter(
-    (order) => order.status === "BEFORE_DEPOSIT"
+    (order) => order.status === "BEFORE_PAYMENT"
   ).length;
 
   paymentCompletedCount.value = productOrderDatas.filter(

@@ -11,7 +11,7 @@
               <p class="name">{{ item.productName }}</p>
               <p class="sell-price">
                 <span>계좌이체가</span>
-                {{ (item.productSellPrice * 0.95).toLocaleString() }}원
+                {{ item.productBankSellPrice.toLocaleString() }}원
               </p>
               <p class="sell-price">
                 <span>카드결제가</span>
@@ -25,13 +25,7 @@
           <div class="option-container">
             <p>
               └ [옵션:
-              <span>
-                {{
-                  cartDatas.find((cart) =>
-                    item.option2List.includes(cart.optionName)
-                  )?.optionName || ""
-                }} </span
-              >]
+              <span> {{ item.selectedOptionName }} </span>]
             </p>
           </div>
           <div class="count-container">
@@ -51,7 +45,7 @@
           <div class="option-price-container">
             <p>주문금액</p>
             <strong>
-              {{ (item.productSellPrice * item.count * 0.95).toLocaleString()
+              {{ (item.productBankSellPrice * item.count).toLocaleString()
               }}<span>원</span> ({{
                 (item.productSellPrice * item.count).toLocaleString()
               }}<span>원</span>)
@@ -64,8 +58,8 @@
           <div>
             <p>총 상품금액</p>
             <p>
-              {{ totalBankSellPrice.toLocaleString() }}<span>원</span><br />({{
-                totalCardSellPrice.toLocaleString()
+              {{ totalBankPrice.toLocaleString() }}<span>원</span><br />({{
+                totalCardPrice.toLocaleString()
               }}<span>원</span>)
             </p>
           </div>
@@ -77,8 +71,8 @@
           <div>
             <strong>결제 예정금액</strong>
             <strong>
-              {{ totalBankSellPrice.toLocaleString() }}<span>원</span><br />({{
-                totalCardSellPrice.toLocaleString()
+              {{ totalBankPrice.toLocaleString() }}<span>원</span><br />({{
+                totalCardPrice.toLocaleString()
               }}<span>원</span>)
             </strong>
           </div>
@@ -96,20 +90,21 @@
 
 <script setup lang="js">
 import { onMounted, ref, computed } from 'vue';
-import { auth, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { getDoc, doc, updateDoc } from "firebase/firestore";
 import { useRouter } from 'vue-router';
+import { getUserId } from '@/lib/auth';
 
 const cartDatas = ref([]);
 const productDatas = ref([]);
 
 const router = useRouter();
 
-const totalBankSellPrice = computed(() => {
-  return productDatas.value.reduce((acc, curr) => acc + (curr.productSellPrice * curr.count * 0.95), 0);
+const totalBankPrice = computed(() => {
+  return productDatas.value.reduce((acc, curr) => acc + (curr.productBankSellPrice * curr.count), 0);
 });
 
-const totalCardSellPrice = computed(() => {
+const totalCardPrice = computed(() => {
   return productDatas.value.reduce((acc, curr) => acc + (curr.productSellPrice * curr.count), 0);
 });
 
@@ -119,11 +114,9 @@ async function buyNow() {
     const itemsToBuy = [];
 
     for (const selected of cartDatas.value) {
-      const product = await (await getDoc(doc(db, "product", selected.productCode))).data();
       itemsToBuy.push({
         productCode: selected.productCode,
         optionName: selected.optionName,
-        price: product.productSellPrice,
         count: selected.count,
       });
     }
@@ -192,7 +185,8 @@ async function removeCart(index) {
 }
 
 async function updateCartData() {
-  await updateDoc(doc(db, "users", auth.currentUser.uid), {
+  const uid = getUserId();
+  await updateDoc(doc(db, "users", uid), {
     userProductCartList: cartDatas.value,
   });
 };
@@ -202,7 +196,7 @@ async function fetchProductData() {
     console.log("Fetching Product Data...");
     cartDatas.value.forEach(async (product) => {
       const productDoc = await getDoc(doc(db, "product", product.productCode));
-      productDatas.value.push({ selectedOptionCode: product.productOptionCode, count: product.count, ...productDoc.data() });
+      productDatas.value.push({ selectedOptionCode: product.productOptionCode, selectedOptionName: product.optionName, count: product.count, ...productDoc.data() });
     })
     console.log("Product Data Fetched Successfully!: ", productDatas.value);
   } catch (error) {
@@ -213,7 +207,8 @@ async function fetchProductData() {
 async function fetchCartData() {
   try {
     console.log("Fetching Cart Data...");
-    const userData = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const uid = getUserId();
+    const userData = await getDoc(doc(db, "users", uid));
     cartDatas.value = userData.data().userProductCartList;
     console.log("Cart Data Fetched Successfully!: ", cartDatas.value);
   } catch (error) {

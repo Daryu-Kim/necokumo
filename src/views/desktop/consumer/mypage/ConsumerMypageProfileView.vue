@@ -10,7 +10,16 @@
             <h2>안녕하세요. {{ userData.userName }} 님!</h2>
             <p class="grade">
               고객님의 회원 등급은
-              <span>{{ userData.userGrade }}</span> 입니다.
+              <span>{{ convertUserGradeCodeToLabel(userData.userGrade) }}</span>
+              입니다.
+            </p>
+            <p style="margin-top: 4px">
+              구매 금액의
+              <span
+                >{{
+                  convertUserGradeCodeToPointRate(userData.userGrade) * 100
+                }}%</span
+              >가 항상 적립됩니다!
             </p>
             <p style="margin-top: 4px">
               오늘도 구름 위를 걷는 듯한 쇼핑을 즐겨보세요 ☁️
@@ -22,35 +31,18 @@
         </div>
         <div style="width: 25%" class="count-container">
           <span class="material-icons-outlined"> paid </span>
-          <h3>{{ userData.userAvailablePoint.toLocaleString() }} 냥코인</h3>
+          <h3>{{ userPoint.toLocaleString() }} 냥코인</h3>
           <p>사용가능 냥코인</p>
         </div>
         <div style="width: 25%" class="count-container">
           <span class="material-icons-outlined"> inventory_2 </span>
           <h3>
-            {{ userData.userActualPaymentAmount.toLocaleString() }}원 ({{
-              userData.userTotalActualOrderCount.toLocaleString()
+            {{ totalOrderPrice.toLocaleString() }}원 ({{
+              totalOrderCount.toLocaleString()
             }}회)
           </h3>
           <p>총 주문</p>
         </div>
-      </div>
-      <div class="invite-container">
-        <h3>주소를 복사하여 친구를 쇼핑몰에 초대해보세요.</h3>
-        <div class="address-copy-container">
-          <input
-            type="text"
-            :value="`http://necokumo.shop/?reco_id=${userData.userId}`"
-            readonly
-          />
-          <button @click="copyAddress">주소 복사</button>
-        </div>
-        <p>친구가 상품을 구매 시 구매 적립금의 일부를 받아요.</p>
-        <p>
-          추천받은 횟수가 늘어나면 네코쿠모의 구인 공고에 지원했을때 가산점을
-          받아요.
-        </p>
-        <p>네코쿠모에서 근무 시 이 적립금을 환급받을 수도 있어요.</p>
       </div>
     </div>
     <div class="main-container">
@@ -93,11 +85,11 @@
           <div class="delivery-container">
             <div>
               <h3>
-                <router-link to="/mypage/order?filter=BEFORE_DEPOSIT">{{
-                  orderStatus.BEFORE_DEPOSIT.length.toLocaleString()
+                <router-link to="/mypage/order?filter=BEFORE_PAYMENT">{{
+                  orderStatus.BEFORE_PAYMENT.length.toLocaleString()
                 }}</router-link>
               </h3>
-              <p>입금전</p>
+              <p>결제전</p>
             </div>
             <span class="material-icons-outlined"> chevron_right </span>
             <div>
@@ -250,17 +242,17 @@
 </template>
 
 <script setup lang="js">
-import { db, auth } from '@/lib/firebase';
-import { generateOrderStatusLabel } from '@/lib/utils';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, getDocs, query, collection, where, orderBy, Timestamp } from 'firebase/firestore';
+import { getUserId, logoutProcess } from '@/lib/auth';
+import { db } from '@/lib/firebase';
+import { convertUserGradeCodeToLabel, convertUserGradeCodeToPointRate, generateOrderStatusLabel } from '@/lib/utils';
+import router from '@/router';
+import { doc, getDoc, getDocs, query, collection, where, orderBy, Timestamp, limit } from 'firebase/firestore';
 import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 const userData = ref(null);
 const orderData = ref([]);
 const orderStatus = ref({
-  BEFORE_DEPOSIT: [],
+  BEFORE_PAYMENT: [],
   PAYMENT_COMPLETED: [],
   PREPARING_PRODUCT: [],
   PREPARING_DELIVERY: [],
@@ -272,21 +264,17 @@ const orderStatus = ref({
 });
 const recentOrders = ref([]);
 
-const router = useRouter();
+const userPoint = ref(0);
+const totalOrderCount = ref(0);
+const totalOrderPrice = ref(0);
 
 const resetPassword = async () => {
-  try {
-    await sendPasswordResetEmail(auth, userData.value.userEmail);
-    alert('비밀번호 초기화 링크를 전송하였습니다.\n메일보관함을 확인하세요!');
-  } catch (error) {
-    console.error('Error sending password reset email:', error);
-    alert('비밀번호 초기화 실패하였습니다.\n관리자에게 문의해주세요!');
-  }
+  router.push("/mypage/reset-password");
 }
 
 const logout = async () => {
-  await auth.signOut();
-  router.push('/');
+  await logoutProcess();
+  window.location.href = "/";
 }
 
 function formatDate(date) {
@@ -296,24 +284,44 @@ function formatDate(date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-const copyAddress = () => {
-  navigator.clipboard.writeText(`http://necokumo.shop/?reco_id=${userData.value.userId}`);
-  alert('주소를 복사했습니다.\n친구들에게 공유해보세요!');
-};
-
 onMounted(async () => {
+  const uid = getUserId();
   const now = new Date();
   const threeMonthsAgo = new Date(now.setMonth(now.getMonth() - 3));
   const threeMonthsAgoTimestamp = Timestamp.fromDate(threeMonthsAgo);
 
-  const userDataRef = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+  const userDataRef = (await getDoc(doc(db, "users", uid))).data();
   userData.value = userDataRef;
 
+  // 유저 포인트 조회
+  const userPointRef = await getDocs(
+    query(
+      collection(db, "userPoints"),
+      where("userId", "==", uid),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    )
+  );
+
+  userPoint.value = userPointRef.docs[0].data().afterPoint;
+
+  // 총 주문 건수 & 금액 조회
+  const totalOrderRef = await getDocs(
+    query(
+      collection(db, "order"),
+      where("orderChannel", "==", "NECOKUMO"),
+      where("userId", "==", uid)
+    )
+  );
+
+  totalOrderCount.value = totalOrderRef.size;
+  totalOrderPrice.value = totalOrderRef.docs.reduce((acc, doc) => acc + doc.data().productsPrice, 0);
+
+  // 주문내역 조회
   const orderDataRef = await getDocs(
     query(
       collection(db, "productOrder"),
-      where("orderChannel", "==", "NECOKUMO"),
-      where("userId", "==", auth.currentUser.uid),
+      where("userId", "==", uid),
       where("createdAt", ">=", threeMonthsAgoTimestamp), // 3개월 조건 추가
       orderBy("createdAt", "desc") // 반드시 createdAt으로 정렬
     )
@@ -330,12 +338,15 @@ onMounted(async () => {
   );
   console.log(orderData.value);
   orderStatus.value = {
-    BEFORE_DEPOSIT: orderDataRef.docs.filter((doc) => doc.data().status === 'BEFORE_DEPOSIT'),
+    BEFORE_PAYMENT: orderDataRef.docs.filter((doc) => doc.data().status === 'BEFORE_PAYMENT'),
     PAYMENT_COMPLETED: orderDataRef.docs.filter((doc) => doc.data().status === 'PAYMENT_COMPLETED'),
     PREPARING_PRODUCT: orderDataRef.docs.filter((doc) => doc.data().status === 'PREPARING_PRODUCT'),
     PREPARING_DELIVERY: orderDataRef.docs.filter((doc) => doc.data().status === 'PREPARING_DELIVERY'),
     SHIPPING_PROGRESS: orderDataRef.docs.filter((doc) => doc.data().status === 'SHIPPING_PROGRESS'),
-    DELIVERY_COMPLETED: orderDataRef.docs.filter((doc) => doc.data().status === 'DELIVERY_COMPLETED'),
+    DELIVERY_COMPLETED: orderDataRef.docs.filter(doc => {
+      const status = doc.data().status;
+      return status === 'DELIVERY_COMPLETED' || status === 'CONFIRM_PURCHASE';
+    }),
     CANCELLED: orderDataRef.docs.filter((doc) => doc.data().status === 'CANCELLED'),
     EXCHANGE: orderDataRef.docs.filter((doc) => doc.data().status === 'EXCHANGE'),
     RETURNED: orderDataRef.docs.filter((doc) => doc.data().status === 'RETURNED'),
@@ -405,6 +416,10 @@ onMounted(async () => {
 
           > p {
             font-size: 14px;
+            > span {
+              font-weight: 700;
+              color: #007bff;
+            }
           }
         }
       }
@@ -423,44 +438,6 @@ onMounted(async () => {
           margin-top: 4px;
           color: #666;
         }
-      }
-    }
-
-    > .invite-container {
-      padding: 48px 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-
-      > div {
-        margin: 24px 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        > input {
-          font-size: 16px;
-          height: 42px;
-          width: 420px;
-          padding: 0 12px;
-        }
-
-        > button {
-          border: none;
-          background: #007bff;
-          height: 42px;
-          font-weight: 700;
-          color: white;
-          border-radius: 4px;
-          font-size: 16px;
-          width: 96px;
-          cursor: pointer;
-        }
-      }
-
-      > p {
-        font-size: 16px;
-        line-height: 24px;
-        color: #666;
       }
     }
   }

@@ -85,7 +85,7 @@
             <div class="price-container">
               <div class="sell-price-container">
                 <router-link :to="`/product?id=${item.id}`" class="sell-price">
-                  {{ (item.productSellPrice * 0.95).toLocaleString() }}원 ({{
+                  {{ item.productBankSellPrice.toLocaleString() }}원 ({{
                     item.productSellPrice.toLocaleString()
                   }}원)
                 </router-link>
@@ -122,14 +122,24 @@
 <script setup lang="js">
 import { onMounted, ref, watch } from 'vue';
 import { db } from "@/lib/firebase";
-import { getDocs, query, collection, where, orderBy } from "firebase/firestore";
-import { useRoute, useRouter } from 'vue-router';
+import { getDocs, query, collection, where, orderBy, limit, startAfter } from "firebase/firestore";
+import { useRoute } from 'vue-router';
+import { nextTick } from 'vue';
+import { onUnmounted } from 'vue';
 
 const productDatas = ref([]);
 const viewFilterData = ref("list");
 const searchKeyword = ref("");
 
-const router = useRouter();
+const lastDoc = ref(null);
+const isLoading = ref(false);
+const isEnd = ref(false);
+
+const PAGE_LIMIT = 30;
+
+const observerTarget = ref(null);
+let observer = null;
+
 const route = useRoute();
 
 function formatTimestampToYearMonth(timestamp) {
@@ -139,30 +149,60 @@ function formatTimestampToYearMonth(timestamp) {
   return `${year}.${month}`;
 }
 
-async function fetchFilteredData() {
-  try {
-    console.log("Fetching Popular Data...");
-    productDatas.value.sort((a, b) => {
-      // 1️⃣ 우선 productLikeCount 기준 내림차순
-      if (b.productLikeCount !== a.productLikeCount) {
-        return b.productLikeCount - a.productLikeCount;
-      }
-
-      // 2️⃣ 둘 다 0이면 createdAt 기준 최신순
-      if (a.productLikeCount === 0 && b.productLikeCount === 0) {
-        return b.createdAt - a.createdAt;
-      }
-
-      return 0; // 같으면 순서 그대로
-    });
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
+const handleSearch = () => {
+  if (searchKeyword.value.trim() === "") {
+    alert("검색어를 입력하세요.");
+    return;
+  } else {
+    const encodedKeyword = encodeURIComponent(searchKeyword.value);
+    window.location.href = `/search?keyword=${encodedKeyword}`;
   }
 }
 
-async function fetchProductData() {
+function getOrderByByFilter(filter) {
+  switch (filter) {
+    case "popular":
+      return ["popularScore", "desc"];
+    case "ascPrice":
+      return ["productSellPrice", "asc"];
+    case "descPrice":
+      return ["productSellPrice", "desc"];
+    case "newest":
+      return ["createdAt", "desc"];
+    case "descView":
+      return ["productViewCount", "desc"];
+    case "descLike":
+      return ["productLikeCount", "desc"];
+    case "descPurchase":
+      return ["purchaseCount", "desc"];
+    default:
+      return ["popularScore", "desc"];
+  }
+}
+
+watch(() => route.query.keyword, async (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    await fetchProducts();
+  }
+});
+
+async function fetchProducts({ reset = false } = {}) {
+  if (isLoading.value) return;
+
+  if (reset) {
+    productDatas.value = [];
+    lastDoc.value = null;
+    isEnd.value = false;
+  }
+
+  if (isEnd.value) return;
+
+  isLoading.value = true;
+
   try {
-    console.log("Fetching Product Data...");
+    const [field, dir] =
+      getOrderByByFilter(route.query.filter || "popular");
+
     const keywordQuery = route.query.keyword || "";
     const keywordList = keywordQuery
       .toLowerCase()
@@ -170,47 +210,79 @@ async function fetchProductData() {
       .split(" ")
       .map((kw) => kw.trim())
       .filter(Boolean)
-      .slice(0, 10);                 // Firestore array-contains-any는 최대 10개까지 지원
+      .slice(0, 10);
 
-    // 2. Firestore 쿼리 작성
-    const q = query(
+    console.log(keywordList);
+
+    let q = query(
       collection(db, "product"),
       where("isActive", "==", true),
       where("productNameKeywords", "array-contains-any", keywordList),
-      orderBy("productLikeCount", "desc")
+      orderBy(field, dir),
+      limit(PAGE_LIMIT)
     );
-    const product = await getDocs(q);
-    productDatas.value = product.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log("Product Data Fetched Successfully!: ", productDatas.value);
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
-}
 
-const handleSearch = () => {
-  if (searchKeyword.value.trim() === "") {
-    alert("검색어를 입력하세요.");
-    return;
-  } else {
-    const encodedKeyword = encodeURIComponent(searchKeyword.value);
-    router.push(`/search?keyword=${encodedKeyword}`);
-  }
-}
-
-onMounted(async () => {
-    try {
-        await fetchProductData();
-        await fetchFilteredData();
-    } catch (error) {
-        console.error('Failed to fetch data:', error);
+    if (lastDoc.value) {
+      q = query(q, startAfter(lastDoc.value));
     }
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      isEnd.value = true;
+      return;
+    }
+
+    productDatas.value.push(
+      ...snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    );
+
+    lastDoc.value = snap.docs[snap.docs.length - 1];
+  } catch (e) {
+    console.error(e);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+function initObserver() {
+  if (observer) observer.disconnect();
+
+  observer = new IntersectionObserver(
+    entries => {
+      const entry = entries[0];
+      if (!entry.isIntersecting) return;
+      if (isLoading.value || isEnd.value) return;
+
+      fetchProducts({ reset: true });
+    },
+    { rootMargin: "200px" } // 미리 로딩
+  );
+
+  if (observerTarget.value) {
+    observer.observe(observerTarget.value);
+  }
+}
+
+watch(
+  () => [route.query.keyword],
+  async () => {
+    if (observer) observer.disconnect();
+
+    await fetchProducts({ reset: true });
+
+    await nextTick();
+    initObserver();
+  },
+  { immediate: true }
+);
+
+onMounted(() => {
+  initObserver();
 });
 
-watch(() => route.query.keyword, async (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    await fetchProductData();
-    await fetchFilteredData();
-  }
+onUnmounted(() => {
+  if (observer) observer.disconnect();
 });
 </script>
 

@@ -55,11 +55,10 @@
 </template>
 
 <script setup lang="js">
-import { auth, db } from '@/lib/firebase';
+import { getUserId } from '@/lib/auth';
+import { db } from '@/lib/firebase';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { ref, onMounted } from 'vue';
-
-const currentUser = ref(null);
+import { onMounted } from 'vue';
 
 onMounted(async () => {
   const setVh = () => {
@@ -68,14 +67,13 @@ onMounted(async () => {
   };
   setVh();
   window.addEventListener('resize', setVh);
-  auth.onAuthStateChanged(async (user) => {
-    currentUser.value = user;
-    if (user) {
-      await updateDoc(doc(db, "users", user.uid), {
-        visitedAt: Timestamp.fromDate(new Date()),
-      });
-    }
-  });
+
+  const user = getUserId();
+  if (user) {
+    await updateDoc(doc(db, "users", user), {
+      visitedAt: Timestamp.fromDate(new Date()),
+    });
+  }
 });
 </script>
 

@@ -29,11 +29,11 @@
           <div class="delivery-container">
             <div>
               <h3>
-                <router-link to="/mypage/order?filter=BEFORE_DEPOSIT">{{
-                  orderStatus.BEFORE_DEPOSIT.length.toLocaleString()
+                <router-link to="/mypage/order?filter=BEFORE_PAYMENT">{{
+                  orderStatus.BEFORE_PAYMENT.length.toLocaleString()
                 }}</router-link>
               </h3>
-              <p>입금전</p>
+              <p>결제전</p>
             </div>
             <div>
               <h3>
@@ -132,8 +132,7 @@
                       {{ order.productData.productName }}
                     </p>
                     <p class="price">
-                      {{ order.productPrice.toLocaleString()
-                      }}{{ order.currency === "KRW" ? "원" : "$" }} ({{
+                      {{ order.productPrice.toLocaleString() }}원 ({{
                         order.count
                       }}개)
                     </p>
@@ -179,17 +178,17 @@
 </template>
 
 <script setup lang="js">
-import { db, auth } from '@/lib/firebase';
+import { getUserId, logoutProcess } from '@/lib/auth';
+import { db } from '@/lib/firebase';
 import { generateOrderStatusLabel } from '@/lib/utils';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import router from '@/router';
 import { doc, getDoc, getDocs, query, collection, where, orderBy, Timestamp } from 'firebase/firestore';
 import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 const userData = ref(null);
 const orderData = ref([]);
 const orderStatus = ref({
-  BEFORE_DEPOSIT: [],
+  BEFORE_PAYMENT: [],
   PAYMENT_COMPLETED: [],
   PREPARING_PRODUCT: [],
   PREPARING_DELIVERY: [],
@@ -201,21 +200,13 @@ const orderStatus = ref({
 });
 const recentOrders = ref([]);
 
-const router = useRouter();
-
 const resetPassword = async () => {
-  try {
-    await sendPasswordResetEmail(auth, userData.value.userEmail);
-    alert('비밀번호 초기화 링크를 전송하였습니다.\n메일보관함을 확인하세요!');
-  } catch (error) {
-    console.error('Error sending password reset email:', error);
-    alert('비밀번호 초기화 실패하였습니다.\n관리자에게 문의해주세요!');
-  }
+  router.push("/mypage/reset-password");
 }
 
 const logout = async () => {
-  await auth.signOut();
-  router.push('/');
+  await logoutProcess();
+  window.location.href = "/";
 }
 
 function formatDate(date) {
@@ -229,15 +220,16 @@ onMounted(async () => {
   const now = new Date();
   const threeMonthsAgo = new Date(now.setMonth(now.getMonth() - 3));
   const threeMonthsAgoTimestamp = Timestamp.fromDate(threeMonthsAgo);
+  const uid = getUserId();
 
-  const userDataRef = (await getDoc(doc(db, "users", auth.currentUser.uid))).data();
+  const userDataRef = (await getDoc(doc(db, "users", uid))).data();
   userData.value = userDataRef;
 
   const orderDataRef = await getDocs(
     query(
       collection(db, "productOrder"),
       where("orderChannel", "==", "NECOKUMO"),
-      where("userId", "==", auth.currentUser.uid),
+      where("userId", "==", uid),
       where("createdAt", ">=", threeMonthsAgoTimestamp), // 3개월 조건 추가
       orderBy("createdAt", "desc") // 반드시 createdAt으로 정렬
     )
@@ -254,12 +246,15 @@ onMounted(async () => {
   );
   console.log(orderData.value);
   orderStatus.value = {
-    BEFORE_DEPOSIT: orderDataRef.docs.filter((doc) => doc.data().status === 'BEFORE_DEPOSIT'),
+    BEFORE_PAYMENT: orderDataRef.docs.filter((doc) => doc.data().status === 'BEFORE_PAYMENT'),
     PAYMENT_COMPLETED: orderDataRef.docs.filter((doc) => doc.data().status === 'PAYMENT_COMPLETED'),
     PREPARING_PRODUCT: orderDataRef.docs.filter((doc) => doc.data().status === 'PREPARING_PRODUCT'),
     PREPARING_DELIVERY: orderDataRef.docs.filter((doc) => doc.data().status === 'PREPARING_DELIVERY'),
     SHIPPING_PROGRESS: orderDataRef.docs.filter((doc) => doc.data().status === 'SHIPPING_PROGRESS'),
-    DELIVERY_COMPLETED: orderDataRef.docs.filter((doc) => doc.data().status === 'DELIVERY_COMPLETED'),
+    DELIVERY_COMPLETED: orderDataRef.docs.filter(doc => {
+      const status = doc.data().status;
+      return status === 'DELIVERY_COMPLETED' || status === 'CONFIRM_PURCHASE';
+    }),
     CANCELLED: orderDataRef.docs.filter((doc) => doc.data().status === 'CANCELLED'),
     EXCHANGE: orderDataRef.docs.filter((doc) => doc.data().status === 'EXCHANGE'),
     RETURNED: orderDataRef.docs.filter((doc) => doc.data().status === 'RETURNED'),

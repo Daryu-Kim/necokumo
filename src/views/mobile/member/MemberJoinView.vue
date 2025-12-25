@@ -315,6 +315,7 @@
 <script setup>
 import { db } from "@/lib/firebase";
 import {
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -322,11 +323,12 @@ import {
   query,
   setDoc,
   Timestamp,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { Icon } from "@vicons/utils";
 import { CloseRound } from "@vicons/material";
-import { nextTick, ref } from "vue";
+import { nextTick, onMounted, ref } from "vue";
 import router from "@/router";
 import {
   convertRRNtoDate,
@@ -336,6 +338,7 @@ import {
 import { encrypt } from "@/lib/crypto";
 import { checkResidentCard } from "@/lib/apick";
 import { loginProcess } from "@/lib/auth";
+import { useRoute } from "vue-router";
 
 const isBusy = ref(false);
 
@@ -689,6 +692,12 @@ const nextStep = async () => {
       createdAt: Timestamp.fromDate(new Date()),
     });
 
+    if (isCheckedSalespersonCode.value) {
+      await updateDoc(doc(db, "salespersons", salespersonCodeText.value), {
+        userIds: arrayUnion(uuid),
+      });
+    }
+
     await loginProcess(uuid);
 
     router.push("/member/join-success");
@@ -713,6 +722,26 @@ const openDialog = async (docId) => {
 const closeDialog = () => {
   isDialogOpened.value = false;
 };
+
+onMounted(async () => {
+  const route = useRoute();
+  const id = route.query.id || "";
+
+  isBusy.value = true;
+
+  const salespersonDocs = await getDocs(
+    query(collection(db, "salespersons"), where("salespersonId", "==", id))
+  );
+
+  if (salespersonDocs.empty) {
+    isBusy.value = false;
+    return;
+  }
+
+  salespersonCodeText.value = id;
+  isCheckedSalespersonCode.value = true;
+  isBusy.value = false;
+});
 </script>
 
 <style lang="scss" scoped>

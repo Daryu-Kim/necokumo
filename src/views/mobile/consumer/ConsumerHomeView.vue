@@ -196,7 +196,7 @@ onMounted(async () => {
             where("productCategory", "array-contains", categoryId),
             orderBy("popularScore", "desc"),
             orderBy("createdAt", "desc"),
-            limit(5)
+            limit(4)
           ));
 
           // 각 카테고리 ID를 키로 하여 데이터 저장

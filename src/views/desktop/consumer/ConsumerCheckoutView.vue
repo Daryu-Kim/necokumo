@@ -250,7 +250,7 @@
     <button @click="checkoutCard" v-else>
       {{
         `${(
-          totalCardDollar + (typeof deliveryFee === "string" ? 0 : deliveryFee)
+          totalCardPrice + (typeof deliveryFee === "string" ? 0 : deliveryFee)
         ).toLocaleString()}원`
       }}
       결제하기

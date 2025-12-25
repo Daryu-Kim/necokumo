@@ -250,7 +250,7 @@
     <button @click="checkoutCard" v-else>
       {{
         `${(
-          totalCardDollar + (typeof deliveryFee === "string" ? 0 : deliveryFee)
+          totalCardPrice + (typeof deliveryFee === "string" ? 0 : deliveryFee)
         ).toLocaleString()}원`
       }}
       결제하기
@@ -1013,13 +1013,14 @@ onMounted(async () => {
       > .title {
         width: 96px;
         line-height: 38px;
+        font-size: 14px;
       }
 
       > input {
         width: 100%;
         padding: 8px 12px;
         border: 1px solid black;
-        font-size: 16px;
+        font-size: 14px;
         border-radius: 4px;
       }
 

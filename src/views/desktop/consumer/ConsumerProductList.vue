@@ -2,7 +2,10 @@
   <div class="consumer-product-list">
     <h1 v-if="currentCategoryData">
       {{ currentCategoryData.categoryName }}
-      <span>({{ productDatas.length.toLocaleString() }}개 상품)</span>
+      <span
+        >({{ currentCategoryData.categoryProductCount.toLocaleString() }}개
+        상품)</span
+      >
     </h1>
     <div class="product-list-box">
       <div class="filter-container">

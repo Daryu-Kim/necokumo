@@ -4,7 +4,10 @@
       <div>
         <h3 v-if="currentCategoryData">
           {{ currentCategoryData.categoryName }}
-          <span>({{ productDatas.length.toLocaleString() }}개 상품)</span>
+          <span
+            >({{ currentCategoryData.categoryProductCount.toLocaleString() }}개
+            상품)</span
+          >
         </h3>
         <table v-if="categoryRows.length > 0">
           <tr v-for="(row, rowIndex) in categoryRows" :key="rowIndex">

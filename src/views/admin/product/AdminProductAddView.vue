@@ -159,6 +159,9 @@
             <button @click="crawlProduct('cigapong')" :disabled="isBusy">
               시가퐁
             </button>
+            <button @click="crawlProduct('paxvape')" :disabled="isBusy">
+              팍스베이프
+            </button>
             <button @click="crawlProduct('manual')" :disabled="isBusy">
               수동
             </button>
@@ -541,14 +544,11 @@ const crawlProduct = async (buyer) => {
         break;
       case "vanom":
         replaceUrl = "";
-        thumbnailImage = doc.querySelector("img.ThumbImage");
-        detailImages = doc.querySelectorAll("#prdDetail img");
+        thumbnailImage = doc.querySelector("#btn_owl_0 > a > img");
+        detailImages = doc.querySelectorAll("#prod_detail_body > p > img");
         options = doc.querySelectorAll(
-          "#M_mode > div.in > table optgroup option"
+          "#prod_options > div > div > div.txt_l > label"
         );
-        if (options.length == 0) {
-          options = doc.querySelectorAll("#M_mode > div.in > table option");
-        }
         break;
       case "cigarman":
         replaceUrl = "https://cigarman.co.kr/";
@@ -647,6 +647,17 @@ const crawlProduct = async (buyer) => {
           );
         }
         break;
+      case "paxvape":
+        replaceUrl = "";
+        thumbnailImage = doc.querySelector("img.ThumbImage");
+        detailImages = doc.querySelectorAll("#prdDetail img");
+        options = doc.querySelectorAll("#product_option_id1 option");
+        if (options.length == 0) {
+          options = doc.querySelectorAll(
+            "#product_option_id1 > optgroup > option"
+          );
+        }
+        break;
       case "manual":
         replaceUrl = "";
         detailImages = doc.querySelectorAll("img");
@@ -697,50 +708,96 @@ const crawlProduct = async (buyer) => {
     });
 
     optionList.value = [];
-    Array.from(options)
-      .filter((opt) => {
-        if (opt.value === "" || opt.value === "*" || opt.value === "**")
-          return false;
+    if (buyer !== "vanom") {
+      Array.from(options)
+        .filter((opt) => {
+          if (opt.value === "" || opt.value === "*" || opt.value === "**")
+            return false;
 
-        let text = opt.textContent.replace("[품절]", "").trim();
+          let text = opt.textContent.replace("[품절]", "").trim();
 
-        if (text.includes("[")) return false;
-        if (text.includes("제조")) return false;
+          if (text.includes("[")) return false;
+          if (text.includes("제조")) return false;
 
-        return true;
-      })
-      .map((opt) => {
-        let text = opt.textContent;
+          return true;
+        })
+        .map((opt) => {
+          let text = opt.textContent;
 
-        // [품절] 제거
-        text = text.replace("[품절]", "").trim();
+          // [품절] 제거
+          text = text.replace("[품절]", "").trim();
 
-        // (…원) 패턴을 임시 치환
-        const pricePatterns = [];
-        text = text.replace(/\(-?\d{1,3}(,\d{3})*원\)/g, (match) => {
-          pricePatterns.push(match);
-          return `__PRICE${pricePatterns.length - 1}__`;
+          // (…원) 패턴을 임시 치환
+          const pricePatterns = [];
+          text = text.replace(/\(-?\d{1,3}(,\d{3})*원\)/g, (match) => {
+            pricePatterns.push(match);
+            return `__PRICE${pricePatterns.length - 1}__`;
+          });
+
+          // 나머지 괄호 및 괄호 안 내용 제거
+          text = text.replaceAll(/\([^()]*\)/g, "");
+
+          // 가격 패턴 복원
+          pricePatterns.forEach((price, idx) => {
+            const placeholder = `__PRICE${idx}__`;
+            text = text.replace(placeholder, price);
+          });
+
+          // 남은 공백 정리
+          return text.trim();
+        })
+        .forEach((option, index) => {
+          optionList.value.push({
+            optionCode: (index + 1).toString().padStart(4, "0"),
+            optionName: option,
+            optionStock: 0,
+          });
         });
+    } else {
+      Array.from(options)
+        .filter((opt) => {
+          if (
+            opt.getAttribute("data-optcode") === "" ||
+            opt.getAttribute("data-optcode") === "*" ||
+            opt.getAttribute("data-optcode") === "**"
+          )
+            return false;
 
-        // 나머지 괄호 및 괄호 안 내용 제거
-        text = text.replace(/\([^()]*\)/g, "");
+          return true;
+        })
+        .map((opt) => {
+          let text = opt.getAttribute("data-title");
 
-        // 가격 패턴 복원
-        pricePatterns.forEach((price, idx) => {
-          const placeholder = `__PRICE${idx}__`;
-          text = text.replace(placeholder, price);
+          // [품절] 제거
+          text = text.replace("[품절]", "").trim();
+
+          // (…원) 패턴을 임시 치환
+          const pricePatterns = [];
+          text = text.replace(/\(-?\d{1,3}(,\d{3})*원\)/g, (match) => {
+            pricePatterns.push(match);
+            return `__PRICE${pricePatterns.length - 1}__`;
+          });
+
+          // 나머지 괄호 및 괄호 안 내용 제거
+          text = text.replace(/\([^()]*\)/g, "");
+
+          // 가격 패턴 복원
+          pricePatterns.forEach((price, idx) => {
+            const placeholder = `__PRICE${idx}__`;
+            text = text.replace(placeholder, price);
+          });
+
+          // 남은 공백 정리
+          return text.trim();
+        })
+        .forEach((option, index) => {
+          optionList.value.push({
+            optionCode: (index + 1).toString().padStart(4, "0"),
+            optionName: option,
+            optionStock: 0,
+          });
         });
-
-        // 남은 공백 정리
-        return text.trim();
-      })
-      .forEach((option, index) => {
-        optionList.value.push({
-          optionCode: (index + 1).toString().padStart(4, "0"),
-          optionName: option,
-          optionStock: 0,
-        });
-      });
+    }
     isBusy.value = false;
   } catch (error) {
     console.error(error);

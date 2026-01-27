@@ -6,26 +6,34 @@
       class="admin-shortcut-item primary"
     >
       <span class="material-icons-round">shopping_cart</span>
-      <p>자사몰</p>
+      <p>폐쇄몰 1</p>
+    </a>
+    <a
+      href="https://necokumo.co.kr/"
+      target="_blank"
+      class="admin-shortcut-item primary"
+    >
+      <span class="material-icons-round">shopping_cart</span>
+      <p>폐쇄몰 2</p>
     </a>
     <a
       href="https://냥이네구름가게.shop/"
       target="_blank"
       class="admin-shortcut-item primary"
     >
-      <span class="material-icons-round">report_problem</span>
-      <p>계좌이체몰</p>
+      <span class="material-icons-round">shopping_cart</span>
+      <p>폐쇄몰 3</p>
     </a>
     <a
-      href="https://eclogin.cafe24.com/Shop/"
+      href="https://snsshop.kr/"
       target="_blank"
       class="admin-shortcut-item secondary"
     >
       <span class="material-icons-round">report_problem</span>
-      <p>카페24 관리자</p>
+      <p>SNS 작업몰</p>
     </a>
     <a
-      href="https://instagram.com/necokumo.shop"
+      href="https://instagram.com/necokumo_"
       target="_blank"
       class="admin-shortcut-item secondary"
     >
@@ -41,12 +49,28 @@
       <p>유튜브</p>
     </a>
     <a
-      href="https://www.cupost.co.kr/postbox/main.cupost"
+      href="https://chzzk.naver.com/"
       target="_blank"
       class="admin-shortcut-item secondary"
     >
       <span class="material-icons-round">report_problem</span>
-      <p>택배사 사이트</p>
+      <p>Chzzk</p>
+    </a>
+    <a
+      href="https://www.sooplive.co.kr/"
+      target="_blank"
+      class="admin-shortcut-item secondary"
+    >
+      <span class="material-icons-round">report_problem</span>
+      <p>SOOP</p>
+    </a>
+    <a
+      href="https://web.realsystem.co.kr/daelim/login.do"
+      target="_blank"
+      class="admin-shortcut-item secondary"
+    >
+      <span class="material-icons-round">report_problem</span>
+      <p>대림통운</p>
     </a>
   </div>
 </template>

@@ -7,35 +7,42 @@
       </button>
       <button
         class="blue"
-        @click="convertToStatus('BEFORE_PAYMENT', 'PAYMENT_COMPLETED')"
+        @click="convertToStatus('BEFORE_PAYMENT')"
+        :disabled="isBusy"
+      >
+        결제전 처리
+      </button>
+      <button
+        class="blue"
+        @click="convertToStatus('PAYMENT_COMPLETED')"
         :disabled="isBusy"
       >
         결제완료 처리
       </button>
       <button
         class="blue"
-        @click="convertToStatus('PAYMENT_COMPLETED', 'PREPARING_PRODUCT')"
+        @click="convertToStatus('PREPARING_PRODUCT')"
         :disabled="isBusy"
       >
         상품준비중 처리
       </button>
       <button
         class="blue"
-        @click="convertToStatus('PREPARING_PRODUCT', 'PREPARING_DELIVERY')"
+        @click="convertToStatus('PREPARING_DELIVERY')"
         :disabled="isBusy"
       >
         배송준비중 처리
       </button>
       <button
         class="blue"
-        @click="convertToStatus('PREPARING_DELIVERY', 'SHIPPING_PROGRESS')"
+        @click="convertToStatus('SHIPPING_PROGRESS')"
         :disabled="isBusy"
       >
         배송중 처리
       </button>
       <button
         class="blue"
-        @click="convertToStatus('SHIPPING_PROGRESS', 'DELIVERY_COMPLETED')"
+        @click="convertToStatus('DELIVERY_COMPLETED')"
         :disabled="isBusy"
       >
         배송완료 처리
@@ -84,7 +91,9 @@ import {
   arrayRemove,
   writeBatch,
   Timestamp,
-  increment,
+  addDoc,
+  limit,
+  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -237,7 +246,7 @@ const deleteOrder = async () => {
   }
 };
 
-const convertToStatus = async (before, after) => {
+const convertToStatus = async (after) => {
   try {
     isBusy.value = true;
     const checkedItems = await getCheckedItems();
@@ -249,7 +258,7 @@ const convertToStatus = async (before, after) => {
     }
 
     const validItems = checkedItems.filter((item) => {
-      return item.status === before && !item.claimStatus;
+      return item.claimStatus === "";
     });
 
     if (!validItems.length) {
@@ -290,129 +299,123 @@ const convertToStatus = async (before, after) => {
 
           // 주문자의 유저 데이터 가져오기
           if (item.userId) {
-            const userRef = doc(db, "users", item.userId);
-            const userSnap = await getDoc(userRef);
-            if (userSnap.exists()) {
-              const userData = userSnap.data();
+            const point = Math.floor(item.pointAmount);
 
-              // 주문자 포인트 업데이트 (예: 100 포인트 지급)
-              updates.push(
-                updateDoc(userRef, {
-                  userActualPaymentAmount: increment(item.productPrice),
-                  userAvailablePoint: increment(Math.floor(item.pointAmount)),
-                  userTotalPoint: increment(Math.floor(item.pointAmount)),
-                  userTotalActualOrderCount: increment(1),
-                })
-              );
+            const lastUserPointDocs = await getDocs(
+              query(
+                collection(db, "userPoints"),
+                where("userId", "==", item.userId),
+                orderBy("createdAt", "desc"),
+                limit(1)
+              )
+            );
+            const lastUserPointData = lastUserPointDocs.docs[0].data();
 
-              // 추천인 포인트 지급
-              if (userData.userReferralId) {
-                const referralRef = doc(db, "users", userData.userReferralId);
-                updates.push(
-                  updateDoc(referralRef, {
-                    userAvailablePoint: increment(
-                      Math.floor(item.pointAmount * 0.1)
-                    ),
-                    userTotalPoint: increment(
-                      Math.floor(item.pointAmount * 0.1)
-                    ),
-                  })
-                );
-              }
-            }
+            await addDoc(collection(db, "userPoints"), {
+              actionType: "ADD",
+              afterPoint: lastUserPointData.afterPoint + point,
+              amount: point,
+              beforePoint: lastUserPointData.afterPoint,
+              createdAt: Timestamp.fromDate(new Date()),
+              description: "구매확정으로 인한 포인트 지급",
+              sourceType: "ORDER_REWARD",
+              userId: item.userId,
+            });
           }
         }
 
         const orderData = (await getDoc(doc(db, "order", item.orderId))).data();
         console.log(orderData, after);
-        switch (after) {
-          case "PAYMENT_COMPLETED":
-            updates.push(
-              sendPpurioMessage({
-                targets: [
-                  {
-                    to: orderData.phone,
-                  },
-                ],
-                targetCount: 1,
-                content: `[네코쿠모] 입금 처리가 완료되었습니다.\n\n주문번호: ${item.orderId}\n\n빠르게 발주 완료 후 연락 남겨드리겠습니다. 감사합니다!`,
-                refKey: `PC_${item.orderId}`,
-              })
-            );
-            break;
+        if (confirm("고객님께 메시지를 보내겠습니까?")) {
+          switch (after) {
+            case "PAYMENT_COMPLETED":
+              updates.push(
+                sendPpurioMessage({
+                  targets: [
+                    {
+                      to: orderData.phone,
+                    },
+                  ],
+                  targetCount: 1,
+                  content: `[네코쿠모] 입금 처리가 완료되었습니다.\n\n주문번호: ${item.orderId}\n\n빠르게 발주 완료 후 연락 남겨드리겠습니다. 감사합니다!`,
+                  refKey: `PC_${item.orderId}`,
+                })
+              );
+              break;
 
-          case "PREPARING_PRODUCT":
-            updates.push(
-              sendPpurioMessage({
-                targets: [
-                  {
-                    to: orderData.phone,
-                  },
-                ],
-                targetCount: 1,
-                content: `[네코쿠모] 상품 발주 처리가 완료되었습니다.\n\n주문번호: ${item.orderId}\n\n빠르게 상품 수령 및 검수 완료 후 연락 남겨드리겠습니다. 감사합니다!`,
-                refKey: `PP_${item.orderId}`,
-              })
-            );
-            break;
+            case "PREPARING_PRODUCT":
+              updates.push(
+                sendPpurioMessage({
+                  targets: [
+                    {
+                      to: orderData.phone,
+                    },
+                  ],
+                  targetCount: 1,
+                  content: `[네코쿠모] 상품 발주 처리가 완료되었습니다.\n\n주문번호: ${item.orderId}\n\n빠르게 상품 수령 및 검수 완료 후 연락 남겨드리겠습니다. 감사합니다!`,
+                  refKey: `PP_${item.orderId}`,
+                })
+              );
+              break;
 
-          case "PREPARING_DELIVERY":
-            updates.push(
-              sendPpurioMessage({
-                targets: [
-                  {
-                    to: orderData.phone,
-                  },
-                ],
-                targetCount: 1,
-                content: `[네코쿠모] 상품 검수 처리가 완료되었습니다.\n\n주문번호: ${item.orderId}\n\n포장 및 발송 후 연락 남겨드리겠습니다. 감사합니다!`,
-                refKey: `PD_${item.orderId}`,
-              })
-            );
-            break;
+            case "PREPARING_DELIVERY":
+              updates.push(
+                sendPpurioMessage({
+                  targets: [
+                    {
+                      to: orderData.phone,
+                    },
+                  ],
+                  targetCount: 1,
+                  content: `[네코쿠모] 상품 검수 처리가 완료되었습니다.\n\n주문번호: ${item.orderId}\n\n포장 및 발송 후 연락 남겨드리겠습니다. 감사합니다!`,
+                  refKey: `PD_${item.orderId}`,
+                })
+              );
+              break;
 
-          case "SHIPPING_PROGRESS":
-            updates.push(
-              sendPpurioMessage({
-                targets: [
-                  {
-                    to: orderData.phone,
-                  },
-                ],
-                targetCount: 1,
-                content: `[네코쿠모] 상품 포장 및 발송 처리가 완료되었습니다.\n\n주문번호: ${
-                  item.orderId
-                }\n배송정보: ${generateDeliveryCompanyLabel(
-                  item.deliveryCompany
-                )} ${item.deliveryTrackingNumber}\n배송조회 링크: ${
-                  item.deliveryTrackingLink
-                }\n\n배송완료 시 연락 남겨드리겠습니다. 감사합니다!`,
-                refKey: `SP_${item.orderId}`,
-              })
-            );
-            break;
+            case "SHIPPING_PROGRESS":
+              updates.push(
+                sendPpurioMessage({
+                  targets: [
+                    {
+                      to: orderData.phone,
+                    },
+                  ],
+                  targetCount: 1,
+                  content: `[네코쿠모] 상품 포장 및 발송 처리가 완료되었습니다.\n\n주문번호: ${
+                    item.orderId
+                  }\n배송정보: ${generateDeliveryCompanyLabel(
+                    item.deliveryCompany
+                  )} ${item.deliveryTrackingNumber}\n배송조회 링크: ${
+                    item.deliveryTrackingLink
+                  }\n\n배송완료 시 연락 남겨드리겠습니다. 감사합니다!`,
+                  refKey: `SP_${item.orderId}`,
+                })
+              );
+              break;
 
-          case "DELIVERY_COMPLETED":
-            updates.push(
-              sendPpurioMessage({
-                targets: [
-                  {
-                    to: orderData.phone,
-                  },
-                ],
-                targetCount: 1,
-                content: `[네코쿠모] 상품 배송이 완료되었습니다.\n\n주문번호: ${
-                  item.orderId
-                }\n적립 냥코인: ${Math.floor(
-                  item.pointAmount
-                ).toLocaleString()}냥코인\n\n즐겁게 베이핑하시고 문제가 있으시면 언제든 연락주세요. 감사합니다!`,
-                refKey: `DC_${item.orderId}`,
-              })
-            );
-            break;
+            case "DELIVERY_COMPLETED":
+              updates.push(
+                sendPpurioMessage({
+                  targets: [
+                    {
+                      to: orderData.phone,
+                    },
+                  ],
+                  targetCount: 1,
+                  content: `[네코쿠모] 상품 배송이 완료되었습니다.\n\n주문번호: ${
+                    item.orderId
+                  }\n적립 냥코인: ${Math.floor(
+                    item.pointAmount
+                  ).toLocaleString()}냥코인\n\n즐겁게 베이핑하시고 문제가 있으시면 언제든 연락주세요. 감사합니다!`,
+                  refKey: `DC_${item.orderId}`,
+                })
+              );
+              break;
 
-          default:
-            break;
+            default:
+              break;
+          }
         }
 
         return Promise.all(updates);

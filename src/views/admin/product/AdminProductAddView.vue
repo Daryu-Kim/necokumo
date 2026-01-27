@@ -153,11 +153,11 @@
             <button @click="crawlProduct('boomboom')" :disabled="isBusy">
               붐붐리퀴드
             </button>
-            <button @click="crawlProduct('uwell')" :disabled="isBusy">
+            <button @click="crawlProduct('dragonvapes')" :disabled="isBusy">
               용트림
             </button>
-            <button @click="crawlProduct('cigapong')" :disabled="isBusy">
-              시가퐁
+            <button @click="crawlProduct('kvape')" :disabled="isBusy">
+              케이베이프
             </button>
             <button @click="crawlProduct('paxvape')" :disabled="isBusy">
               팍스베이프
@@ -613,39 +613,27 @@ const crawlProduct = async (buyer) => {
           options = doc.querySelectorAll("#product_option_id1 > option");
         }
         break;
-      case "uwell":
-        replaceUrl = "https://boomboomliquid.com";
+      case "dragonvapes":
+        replaceUrl = "https://dragonvapes.kr";
         thumbnailImage = doc.querySelector(
-          "#content > div > div._2-I30XS1lA > div._3rXou9cfw2 > div.bd_23RhM.bd_2Yw8f > div.bd_1uFKu.bd_2PG3r > img"
+          "#contents2 > div.xans-element-.xans-product.xans-product-detail > div.detailArea > div.xans-element-.xans-product.xans-product-image.imgArea > div > div.thumbnail > a > img"
         );
         detailImages = doc.querySelectorAll(
-          "#INTRODUCE div.se-main-container img"
+          "#contents2 > div.xans-element-.xans-product.xans-product-detail > div.xans-element-.xans-product.xans-product-additional > div.cont > div.edibot-product-detail > div > img"
         );
         options = doc.querySelectorAll(
-          "#content > div > div._2-I30XS1lA > div._2QCa6wHHPy > fieldset > div.bd_2dy3Y > div > ul > li > a"
+          "#product_option_id1 > optgroup > option"
         );
         if (options.length == 0) {
-          options = doc.querySelectorAll(
-            "#content > div > div._2-I30XS1lA > div._2QCa6wHHPy > fieldset > div.bd_2dy3Y > div > ul > li > a"
-          );
+          options = doc.querySelectorAll("#product_option_id1 > option");
         }
         break;
-      case "cigapong":
-        replaceUrl = "https://boomboomliquid.com";
-        thumbnailImage = doc.querySelector(
-          "#content > div > div._2-I30XS1lA > div._3rXou9cfw2._3SDVmcn7nN > div.bd_23RhM.bd_2Yw8f > div.bd_1uFKu > img"
-        );
+      case "kvape":
+        replaceUrl = "https://www.k-vape.co.kr/";
+        thumbnailImage = doc.querySelector("#goods_view_img");
         detailImages = doc.querySelectorAll(
-          "#INTRODUCE div.se-main-container img"
+          "#glores-B-view-tab-cont1 > div.glores-B-goods-content > p > img"
         );
-        options = doc.querySelectorAll(
-          "#content > div > div._2-I30XS1lA > div._2QCa6wHHPy > fieldset > div.bd_2dy3Y > div > ul > li > a"
-        );
-        if (options.length == 0) {
-          options = doc.querySelectorAll(
-            "#content > div > div._2-I30XS1lA > div._2QCa6wHHPy > fieldset > div.bd_2dy3Y > div > ul > li > a"
-          );
-        }
         break;
       case "paxvape":
         replaceUrl = "";

@@ -29,12 +29,6 @@ import NotFoundView from "@/views/template/NotFoundView.vue";
 import ConsumerCategoryView from "@/views/template/consumer/ConsumerCategoryView.vue";
 import AdminOrderDashboardView from "@/views/admin/order/AdminOrderDashboardView.vue";
 import AdminOrderListView from "@/views/admin/order/AdminOrderListView.vue";
-import AdminOrderListBeforeDepositView from "@/views/admin/order/AdminOrderListBeforeDepositView.vue";
-import AdminOrderListPaymentCompletedView from "@/views/admin/order/AdminOrderListPaymentCompletedView.vue";
-import AdminOrderListPrepraringProductView from "@/views/admin/order/AdminOrderListPrepraringProductView.vue";
-import AdminOrderListPreparingDeliveryView from "@/views/admin/order/AdminOrderListPreparingDeliveryView.vue";
-import AdminOrderListShippingProgressView from "@/views/admin/order/AdminOrderListShippingProgressView.vue";
-import AdminOrderListDeliveryCompletedView from "@/views/admin/order/AdminOrderListDeliveryCompletedView.vue";
 import AdminConsumerAddView from "@/views/admin/consumer/AdminConsumerAddView.vue";
 import AdminPromotionNoticeListView from "@/views/admin/promotion/AdminPromotionNoticeListView.vue";
 import MemberJoinView from "@/views/template/member/MemberJoinView.vue";
@@ -198,36 +192,6 @@ const routes = [
                 path: "all",
                 name: "admin-order-list-all",
                 component: AdminOrderListView,
-              },
-              {
-                path: "before-deposit",
-                name: "admin-order-list-before-deposit",
-                component: AdminOrderListBeforeDepositView,
-              },
-              {
-                path: "payment-completed",
-                name: "admin-order-list-payment-completed",
-                component: AdminOrderListPaymentCompletedView,
-              },
-              {
-                path: "preparing-product",
-                name: "admin-order-list-preparing-product",
-                component: AdminOrderListPrepraringProductView,
-              },
-              {
-                path: "preparing-delivery",
-                name: "admin-order-list-preparing-delivery",
-                component: AdminOrderListPreparingDeliveryView,
-              },
-              {
-                path: "shipping-progress",
-                name: "admin-order-list-shipping-progress",
-                component: AdminOrderListShippingProgressView,
-              },
-              {
-                path: "delivery-completed",
-                name: "admin-order-list-delivery-completed",
-                component: AdminOrderListDeliveryCompletedView,
               },
             ],
           },

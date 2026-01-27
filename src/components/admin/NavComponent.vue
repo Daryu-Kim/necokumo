@@ -97,54 +97,6 @@
             <p>전체 주문 조회하기</p>
           </div>
         </router-link>
-        <router-link
-          to="/admin/order/list/before-deposit"
-          class="admin-menu-item"
-        >
-          <div>
-            <p>결제전 관리하기</p>
-          </div>
-        </router-link>
-        <router-link
-          to="/admin/order/list/payment-completed"
-          class="admin-menu-item"
-        >
-          <div>
-            <p>결제완료 관리하기</p>
-          </div>
-        </router-link>
-        <router-link
-          to="/admin/order/list/preparing-product"
-          class="admin-menu-item"
-        >
-          <div>
-            <p>상품 준비중 관리하기</p>
-          </div>
-        </router-link>
-        <router-link
-          to="/admin/order/list/preparing-delivery"
-          class="admin-menu-item"
-        >
-          <div>
-            <p>배송 준비중 관리하기</p>
-          </div>
-        </router-link>
-        <router-link
-          to="/admin/order/list/shipping-progress"
-          class="admin-menu-item"
-        >
-          <div>
-            <p>배송 중 관리하기</p>
-          </div>
-        </router-link>
-        <router-link
-          to="/admin/order/list/delivery-completed"
-          class="admin-menu-item"
-        >
-          <div>
-            <p>배송 완료 조회하기</p>
-          </div>
-        </router-link>
       </div>
     </div>
     <div class="admin-menu-box">
